@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Editor, Frame, Element } from '@craftjs/core';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ComponentsTab from '../../components/ComponentsTab/ComponentsTab';
@@ -19,10 +19,26 @@ import { SearchBox } from '../../components/UserComponents/SearchBox';
 import { BarChart } from '../../components/UserComponents/BarChart';
 import { PieChart } from '../../components/UserComponents/PieChart';
 import { LineChart } from '../../components/UserComponents/LineChart';
-
 import './EditingInterface.css';
 
 const EditingInterface: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('components');
+
+  const renderActiveTabContent = () => {
+    switch (activeTab) {
+      case 'components':
+        return <ComponentsTab />;
+      case 'layout':
+        return <div>Layout content goes here</div>;
+      case 'pages':
+        return <div>Pages content goes here</div>;
+      case 'settings':
+        return <div>Settings content goes here</div>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="editing-interface">
       <Editor
@@ -46,8 +62,8 @@ const EditingInterface: React.FC = () => {
           LineChart,
         }}
       >
-        <Sidebar activeTab="components" onTabClick={() => {}} />
-        <ComponentsTab />
+        <Sidebar activeTab={activeTab} onTabClick={setActiveTab} />
+        {renderActiveTabContent()}
         <div className="main-content">
           <Frame>
             <Element is={Container} padding={20} canvas>
@@ -61,33 +77,3 @@ const EditingInterface: React.FC = () => {
 };
 
 export default EditingInterface;
-
-// import React, { useState } from 'react';
-// import Sidebar from '../../components/Sidebar/Sidebar';
-// import ComponentsTab from '../../components/ComponentsTab/ComponentsTab';
-// import './EditingInterface.css';
-
-// const EditingInterface: React.FC = () => {
-//   const [activeTab, setActiveTab] = useState('components');
-
-//   const renderActiveTabContent = () => {
-//     switch (activeTab) {
-//       case 'components':
-//         return <ComponentsTab />;
-//       default:
-//         return null;
-//     }
-//   };
-
-//   return (
-//     <div className="editing-interface">
-//       <Sidebar activeTab={activeTab} onTabClick={setActiveTab} />
-//       {renderActiveTabContent()}
-//       <div className="main-content">
-//         <h1>Main Content Area</h1>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default EditingInterface;
