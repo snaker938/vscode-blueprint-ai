@@ -1,12 +1,78 @@
+/* Home.css */
 .home-container {
+  background-color: #121212;
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-title {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.home-subtitle {
+  color: #b0b0b0;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.cards-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.card-link {
+  text-decoration: none;
+}
+
+.card {
+  background-color: #1f1f1f;
+  padding: 20px;
+  width: 300px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100vh;
+  text-align: center;
 }
 
-.start-button {
-  padding: 10px 20px;
-  font-size: 16px;
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.card-icon {
+  font-size: 48px;
+  color: #0078d4;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  color: #ffffff;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.card-description {
+  color: #a0a0a0;
+  margin-bottom: 15px;
+}
+
+.card-button {
+  background-color: #0078d4;
+  color: #ffffff;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.card-button:hover {
+  background-color: #005a9e;
 }

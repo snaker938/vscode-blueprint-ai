@@ -1,0 +1,38 @@
+/* src/components/CreateWithText/CreateWithText.css */
+
+.create-with-text-container {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.header-text {
+  color: #5c2d91; /* Soft purple accent */
+  font-weight: 600;
+  text-align: center;
+}
+
+.subheader-text {
+  color: #666666;
+  text-align: center;
+}
+
+.input-textbox {
+  width: 100%;
+  max-width: 500px;
+}
+
+.input-textbox .ms-TextField-fieldGroup {
+  border-radius: 8px;
+  border: 1px solid #c8c8c8;
+  background-color: #f9f9f9;
+}
+
+.input-textbox .ms-TextField-fieldGroup:hover {
+  border-color: #5c2d91;
+}
+
+.input-textbox .ms-TextField-field:focus {
+  border-color: #5c2d91;
+}
