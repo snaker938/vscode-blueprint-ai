@@ -1,35 +1,118 @@
 import React from 'react';
 import { TextField, Text, Icon, Separator } from '@fluentui/react';
+import { useEditor } from '@craftjs/core';
+import {
+  Container,
+  Button as UserButton,
+  Heading,
+  Textbox,
+  IconComponent,
+  LinkComponent,
+  ButtonGroup,
+  InputBox,
+  Dropdown,
+  Checkbox,
+  RadioButtons,
+  Slider,
+  StarRating,
+  SearchBox,
+  BarChart,
+  PieChart,
+  LineChart,
+} from '../UserComponents';
 import './ComponentsTab.css';
 
-const basicElements = [
-  { key: 'container', icon: 'CubeShape', name: 'Container' },
-  { key: 'button', icon: 'ButtonControl', name: 'Button' },
-  { key: 'image', icon: 'FileImage', name: 'Image' },
-  { key: 'heading', icon: 'Header1', name: 'Heading' },
-  { key: 'textbox', icon: 'TextField', name: 'Textbox' },
-  { key: 'icon', icon: 'Emoji2', name: 'Icon' },
-  { key: 'link', icon: 'Link', name: 'Link' },
+interface ComponentItem {
+  key: string;
+  icon: string;
+  name: string;
+  component: React.ElementType;
+}
+
+const basicElements: ComponentItem[] = [
+  {
+    key: 'container',
+    icon: 'CubeShape',
+    name: 'Container',
+    component: Container,
+  },
+  {
+    key: 'button',
+    icon: 'ButtonControl',
+    name: 'Button',
+    component: UserButton,
+  },
+  { key: 'heading', icon: 'Header1', name: 'Heading', component: Heading },
+  { key: 'textbox', icon: 'TextField', name: 'Textbox', component: Textbox },
+  { key: 'icon', icon: 'Emoji2', name: 'Icon', component: IconComponent },
+  { key: 'link', icon: 'Link', name: 'Link', component: LinkComponent },
 ];
 
-const smartComponents = [
-  { key: 'buttonGroup', icon: 'GroupedList', name: 'Button Group' },
-  { key: 'inputBox', icon: 'TextField', name: 'Input Box' },
-  { key: 'dropdown', icon: 'Dropdown', name: 'Dropdown' },
-  { key: 'checkbox', icon: 'CheckboxComposite', name: 'Checkbox' },
-  { key: 'radioButtons', icon: 'RadioBtnOn', name: 'Radio Buttons' },
-  { key: 'slider', icon: 'Slider', name: 'Slider' },
-  { key: 'starRating', icon: 'FavoriteStar', name: 'Star Rating' },
-  { key: 'searchBox', icon: 'Search', name: 'Search Box' },
+const smartComponents: ComponentItem[] = [
+  {
+    key: 'buttonGroup',
+    icon: 'GroupedList',
+    name: 'Button Group',
+    component: ButtonGroup,
+  },
+  {
+    key: 'inputBox',
+    icon: 'TextField',
+    name: 'Input Box',
+    component: InputBox,
+  },
+  { key: 'dropdown', icon: 'Dropdown', name: 'Dropdown', component: Dropdown },
+  {
+    key: 'checkbox',
+    icon: 'CheckboxComposite',
+    name: 'Checkbox',
+    component: Checkbox,
+  },
+  {
+    key: 'radioButtons',
+    icon: 'RadioBtnOn',
+    name: 'Radio Buttons',
+    component: RadioButtons,
+  },
+  { key: 'slider', icon: 'Slider', name: 'Slider', component: Slider },
+  {
+    key: 'starRating',
+    icon: 'FavoriteStar',
+    name: 'Star Rating',
+    component: StarRating,
+  },
+  {
+    key: 'searchBox',
+    icon: 'Search',
+    name: 'Search Box',
+    component: SearchBox,
+  },
 ];
 
-const graphElements = [
-  { key: 'barChart', icon: 'BarChart4', name: 'Bar Chart' },
-  { key: 'pieChart', icon: 'DonutChart', name: 'Pie Chart' },
-  { key: 'lineChart', icon: 'LineChart', name: 'Line Chart' },
+const graphElements: ComponentItem[] = [
+  {
+    key: 'barChart',
+    icon: 'BarChart4',
+    name: 'Bar Chart',
+    component: BarChart,
+  },
+  {
+    key: 'pieChart',
+    icon: 'DonutChart',
+    name: 'Pie Chart',
+    component: PieChart,
+  },
+  {
+    key: 'lineChart',
+    icon: 'LineChart',
+    name: 'Line Chart',
+    component: LineChart,
+  },
 ];
 
 const ComponentsTab: React.FC = () => {
+  const { connectors } = useEditor();
+
   return (
     <div className="components-tab">
       {/* Search Bar */}
@@ -45,7 +128,13 @@ const ComponentsTab: React.FC = () => {
       </Text>
       <div className="components-grid">
         {basicElements.map((item) => (
-          <div key={item.key} className="component-card">
+          <div
+            key={item.key}
+            className="component-card"
+            ref={(ref) =>
+              ref && connectors.create(ref, React.createElement(item.component))
+            }
+          >
             <Icon iconName={item.icon} className="component-icon" />
             <Text className="component-name">{item.name}</Text>
           </div>
@@ -60,7 +149,13 @@ const ComponentsTab: React.FC = () => {
       </Text>
       <div className="components-grid">
         {smartComponents.map((item) => (
-          <div key={item.key} className="component-card">
+          <div
+            key={item.key}
+            className="component-card"
+            ref={(ref) =>
+              ref && connectors.create(ref, React.createElement(item.component))
+            }
+          >
             <Icon iconName={item.icon} className="component-icon" />
             <Text className="component-name">{item.name}</Text>
           </div>
@@ -75,7 +170,13 @@ const ComponentsTab: React.FC = () => {
       </Text>
       <div className="components-grid">
         {graphElements.map((item) => (
-          <div key={item.key} className="component-card">
+          <div
+            key={item.key}
+            className="component-card"
+            ref={(ref) =>
+              ref && connectors.create(ref, React.createElement(item.component))
+            }
+          >
             <Icon iconName={item.icon} className="component-icon" />
             <Text className="component-name">{item.name}</Text>
           </div>
