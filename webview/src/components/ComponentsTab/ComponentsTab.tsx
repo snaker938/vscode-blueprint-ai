@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TextField, Text, Icon, Separator } from '@fluentui/react';
 import { useEditor } from '@craftjs/core';
 import {
@@ -112,6 +112,18 @@ const graphElements: ComponentItem[] = [
 
 const ComponentsTab: React.FC = () => {
   const { connectors } = useEditor();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter function to match components based on search query
+  const filterComponents = (components: ComponentItem[]) =>
+    components.filter((item) =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+  // Filtered components based on the search query
+  const filteredBasicElements = filterComponents(basicElements);
+  const filteredSmartComponents = filterComponents(smartComponents);
+  const filteredGraphElements = filterComponents(graphElements);
 
   return (
     <div className="components-tab">
@@ -120,6 +132,8 @@ const ComponentsTab: React.FC = () => {
         placeholder="Search components..."
         className="search-bar"
         iconProps={{ iconName: 'Search' }}
+        value={searchQuery}
+        onChange={(e, newValue) => setSearchQuery(newValue || '')}
       />
 
       {/* Basic Elements Section */}
@@ -127,7 +141,7 @@ const ComponentsTab: React.FC = () => {
         Basic Elements
       </Text>
       <div className="components-grid">
-        {basicElements.map((item) => (
+        {filteredBasicElements.map((item) => (
           <div
             key={item.key}
             className="component-card"
@@ -148,7 +162,7 @@ const ComponentsTab: React.FC = () => {
         Smart Components
       </Text>
       <div className="components-grid">
-        {smartComponents.map((item) => (
+        {filteredSmartComponents.map((item) => (
           <div
             key={item.key}
             className="component-card"
@@ -169,7 +183,7 @@ const ComponentsTab: React.FC = () => {
         Graph Elements
       </Text>
       <div className="components-grid">
-        {graphElements.map((item) => (
+        {filteredGraphElements.map((item) => (
           <div
             key={item.key}
             className="component-card"
