@@ -1,0 +1,32 @@
+{
+  "name": "blueprint-ai",
+  "displayName": "Blueprint AI",
+  "publisher": "UCL",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "activationEvents": [
+    "onCommand:blueprint-ai.openWebview"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "blueprint-ai.openWebview",
+        "title": "Open Blueprint AI"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "npm run compile"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.0",
+    "vscode": "^1.1.37",
+    "@types/node": "^14.0.0",
+    "@types/vscode": "^1.50.0"
+  }
+}

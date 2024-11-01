@@ -1,0 +1,279 @@
+Project Title:
+Microsoft – Blueprint AI UI v2.0 for Windows Generative Drag and Drop
+
+The plugin will be used as a VS code extension and therefore will be written in Typescript.
+
+-----Project Workflow------
+
+Project Workflow Overview
+
+---
+
+1. VSCode Extension Wrapper:
+   - The entire application runs within a Visual Studio Code (VSCode) extension. This wrapper encapsulates all components and workflows, ensuring that the extension integrates seamlessly with VSCode.
+
+2. VSCode Webview:
+   - This webview is the primary user interface within the VSCode extension. It provides the main area where users interact with the UI elements, layout, and design tools.
+
+3. React Editor:
+   - The editor itself is built using **React**, and contains various components and tools for designing layouts.
+     - CraftJS: This serves as the editor framework, enabling drag-and-drop functionality and component customization.
+     - FluentUI: This component library provides pre-designed editor components with a consistent design language.
+     - React Grid Layout: Used for organizing and structuring the layout of components, giving users flexibility to position elements on a grid.
+     - HTML User Components: A library of HTML components available for drag-and-drop into the layout, allowing users to quickly build webpages with predefined UI elements.
+
+   - Message Listeners: These capture and handle messages (events and commands) between the editor and other components or the VSCode environment.
+
+4. AI Generation:
+   - The AI generation component is responsible for generating layout suggestions and visual elements based on user input.
+     - Text Layout & Sketch Layout: Users can provide a text description or sketch for the desired layout. The AI processes these inputs and generates a corresponding layout structure.
+     - VSCode API Key Storage: Securely stores API keys needed for external AI services.
+     - Image Generation: When needed, the AI can generate images, either using a description provided by the user or based on existing layout elements.
+
+   - External AI Services:
+     - DALL-E 3 Endpoint: Used for generating images based on descriptions or layout requirements.
+     - Azure or OpenAI GPT-4 Endpoint: Used to process text-based layout requests and provide schema-based layout structures in response.
+
+5. Editor State Management:
+   - Generated Layout Node Tree: The AI outputs a layout structure in the form of a node tree, which is then applied to the React editor for visual representation and further adjustments.
+   - Editor State (JSON Node Tree): The state of the editor is maintained in a JSON format, representing the hierarchy and properties of layout components. This state can be saved, loaded, and updated dynamically.
+   - Save + Load Utilities: These utilities manage the saving and loading of editor states, ensuring that users can continue work from a previous session or store their current layout.
+
+6. Output:
+   - This component is responsible for converting the editor’s design into exportable code formats.
+     - HTML + CSS Converter: Converts the layout into a static webpage, generating clean HTML and CSS code that matches the designed layout.
+
+7. Current Workspace:
+   - The generated layouts, images, and any other necessary files are stored in the user’s current workspace in VSCode, allowing them to manage project assets and files directly from the editor environment.
+
+-----------------------------------------------------------------------------
+
+--Outline Of Different Components--
+
+There are three buttons: "Sketch", "Text" and "Scratch"
+
+We will only start with the "Sketch" button for now.
+
+This allows you to upload a photo of a UI from the internet. For example, the Outlook sign-in UI
+
+You can then click "Process Sketch"
+
+It then generates the sketch, (infinite loading circle present during this process)
+
+The extension in the backend makes an API call to OpenAI with a structured output schema to generate the layout and design.
+
+The extension then displays the scaffolded layout that looks similar to the inputted image in its developer window.
+
+
+
+--Once the scaffolded layout is displayed--
+
+A left vertical sidebar is displayed with several tabs
+
+-Layout Tab-
+Grid Editable Section:
+ - Rows
+ - Columns
+ - "Add Grid Cell" button
+ - "Grid Visible" toggle slider
+
+If you add a new grid cell:
+ - New tab menu on the right hand of the developer winder:
+     - Direction: Row or Column
+     - Justify Content: Start, Centre, End, Space Between, Space Around
+     - Align Items: Start, Centre, End
+     - Gap: Slider, 10 default
+     - large "Delete" button
+
+You can resize and move all the grid components.
+
+-Components Tab-
+A new menu appears on the right hand side when the user clicks on a component. This menu will appear regardless of which tab the user is technically in.
+
+Components:
+Drag components onto grid cells to add them to the canvas. You can add contains within containers.
+
+ - Button
+ - Label
+ - Single line input
+ - Multi line input
+ - Paragraph
+ - Image
+ - Radio Buttons
+ - Checkboxes
+ - Dropdown
+ - Slider
+ - Icon
+ - Container
+
+I have outlined a few component menu's below:
+
+Container Component:
+ - Background Colour: Hex Colour Wheel
+ - Border Colour: Hex Colour Wheel
+ - Border Radius: Slider, 5 default
+ - Height: Slider
+ - Width: Slider
+ - Padding: Slider
+ - Direction: Row, Column
+ - Justify Content: Start, Centre, End, Space Between, Space Around
+ - Align Items: Start, Centre, End
+ - Gap: Slider
+ - large "Delete" button
+
+Button Component: 
+ - Font Colour: Hex Colour Wheel
+ - Background Colour: Hex Colour Wheel
+ - Border Colour: Hex Colour Wheel
+ - Text: input box
+ - Font Size: Slider, 18 default
+ - Border Radius: Slider, 4 default
+ - Width: Slider, 20 default
+ - Height: Slider, 4 default
+ - Shadow Colour: Hex Colour Wheel
+ - Shadow Offset X: Slider, 2 default
+ - Shadow Offset Y: Slider, 2 default
+ - Shadow Blur: Slider, 2 default
+ - Hyperlink: text input
+
+Dropdown Component:
+ - Header: text input
+ - Number of options: integer input
+ - Option Labels: scrollable container of elements corresponding to the number of options. The user can edit each option's text
+ - Font Size: Slider, 14 default
+ - Font Colour: Hex Colour Wheel
+
+Label Component:
+ - Text: text input
+ - Font Size: Slider, 24 default
+ - Font Colour: Hex Colour Wheel
+ - Alignment: Left, Centre, Right, Justify
+ - Hyperlink: text input
+ - Icon: None, Left, Right
+ - Bold, Italics, Underline: all three buttons are toggle buttons
+
+Paragraph Component:
+ - Font Size: Slider, 14 default
+ - Font Colour: Hex Colour Wheel
+ - Text: Scrollable (Vertical) Text Input Box
+ - Alignment: Left, Centre, Right, Justify
+ - Hyperlink: text input
+ - Bold, Italics, Underline: all three buttons are toggle buttons
+
+Image Component:
+ - Source: Select Image Source Input (file input)
+ - Alt: text input
+ - "Generate Image" button: opens up a text input modal window. Generates an AI image based on the text provided
+ - Width: Slider, 34 default
+
+-Pages Tab-
+Add, rename, delete pages in your project
+
+A new menu appears on the right hand side when the user clicks on a component:
+ - Dynamic scrollable list showing the pages and their names. These pages are clickable elements
+ - "Add" button
+ - "Rename" button
+ - "Delete" button
+ - "Reset" button 
+
+"Add" page button:
+ - Choose how you would like to add a new page: Scratch, Template, Text, Sketch
+ - We have covered "Sketch" before
+ - Lets create a page using "Text"
+ - We can create a page from a text input
+ - The backend is making an API call to OpenAI with a structured output schema
+
+
+-Settings Tab-
+Change the theme, language and accessibility settings for the editor
+
+Theme: Dark, Light, High Contrast (from dropdown selection box)
+Language: English, others, (from dropdown selection box)
+
+
+
+-- Once the user is happy with all the pages and themes --
+
+- "Save" button to save the page "templates" to the workspace so they can edit them again in the future
+
+- "Export" button to export the pages to HTML. Creates a project folder with HTML, CSS and JavaScript.
+
+- Has these folders in the export: css, images, js
+
+- Has these files in the main directory: index.html, README.md and "examplepage.html" files.
+
+-------------------------------------------
+
+
+Directory:
+.vscode
+├── launch.json
+├── settings.json
+├── tasks.json
+
+node_modules
+
+out
+
+src
+├── panels
+│   └── MainWebViewPanel.ts
+├── extension.ts
+
+webview
+├── node_modules
+├── public
+│   └── index.html
+├── src
+│   ├── components
+│   │   ├── Canvas
+│   │   │   ├── Canvas.css
+│   │   │   ├── Canvas.tsx
+│   │   │   └── GridLayout.tsx
+│   │   ├── Header
+│   │   │   ├── Header.css
+│   │   │   ├── Header.tsx
+│   │   │   ├── ScratchButton.tsx
+│   │   │   ├── SketchButton.tsx
+│   │   │   └── TextButton.tsx
+│   │   ├── Sidebar
+│   │   │   ├── ComponentsTab.tsx
+│   │   │   ├── LayoutTab.tsx
+│   │   │   ├── PagesTab.tsx
+│   │   │   ├── SettingsTab.tsx
+│   │   │   ├── Sidebar.css
+│   │   │   └── Sidebar.tsx
+│   │   ├── Toolbar
+│   │   │   ├── ExportButton.tsx
+│   │   │   ├── RedoButton.tsx
+│   │   │   ├── SaveButton.tsx
+│   │   │   ├── Toolbar.css
+│   │   │   ├── Toolbar.tsx
+│   │   │   └── UndoButton.tsx
+│   │   └── userComponents
+│   ├── pages
+│   │   ├── EditingInterface
+│   │   │   ├── LeftSidebar
+│   │   │   ├── RightSidebar
+│   │   │   ├── Canvas.tsx
+│   │   │   ├── EditingInterface.css
+│   │   │   └── EditingInterface.tsx
+│   │   └── Home
+│   │       ├── Home.css
+│   │       └── Home.tsx
+│   ├── App.tsx
+│   └── index.tsx
+
+.gitignore
+package-lock.json
+package.json
+README.md
+tsconfig.json
+
+webview
+├── .gitignore
+├── Outline.txt
+├── package-lock.json
+├── package.json
+├── README.md
+└── tsconfig.json

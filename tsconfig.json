@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2022",
+    "outDir": "out",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "lib": ["ES2022", "dom"],
+    "sourceMap": true,
+    "strict": true,
+    "types": ["node", "jest"],
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node"
+  },
+  "exclude": ["node_modules", ".vscode-test", "webview", "**/webview/**"],
+  "include": ["src/**/*"]
+}
