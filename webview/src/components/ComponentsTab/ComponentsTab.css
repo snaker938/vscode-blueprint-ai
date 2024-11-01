@@ -1,0 +1,91 @@
+.components-tab {
+  width: 100%;
+  max-width: 320px;
+  background-color: #f9f9f9;
+  border-right: 1px solid #e1e1e1;
+  padding: 15px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.components-tab::-webkit-scrollbar {
+  width: 8px;
+}
+
+.components-tab::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+.components-tab::-webkit-scrollbar-thumb {
+  background-color: #4b3f72;
+  border-radius: 10px;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.search-bar .ms-TextField-fieldGroup {
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.section-title {
+  margin-top: 25px;
+  margin-bottom: 15px;
+  color: #4b3f72;
+  font-weight: 700;
+  font-size: 1.1em;
+}
+
+.section-divider {
+  margin: 15px 0;
+  border-top: 2px solid #5c2d91;
+}
+
+.components-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 15px;
+  padding: 10px 0;
+}
+
+.component-card {
+  width: 100%;
+  height: 80px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.component-card:hover {
+  background-color: #f2f2ff;
+  border-color: #4b3f72;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+}
+
+.component-icon {
+  font-size: 28px;
+  color: #4b3f72;
+}
+
+.component-name {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #333333;
+  font-weight: 500;
+  text-align: center;
+}

@@ -17,7 +17,7 @@
 
 .sidebar-button:hover,
 .sidebar-button:focus {
-  color: #5c2d91; /* Purple accent color */
+  color: #5c2d91;
 }
 
 .sidebar-button .ms-Button-icon {
@@ -26,6 +26,12 @@
 
 .sidebar-separator {
   width: 80%;
-  margin: 20px 0;
-  border-top: 1px solid #444444; /* Darker gray color */
+  margin: 10px 0;
+  border-top: 1px solid #444444;
+}
+
+.active-tab {
+  color: #5c2d91;
+  border-left: 3px solid #5c2d91;
+  padding-left: 5px;
 }

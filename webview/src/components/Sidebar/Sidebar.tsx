@@ -1,4 +1,3 @@
-// src/components/Sidebar/Sidebar.tsx
 import React from 'react';
 import {
   Stack,
@@ -8,6 +7,11 @@ import {
   DirectionalHint,
 } from '@fluentui/react';
 import './Sidebar.css';
+
+interface SidebarProps {
+  activeTab: string;
+  onTabClick: (tabKey: string) => void;
+}
 
 const tabs = [
   { key: 'layout', icon: 'GridViewSmall', title: 'Layout' },
@@ -25,7 +29,7 @@ const actions = [
   { key: 'export', icon: 'OpenInNewWindow', title: 'Export' },
 ];
 
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabClick }) => {
   return (
     <div className="sidebar">
       <Stack
@@ -44,7 +48,10 @@ const Sidebar: React.FC = () => {
                 iconProps={{ iconName: tab.icon }}
                 title={tab.title}
                 ariaLabel={tab.title}
-                className="sidebar-button"
+                className={`sidebar-button ${
+                  activeTab === tab.key ? 'active-tab' : ''
+                }`}
+                onClick={() => onTabClick(tab.key)}
               />
             </TooltipHost>
           ))}
@@ -52,7 +59,7 @@ const Sidebar: React.FC = () => {
 
         {/* Action Buttons */}
         <Stack>
-          <Separator className="sidebar-separator" />
+          <Separator className="sidebar-separator" />{' '}
           {actions.map((action) => (
             <TooltipHost
               content={action.title}
