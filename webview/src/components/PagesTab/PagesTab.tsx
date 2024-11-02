@@ -69,15 +69,14 @@ const PagesTab: React.FC<PagesTabProps> = ({
             iconProps={{ iconName: 'Rename' }}
             title="Rename Page"
             ariaLabel="Rename Page"
-            disabled={!selectedPageId}
             onClick={() => setIsRenameModalOpen(true)}
           />
           <IconButton
             iconProps={{ iconName: 'Delete' }}
             title="Delete Page"
             ariaLabel="Delete Page"
-            disabled={!selectedPageId}
             onClick={handleDeletePage}
+            disabled={pages.length <= 1}
           />
           <IconButton
             iconProps={{ iconName: 'Refresh' }}
