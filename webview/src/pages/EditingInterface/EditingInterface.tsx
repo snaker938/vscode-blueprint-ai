@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Editor, Frame, Element } from '@craftjs/core';
+import { Editor, Frame, SerializedNodes } from '@craftjs/core';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ComponentsTab from '../../components/ComponentsTab/ComponentsTab';
 import { Container } from '../../components/UserComponents/Container';
@@ -20,9 +20,78 @@ import { BarChart } from '../../components/UserComponents/BarChart';
 import { PieChart } from '../../components/UserComponents/PieChart';
 import { LineChart } from '../../components/UserComponents/LineChart';
 import './EditingInterface.css';
+import PagesTab from '../../components/PagesTab/PagesTab';
+
+interface Page {
+  id: number;
+  name: string;
+  thumbnail: string;
+  content: string | SerializedNodes;
+}
 
 const EditingInterface: React.FC = () => {
   const [activeTab, setActiveTab] = useState('components');
+
+  // Pages state lifted to EditingInterface
+  const [pages, setPages] = useState<Page[]>([
+    {
+      id: Date.now(),
+      name: 'Untitled Page',
+      thumbnail: '',
+      content: '',
+    },
+  ]);
+  const [selectedPageId, setSelectedPageId] = useState<number>(pages[0].id);
+
+  const getSelectedPage = () =>
+    pages.find((page) => page.id === selectedPageId);
+
+  const addPage = (name: string) => {
+    const newPage: Page = {
+      id: Date.now(),
+      name: name || `Page ${pages.length + 1}`,
+      thumbnail: '',
+      content: null,
+    };
+    setPages([...pages, newPage]);
+    setSelectedPageId(newPage.id);
+  };
+
+  const renamePage = (id: number, newName: string) => {
+    setPages(
+      pages.map((page) => (page.id === id ? { ...page, name: newName } : page))
+    );
+  };
+
+  const deletePage = (id: number) => {
+    const updatedPages = pages.filter((page) => page.id !== id);
+    setPages(updatedPages);
+    // Update selectedPageId
+    if (selectedPageId === id && updatedPages.length > 0) {
+      setSelectedPageId(updatedPages[0].id);
+    } else if (updatedPages.length === 0) {
+      // If no pages left, create a new one
+      addPage('Untitled Page');
+    }
+  };
+
+  const resetPages = () => {
+    setPages([]);
+    addPage('Untitled Page');
+  };
+
+  const handlePageClick = (id: number) => {
+    setSelectedPageId(id);
+  };
+
+  // Function to update page content
+  const updatePageContent = (content: string | SerializedNodes) => {
+    setPages(
+      pages.map((page) =>
+        page.id === selectedPageId ? { ...page, content } : page
+      )
+    );
+  };
 
   const renderActiveTabContent = () => {
     switch (activeTab) {
@@ -31,7 +100,17 @@ const EditingInterface: React.FC = () => {
       case 'layout':
         return <div>Layout content goes here</div>;
       case 'pages':
-        return <div>Pages content goes here</div>;
+        return (
+          <PagesTab
+            pages={pages}
+            selectedPageId={selectedPageId}
+            onAddPage={addPage}
+            onRenamePage={renamePage}
+            onDeletePage={deletePage}
+            onResetPages={resetPages}
+            onPageClick={handlePageClick}
+          />
+        );
       case 'settings':
         return <div>Settings content goes here</div>;
       default:
@@ -61,14 +140,16 @@ const EditingInterface: React.FC = () => {
           PieChart,
           LineChart,
         }}
+        onNodesChange={(query) => {
+          const json = query.serialize();
+          updatePageContent(json);
+        }}
       >
         <Sidebar activeTab={activeTab} onTabClick={setActiveTab} />
         {renderActiveTabContent()}
         <div className="main-content">
-          <Frame>
-            <Element is={Container} padding={20} canvas>
-              {/* Canvas starts empty */}
-            </Element>
+          <Frame data={getSelectedPage()?.content || null}>
+            {/* Canvas content */}
           </Frame>
         </div>
       </Editor>

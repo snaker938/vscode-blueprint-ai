@@ -7,7 +7,7 @@
     "vscode": "^1.50.0"
   },
   "activationEvents": [
-    "onCommand:blueprint-ai.openWebview"
+    "*"
   ],
   "main": "./out/extension.js",
   "contributes": {
