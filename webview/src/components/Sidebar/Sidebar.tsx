@@ -17,7 +17,6 @@ const tabs = [
   { key: 'components', icon: 'BuildQueue', title: 'Components' },
   { key: 'layout', icon: 'GridViewSmall', title: 'Layout' },
   { key: 'pages', icon: 'Page', title: 'Pages' },
-  { key: 'settings', icon: 'Settings', title: 'Settings' },
 ];
 
 const actions = [

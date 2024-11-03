@@ -2,23 +2,10 @@ import React, { useState } from 'react';
 import { Editor, Frame, Element, SerializedNodes } from '@craftjs/core';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ComponentsTab from '../../components/ComponentsTab/ComponentsTab';
+import LayoutTab from '../../components/LayoutTab/LayoutTab';
 import { Container } from '../../components/UserComponents/Container';
-import { Button } from '../../components/UserComponents/Button';
 import { Textbox } from '../../components/UserComponents/Textbox';
-import { Heading } from '../../components/UserComponents/Heading';
-import { IconComponent } from '../../components/UserComponents/Icon';
-import { LinkComponent } from '../../components/UserComponents/Link';
-import { ButtonGroup } from '../../components/UserComponents/ButtonGroup';
-import { InputBox } from '../../components/UserComponents/InputBox';
-import { Dropdown } from '../../components/UserComponents/Dropdown';
-import { Checkbox } from '../../components/UserComponents/Checkbox';
-import { RadioButtons } from '../../components/UserComponents/RadioButtons';
-import { Slider } from '../../components/UserComponents/Slider';
-import { StarRating } from '../../components/UserComponents/StarRating';
-import { SearchBox } from '../../components/UserComponents/SearchBox';
-import { BarChart } from '../../components/UserComponents/BarChart';
-import { PieChart } from '../../components/UserComponents/PieChart';
-import { LineChart } from '../../components/UserComponents/LineChart';
+
 import './EditingInterface.css';
 import PagesTab from '../../components/PagesTab/PagesTab';
 
@@ -112,7 +99,7 @@ const EditingInterface: React.FC = () => {
       case 'components':
         return <ComponentsTab />;
       case 'layout':
-        return <div>Layout content goes here</div>;
+        return <div>Layout Tab</div>;
       case 'pages':
         return (
           <PagesTab
@@ -125,8 +112,6 @@ const EditingInterface: React.FC = () => {
             onPageClick={handlePageClick}
           />
         );
-      case 'settings':
-        return <div>Settings content goes here</div>;
       default:
         return null;
     }
@@ -136,23 +121,8 @@ const EditingInterface: React.FC = () => {
     <div className="editing-interface">
       <Editor
         resolver={{
-          Button,
           Container,
           Textbox,
-          Heading,
-          IconComponent,
-          LinkComponent,
-          ButtonGroup,
-          InputBox,
-          Dropdown,
-          Checkbox,
-          RadioButtons,
-          Slider,
-          StarRating,
-          SearchBox,
-          BarChart,
-          PieChart,
-          LineChart,
         }}
         onNodesChange={(query) => {
           const nodes = query.getSerializedNodes();

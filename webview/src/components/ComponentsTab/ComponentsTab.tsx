@@ -1,25 +1,7 @@
 import React, { useState } from 'react';
 import { TextField, Text, Icon, Separator } from '@fluentui/react';
 import { useEditor } from '@craftjs/core';
-import {
-  Container,
-  Button as UserButton,
-  Heading,
-  Textbox,
-  IconComponent,
-  LinkComponent,
-  ButtonGroup,
-  InputBox,
-  Dropdown,
-  Checkbox,
-  RadioButtons,
-  Slider,
-  StarRating,
-  SearchBox,
-  BarChart,
-  PieChart,
-  LineChart,
-} from '../UserComponents';
+import { Container, Textbox } from '../UserComponents';
 import './ComponentsTab.css';
 
 interface ComponentItem {
@@ -36,79 +18,12 @@ const basicElements: ComponentItem[] = [
     name: 'Container',
     component: Container,
   },
-  {
-    key: 'button',
-    icon: 'ButtonControl',
-    name: 'Button',
-    component: UserButton,
-  },
-  { key: 'heading', icon: 'Header1', name: 'Heading', component: Heading },
   { key: 'textbox', icon: 'TextField', name: 'Textbox', component: Textbox },
-  { key: 'icon', icon: 'Emoji2', name: 'Icon', component: IconComponent },
-  { key: 'link', icon: 'Link', name: 'Link', component: LinkComponent },
 ];
 
-const smartComponents: ComponentItem[] = [
-  {
-    key: 'buttonGroup',
-    icon: 'GroupedList',
-    name: 'Button Group',
-    component: ButtonGroup,
-  },
-  {
-    key: 'inputBox',
-    icon: 'TextField',
-    name: 'Input Box',
-    component: InputBox,
-  },
-  { key: 'dropdown', icon: 'Dropdown', name: 'Dropdown', component: Dropdown },
-  {
-    key: 'checkbox',
-    icon: 'CheckboxComposite',
-    name: 'Checkbox',
-    component: Checkbox,
-  },
-  {
-    key: 'radioButtons',
-    icon: 'RadioBtnOn',
-    name: 'Radio Buttons',
-    component: RadioButtons,
-  },
-  { key: 'slider', icon: 'Slider', name: 'Slider', component: Slider },
-  {
-    key: 'starRating',
-    icon: 'FavoriteStar',
-    name: 'Star Rating',
-    component: StarRating,
-  },
-  {
-    key: 'searchBox',
-    icon: 'Search',
-    name: 'Search Box',
-    component: SearchBox,
-  },
-];
+const smartComponents: ComponentItem[] = [];
 
-const graphElements: ComponentItem[] = [
-  {
-    key: 'barChart',
-    icon: 'BarChart4',
-    name: 'Bar Chart',
-    component: BarChart,
-  },
-  {
-    key: 'pieChart',
-    icon: 'DonutChart',
-    name: 'Pie Chart',
-    component: PieChart,
-  },
-  {
-    key: 'lineChart',
-    icon: 'LineChart',
-    name: 'Line Chart',
-    component: LineChart,
-  },
-];
+const graphElements: ComponentItem[] = [];
 
 const ComponentsTab: React.FC = () => {
   const { connectors } = useEditor();

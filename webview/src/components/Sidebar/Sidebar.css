@@ -35,3 +35,23 @@
   border-left: 3px solid #5c2d91;
   padding-left: 5px;
 }
+
+.sidebar.darkened {
+  opacity: 0.8;
+  transition: opacity 0.3s;
+  position: relative;
+}
+
+.trash-bin-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  color: red;
+  font-size: 50px;
+  transition: transform 0.3s;
+}
+
+.sidebar.darkened .trash-bin-icon {
+  transform: translate(-50%, -50%) scale(1);
+}

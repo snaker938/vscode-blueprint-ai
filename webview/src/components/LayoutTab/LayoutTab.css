@@ -1,0 +1,177 @@
+.layout-tab {
+  padding: 20px;
+  background-color: #f7f7f7; /* Soft, neutral light background */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 100%; /* Ensure consistent width */
+  max-width: 320px; /* Set maximum width */
+  height: 100%; /* Full height to enable scrolling */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.section {
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: #ffffff; /* White background for sections */
+  border: 1px solid #e0e0e0; /* Light, elegant border around each section */
+  border-radius: 8px; /* Subtle, rounded borders */
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #444444; /* Soft, muted color for labels */
+  margin-bottom: 15px;
+}
+
+.grid-settings,
+.spacing-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px; /* Clear spacing between components */
+}
+
+.grid-settings > *,
+.spacing-controls > * {
+  flex: 1 1 calc(50% - 15px);
+}
+
+.add-grid-cell-button {
+  width: 100%;
+  margin-top: 10px;
+  background-color: #0078d4; /* Primary button color */
+  color: #ffffff;
+  border-radius: 4px; /* Rounded borders for buttons */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-grid-cell-button:hover {
+  background-color: #005a9e; /* Slightly darker on hover */
+}
+
+.reset-layout-button {
+  display: block;
+  margin: 20px auto 0; /* Center the button at the bottom */
+  background-color: #0078d4; /* Primary button color */
+  color: #ffffff;
+  border-radius: 4px; /* Rounded borders for buttons */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  padding: 10px 20px;
+}
+
+.reset-layout-button:hover {
+  background-color: #005a9e; /* Slightly darker on hover */
+}
+
+.ms-TextField,
+.ms-Slider,
+.ms-Dropdown,
+.ms-Toggle {
+  margin-bottom: 15px;
+}
+
+.ms-TextField input {
+  border-radius: 4px; /* Rounded borders for input fields */
+  border: 1px solid #d0d0d0;
+  padding: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.ms-TextField input:hover {
+  background-color: #f0f0f0; /* Slight background change on hover */
+  border-color: #c0c0c0;
+}
+
+.ms-Dropdown .ms-Dropdown-title {
+  border-radius: 4px;
+  border: 1px solid #d0d0d0;
+  padding: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.ms-Dropdown:hover .ms-Dropdown-title {
+  background-color: #f0f0f0;
+  border-color: #c0c0c0;
+}
+
+.ms-Slider {
+  margin-top: 10px;
+}
+
+.ms-Slider .ms-Slider-line {
+  height: 4px;
+  background: #d0d0d0;
+}
+
+.ms-Slider .ms-Slider-thumb {
+  width: 16px;
+  height: 16px;
+  background: #0078d4;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+.ms-Slider .ms-Slider-thumb:hover {
+  background: #005a9e;
+}
+
+.ms-Toggle {
+  margin-top: 10px;
+}
+
+.ms-Toggle .ms-Toggle-thumb {
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.ms-Toggle.is-checked .ms-Toggle-thumb {
+  background: #ffffff;
+  border-color: #0078d4;
+}
+
+.ms-Toggle .ms-Toggle-thumb:hover {
+  background: #f0f0f0;
+}
+
+.ms-Toggle .ms-Toggle-background {
+  border-radius: 10px;
+  background: #d0d0d0;
+  transition: background-color 0.3s ease;
+}
+
+.ms-Toggle.is-checked .ms-Toggle-background {
+  background: #0078d4;
+}
+
+.ms-Label {
+  color: #444444; /* Soft, muted color for labels */
+}
+
+@media (max-width: 600px) {
+  .grid-settings > *,
+  .spacing-controls > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* Slim, modern scrollbar */
+.layout-tab::-webkit-scrollbar {
+  width: 8px;
+}
+
+.layout-tab::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.layout-tab::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.layout-tab::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
