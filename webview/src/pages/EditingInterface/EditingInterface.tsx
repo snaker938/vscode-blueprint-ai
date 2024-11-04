@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Editor, Frame, Element, SerializedNodes } from '@craftjs/core';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ComponentsTab from '../../components/ComponentsTab/ComponentsTab';
+// import LayoutTab from '../../components/LayoutTab/LayoutTab';
 import { Container } from '../../components/UserComponents/Container';
 import { Textbox } from '../../components/UserComponents/Textbox';
 

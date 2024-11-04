@@ -41,7 +41,13 @@ const ComponentsTab: React.FC = () => {
   const filteredGraphElements = filterComponents(graphElements);
 
   return (
-    <div className="components-tab">
+    <div
+      className="components-tab"
+      onDragOver={(e) => {
+        e.preventDefault(); // Necessary to allow drag over
+        console.log('Hovering over Component Tab');
+      }}
+    >
       {/* Search Bar */}
       <TextField
         placeholder="Search components..."
@@ -52,9 +58,6 @@ const ComponentsTab: React.FC = () => {
       />
 
       {/* Basic Elements Section */}
-      <Text variant="xLarge" className="section-title">
-        Basic Elements
-      </Text>
       <div className="components-grid">
         {filteredBasicElements.map((item) => (
           <div
@@ -63,6 +66,9 @@ const ComponentsTab: React.FC = () => {
             ref={(ref) =>
               ref && connectors.create(ref, React.createElement(item.component))
             }
+            draggable={true}
+            onDragStart={() => console.log(`Drag started ${item.name}`)}
+            onDragEnd={() => console.log(`Drag ended ${item.name}`)}
           >
             <Icon iconName={item.icon} className="component-icon" />
             <Text className="component-name">{item.name}</Text>
@@ -73,9 +79,6 @@ const ComponentsTab: React.FC = () => {
       <Separator className="section-divider" />
 
       {/* Smart Components Section */}
-      <Text variant="xLarge" className="section-title">
-        Smart Components
-      </Text>
       <div className="components-grid">
         {filteredSmartComponents.map((item) => (
           <div
@@ -84,6 +87,9 @@ const ComponentsTab: React.FC = () => {
             ref={(ref) =>
               ref && connectors.create(ref, React.createElement(item.component))
             }
+            draggable={true}
+            onDragStart={() => console.log(`Drag started ${item.name}`)}
+            onDragEnd={() => console.log(`Drag ended ${item.name}`)}
           >
             <Icon iconName={item.icon} className="component-icon" />
             <Text className="component-name">{item.name}</Text>
@@ -97,6 +103,7 @@ const ComponentsTab: React.FC = () => {
       <Text variant="xLarge" className="section-title">
         Graph Elements
       </Text>
+      {/* Graph Elements Section */}
       <div className="components-grid">
         {filteredGraphElements.map((item) => (
           <div
@@ -105,6 +112,9 @@ const ComponentsTab: React.FC = () => {
             ref={(ref) =>
               ref && connectors.create(ref, React.createElement(item.component))
             }
+            draggable={true}
+            onDragStart={() => console.log(`Drag started ${item.name}`)}
+            onDragEnd={() => console.log(`Drag ended ${item.name}`)}
           >
             <Icon iconName={item.icon} className="component-icon" />
             <Text className="component-name">{item.name}</Text>
