@@ -8,16 +8,58 @@
 }
 
 .home-title {
-  color: #ffffff;
   font-weight: 600;
   margin-bottom: 10px;
   text-align: center;
+  background: linear-gradient(270deg, #ff0080, #ff8c00, #40e0d0);
+  background-size: 600% 600%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: animateTitle 2s ease-in-out, gradientShift 10s ease infinite;
 }
 
 .home-subtitle {
-  color: #b0b0b0;
   margin-bottom: 30px;
   text-align: center;
+  background: #b0b0b0;
+  background-size: 600% 600%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: animateSubtitle 2s ease-in-out;
+}
+
+@keyframes animateTitle {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes animateSubtitle {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .cards-container {

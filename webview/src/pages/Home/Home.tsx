@@ -22,10 +22,10 @@ const Home: React.FC = () => {
             <div className="card">
               <Icon iconName="Edit" className="card-icon" />
               <Text variant="large" className="card-title">
-                Create with Text
+                Create with Imagination
               </Text>
               <Text variant="small" className="card-description">
-                Generate a webpage by providing a text description.
+                Generate a webpage by providing some references!
               </Text>
               <DefaultButton text="Start Creating" className="card-button" />
             </div>
