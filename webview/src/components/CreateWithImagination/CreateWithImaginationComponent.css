@@ -1,0 +1,141 @@
+.create-with-imagination-container {
+  background-color: #ffffff;
+  padding: 60px; /* Increased padding */
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 800px; /* Increased max-width */
+  margin: 0 auto;
+}
+
+.header-text {
+  color: #5c2d91;
+  font-weight: 600;
+  text-align: center;
+}
+
+.subheader-text {
+  color: #666666;
+  text-align: center;
+}
+
+.suggested-features {
+  margin-top: 20px;
+}
+
+.feature-item {
+  cursor: pointer;
+  text-align: center;
+  width: 150px;
+  padding: 10px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.feature-item:hover {
+  background-color: #f0f0f0;
+}
+
+.selected-feature {
+  background-color: #e0e0ff;
+}
+
+.feature-icon {
+  font-size: 36px;
+  color: #5c2d91;
+  margin-bottom: 5px;
+}
+
+.description-text {
+  color: #666666;
+  text-align: left; /* Changed from center to left */
+  margin-top: 20px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.input-box-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+}
+
+.input-textbox {
+  width: 100%;
+}
+
+.input-textbox .ms-TextField-fieldGroup {
+  border-radius: 8px;
+  border: 1px solid #c8c8c8;
+  background-color: #f9f9f9;
+}
+
+.input-textbox .ms-TextField-fieldGroup:hover {
+  border-color: #5c2d91;
+}
+
+.input-textbox .ms-TextField-field:focus {
+  border-color: #5c2d91;
+}
+
+.input-box-icons {
+  position: absolute;
+  bottom: 10px;
+  left: 10px; /* Moved to the left */
+  display: flex;
+  align-items: center;
+}
+
+.ai-features {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #5c2d91; /* Adjusted color */
+}
+
+.ai-features .ai-icon {
+  margin-right: 5px;
+  color: #5c2d91; /* Adjusted color */
+}
+
+.separator-vertical {
+  width: 1px;
+  background-color: #5c2d91; /* Made divider more visible */
+  height: 24px;
+  margin: 0 10px;
+}
+
+.icon-button .ms-Button-icon {
+  color: #5c2d91; /* Adjusted icon color */
+}
+
+.feature-content {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 500px;
+  text-align: left;
+}
+
+.modal-container {
+  width: 500px;
+  padding: 20px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-body {
+  margin-top: 20px;
+}
+
+.modal-feature-item {
+  text-align: center;
+}
+
+.modal-feature-item .feature-icon {
+  font-size: 24px;
+  color: #5c2d91;
+  margin-bottom: 5px;
+}
