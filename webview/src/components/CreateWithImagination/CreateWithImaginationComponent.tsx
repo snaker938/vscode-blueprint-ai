@@ -1,3 +1,5 @@
+// CreateWithImaginationComponent.tsx
+
 import React, { useState } from 'react';
 import {
   TextField,
@@ -6,7 +8,6 @@ import {
   IconButton,
   Modal,
   Icon,
-  DefaultButton,
 } from '@fluentui/react';
 import './CreateWithImaginationComponent.css';
 
@@ -27,7 +28,7 @@ const CreateWithImagination: React.FC = () => {
 
   return (
     <div className="create-with-imagination-container">
-      <Stack tokens={{ childrenGap: 15 }} horizontalAlign="center">
+      <Stack tokens={{ childrenGap: 20 }} horizontalAlign="center">
         <Text variant="xxLarge" className="header-text">
           Hey! How can I help?
         </Text>
@@ -89,16 +90,20 @@ const CreateWithImagination: React.FC = () => {
                 rows={5}
               />
               <div className="input-box-icons">
-                <div className="ai-features" onClick={openAIFeaturesModal}>
-                  <Icon iconName="Robot" className="ai-icon" />
-                  <Text>AI features</Text>
+                <div className="icon-button-group">
+                  <IconButton
+                    iconProps={{ iconName: 'Robot' }}
+                    onClick={openAIFeaturesModal}
+                    className="icon-button ai-features-button"
+                    title="AI features"
+                  />
+                  <IconButton
+                    iconProps={{ iconName: 'Camera' }}
+                    onClick={openImageModal}
+                    className="icon-button"
+                    title="Upload image"
+                  />
                 </div>
-                <div className="separator-vertical" />
-                <IconButton
-                  iconProps={{ iconName: 'Camera' }}
-                  onClick={openImageModal}
-                  className="icon-button"
-                />
               </div>
             </div>
           </>
@@ -139,30 +144,34 @@ const CreateWithImagination: React.FC = () => {
           />
         </div>
         <div className="modal-body">
+          {/* Improved UI for AI Features Modal */}
           <Stack tokens={{ childrenGap: 20 }}>
-            <Stack horizontalAlign="center" className="modal-feature-item">
-              <Icon iconName="Camera" className="feature-icon" />
-              <Text>Convert a screenshot to a design</Text>
-              <DefaultButton
-                text="Try it out"
-                onClick={() => handleFeatureClick('screenshot')}
-              />
+            <Stack
+              horizontal
+              tokens={{ childrenGap: 10 }}
+              verticalAlign="center"
+              className="modal-feature-item"
+            >
+              <Icon iconName="Camera" className="modal-feature-icon" />
+              <Text variant="large">Convert a screenshot to a design</Text>
             </Stack>
-            <Stack horizontalAlign="center" className="modal-feature-item">
-              <Icon iconName="TextField" className="feature-icon" />
-              <Text>Generate a design from text</Text>
-              <DefaultButton
-                text="Try it out"
-                onClick={() => handleFeatureClick('text')}
-              />
+            <Stack
+              horizontal
+              tokens={{ childrenGap: 10 }}
+              verticalAlign="center"
+              className="modal-feature-item"
+            >
+              <Icon iconName="TextField" className="modal-feature-icon" />
+              <Text variant="large">Generate a design from text</Text>
             </Stack>
-            <Stack horizontalAlign="center" className="modal-feature-item">
-              <Icon iconName="Design" className="feature-icon" />
-              <Text>Convert a sketch to a design</Text>
-              <DefaultButton
-                text="Try it out"
-                onClick={() => handleFeatureClick('sketch')}
-              />
+            <Stack
+              horizontal
+              tokens={{ childrenGap: 10 }}
+              verticalAlign="center"
+              className="modal-feature-item"
+            >
+              <Icon iconName="Design" className="modal-feature-icon" />
+              <Text variant="large">Convert a sketch to a design</Text>
             </Stack>
           </Stack>
         </div>
