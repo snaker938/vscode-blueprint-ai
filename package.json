@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-blueprint-ai.helloWorld",
-        "title": "Hello World"
+        "command": "blueprint-ai.openWebview",
+        "title": "Open Blueprint AI"
       }
     ]
   },

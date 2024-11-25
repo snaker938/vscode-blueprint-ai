@@ -1,4 +1,4 @@
-# Blueprint AI UI v1.0 - AI-Powered Visual Design in VS Code
+# Blueprint AI UI v1.0
 
 Blueprint AI UI v1.0 transforms Visual Studio Code into a powerful visual design environment. Built by **Team 21**, this extension combines ReactJS with AI to revolutionize UI development through intuitive drag-and-drop functionality and AI-generated layouts.
 
