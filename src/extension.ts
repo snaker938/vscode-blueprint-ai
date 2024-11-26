@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.commands.registerCommand(
     'blueprint-ai.openWebview',
     () => {
-      MainWebViewPanel.render(context.extensionUri);
+      MainWebViewPanel.createOrShow(context.extensionUri);
     }
   );
 
