@@ -1,8 +1,5 @@
-// MainWebViewPanel.ts
-
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as path from 'path';
 
 export class MainWebViewPanel {
   public static currentPanel: MainWebViewPanel | undefined;
@@ -131,15 +128,6 @@ export class MainWebViewPanel {
       ">`
     );
 
-    // Helper function to fix resource URIs
-    const fixUri = (match: string, uri: string) => {
-      const resourcePath = uri.replace(/^\//, '');
-      const resourceUri = webview.asWebviewUri(
-        vscode.Uri.joinPath(distPath, resourcePath)
-      );
-      return match.replace(uri, resourceUri.toString());
-    };
-
     // Update script tags and add nonce
     html = html.replace(
       /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi,
@@ -166,18 +154,12 @@ export class MainWebViewPanel {
     );
 
     // Update img tags
-    html = html.replace(/<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi, fixUri);
-
-    // Update a tags
     html = html.replace(
-      /<a\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi,
-      (match, attributes, href) => {
-        if (href.startsWith('/')) {
-          const linkPathOnDisk = vscode.Uri.joinPath(distPath, href);
-          const linkUri = webview.asWebviewUri(linkPathOnDisk);
-          return `<a ${attributes.replace(href, linkUri.toString())}>`;
-        }
-        return match;
+      /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi,
+      (match, attributes, src) => {
+        const imgPathOnDisk = vscode.Uri.joinPath(distPath, src);
+        const imgUri = webview.asWebviewUri(imgPathOnDisk);
+        return `<img ${attributes.replace(src, imgUri.toString())}>`;
       }
     );
 
