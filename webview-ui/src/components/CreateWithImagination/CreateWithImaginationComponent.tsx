@@ -67,6 +67,8 @@ const CreateWithImagination: React.FC = () => {
           </Stack>
         </Stack>
 
+        <div style={{ marginTop: '40px' }}></div>
+
         {selectedFeature === 'text' && (
           <SelectedFeatureText openModal={openModal} />
         )}

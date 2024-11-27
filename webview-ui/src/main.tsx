@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import App from './App';
+import './main.css';
 
 import CreateWithImaginationPage from './pages/CreateWithImagination/CreateWithImaginationPage';
 

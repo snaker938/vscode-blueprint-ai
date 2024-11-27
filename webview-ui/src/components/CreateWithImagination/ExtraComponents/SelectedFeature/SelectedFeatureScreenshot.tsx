@@ -66,12 +66,14 @@ const SelectedFeatureScreenshot: React.FC = () => {
 
   return (
     <div className="selected-feature-screenshot-container">
-      <Text variant="xLarge" className="header-text">
-        Upload Your Screenshot
-      </Text>
-      <Text variant="mediumPlus" className="subheader-text">
-        Convert your screenshot into a beautiful design.
-      </Text>
+      <div className="header-container">
+        <Text variant="xLarge" className="header-text">
+          Upload Your Screenshot
+        </Text>
+        <Text variant="mediumPlus" className="subheader-text">
+          Convert your screenshot into a beautiful design.
+        </Text>
+      </div>
 
       {errorMessage && (
         <MessageBar

@@ -1,7 +1,19 @@
+.selected-feature-text-container {
+  background-color: #ffffff;
+  padding: 60px 40px;
+  margin: 20px auto;
+  max-width: 800px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  box-sizing: border-box;
+  width: 100%;
+}
+
 .description-text {
   color: #666666;
   text-align: left;
-  margin-top: 20px;
+  margin-bottom: 10px;
   width: 100%;
   max-width: 600px;
 }
