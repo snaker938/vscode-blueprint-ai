@@ -27,7 +27,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "install:all": "npm install && npm install --prefix webview-ui",
+    "build:all": "npm run compile && npm run build --prefix webview-ui"
   },
   "devDependencies": {
     "@types/vscode": "^1.95.0",

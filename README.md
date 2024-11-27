@@ -34,10 +34,10 @@ npm run build:webview
 
 ## 👥 Team 21
 
-- Joshua Mendel - Lead Developer
-- Simran Goel - AI Integration
-- Joshua Soh - UI/UX Design
-- Gideon Zeru - Architecture
+- Joshua Mendel
+- Simran Goel
+- Joshua Soh
+- Gideon Zeru
 
 ## 📄 License
 
