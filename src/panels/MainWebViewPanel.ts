@@ -80,28 +80,32 @@ export class MainWebViewPanel {
   private _update() {
     const webview = this._panel.webview;
     this._panel.title = 'Blueprint AI';
-    this._panel.webview.html = this._getHtmlForWebview(webview);
+    this._updateWebviewContent(webview);
   }
 
-  private _getHtmlForWebview(webview: vscode.Webview) {
-    const distPath = vscode.Uri.joinPath(
+  private async _updateWebviewContent(webview: vscode.Webview) {
+    const html = await this._getHtmlForWebview(webview);
+    this._panel.webview.html = html;
+  }
+
+  private async _getHtmlForWebview(webview: vscode.Webview) {
+    const distUri = vscode.Uri.joinPath(
       this._extensionUri,
       'webview-ui',
       'dist'
     );
-    const indexPath = vscode.Uri.joinPath(distPath, 'index.html');
+    const indexPath = vscode.Uri.joinPath(distUri, 'index.html');
+    let html = await fs.promises.readFile(indexPath.fsPath, 'utf8');
 
-    let html = fs.readFileSync(indexPath.fsPath, 'utf8');
-
-    html = this._updateHtmlForWebview(html, webview, distPath);
+    html = this._fixHtml(html, webview, distUri);
 
     return html;
   }
 
-  private _updateHtmlForWebview(
+  private _fixHtml(
     html: string,
     webview: vscode.Webview,
-    distPath: vscode.Uri
+    distUri: vscode.Uri
   ): string {
     const nonce = getNonce();
 
@@ -118,21 +122,21 @@ export class MainWebViewPanel {
     html = html.replace(
       /<head>/,
       `<head>
-      <meta http-equiv="Content-Security-Policy" content="
-          default-src 'none';
-          img-src ${webview.cspSource} https:;
-          script-src 'nonce-${nonce}' ${webview.cspSource};
-          style-src ${webview.cspSource} 'unsafe-inline';
-          font-src ${webview.cspSource};
-          connect-src ${webview.cspSource} https:;
-      ">`
+            <meta http-equiv="Content-Security-Policy" content="
+                default-src 'none';
+                img-src ${webview.cspSource} https:;
+                script-src 'nonce-${nonce}' ${webview.cspSource};
+                style-src ${webview.cspSource} 'unsafe-inline';
+                font-src ${webview.cspSource};
+                connect-src ${webview.cspSource} https:;
+            ">`
     );
 
     // Update script tags and add nonce
     html = html.replace(
       /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, src) => {
-        const scriptPathOnDisk = vscode.Uri.joinPath(distPath, src);
+        const scriptPathOnDisk = vscode.Uri.joinPath(distUri, src);
         const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
         return `<script nonce="${nonce}" src="${scriptUri}">`;
       }
@@ -147,7 +151,7 @@ export class MainWebViewPanel {
     html = html.replace(
       /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, href) => {
-        const stylePathOnDisk = vscode.Uri.joinPath(distPath, href);
+        const stylePathOnDisk = vscode.Uri.joinPath(distUri, href);
         const styleUri = webview.asWebviewUri(stylePathOnDisk);
         return `<link ${attributes.replace(href, styleUri.toString())}>`;
       }
@@ -157,9 +161,22 @@ export class MainWebViewPanel {
     html = html.replace(
       /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, src) => {
-        const imgPathOnDisk = vscode.Uri.joinPath(distPath, src);
+        const imgPathOnDisk = vscode.Uri.joinPath(distUri, src);
         const imgUri = webview.asWebviewUri(imgPathOnDisk);
         return `<img ${attributes.replace(src, imgUri.toString())}>`;
+      }
+    );
+
+    // Update anchor tags if needed
+    html = html.replace(
+      /<a\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi,
+      (match, attributes, href) => {
+        if (href.startsWith('/')) {
+          const linkPathOnDisk = vscode.Uri.joinPath(distUri, href);
+          const linkUri = webview.asWebviewUri(linkPathOnDisk);
+          return `<a ${attributes.replace(href, linkUri.toString())}>`;
+        }
+        return match;
       }
     );
 
@@ -173,7 +190,6 @@ function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
     localResourceRoots: [
       vscode.Uri.joinPath(extensionUri, 'webview-ui', 'dist'),
     ],
-    enableCommandUris: true,
   };
 }
 
