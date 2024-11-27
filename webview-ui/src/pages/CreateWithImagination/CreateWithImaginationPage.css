@@ -1,0 +1,33 @@
+.create-with-imagination-page {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.button-container {
+  margin-top: 20px;
+}
+
+.generate-button {
+  background-color: #5c2d91;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.generate-button:hover {
+  background-color: #4b1f7d;
+}
+
+.generate-button-container {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}

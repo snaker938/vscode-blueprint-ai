@@ -1,0 +1,61 @@
+.description-text {
+  color: #666666;
+  text-align: left;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.input-box-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 20px;
+}
+
+.input-textbox {
+  width: 100%;
+}
+
+.input-textbox .ms-TextField-fieldGroup {
+  border-radius: 8px;
+  border: 1px solid #c8c8c8;
+  background-color: #f9f9f9;
+}
+
+.input-textbox .ms-TextField-fieldGroup:hover {
+  border-color: #5c2d91;
+}
+
+.input-textbox .ms-TextField-field:focus {
+  border-color: #5c2d91;
+}
+
+.input-box-icons {
+  display: flex;
+  position: absolute;
+  bottom: 0px;
+  left: 10px;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-features-text {
+  color: #5c2d91;
+  font-weight: 500;
+}
+
+.icon-button-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-button {
+  color: #5c2d91;
+  font-size: 18px;
+}
+
+.icon-button:hover {
+  color: #3e1a6a;
+}

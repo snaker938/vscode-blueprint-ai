@@ -1,0 +1,221 @@
+.selected-feature-sketch-container {
+  background-color: #ffffff;
+  padding: 50px 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+  max-width: 1000px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.header-text {
+  color: #4a148c;
+  font-weight: 700;
+  margin-bottom: 15px;
+  font-size: 32px;
+}
+
+.subheader-text {
+  color: #757575;
+  margin-bottom: 30px;
+  font-size: 18px;
+}
+
+.toolbar {
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.toolbar .icon-button {
+  color: #4a148c;
+  font-size: 24px;
+}
+
+.toolbar .icon-button.selected-tool {
+  background-color: #e1bee7;
+  color: #4a148c;
+  border: 2px solid #4a148c;
+}
+
+.toolbar .icon-button:hover {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.toolbar .ms-StackItem {
+  margin: 0 10px;
+}
+
+.shape-dropdown {
+  width: 150px;
+}
+
+.color-picker input[type='color'] {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d1c4e9;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0 10px;
+}
+
+.line-width-slider {
+  width: 200px;
+  margin: 0 10px;
+}
+
+.toolbar .ms-Dropdown {
+  margin: 0 10px;
+}
+
+.toolbar .ms-Slider {
+  margin: 0 10px;
+}
+
+.line-width-slider .ms-Slider-line {
+  background-color: #d1c4e9;
+}
+
+.line-width-slider .ms-Slider-slideBox:hover .ms-Slider-line {
+  background-color: #b39ddb;
+}
+
+.line-width-slider .ms-Slider-thumb {
+  border: 2px solid #4a148c;
+}
+
+/* Canvas Container */
+.canvas-container {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  height: 600px;
+  margin: 0 auto;
+  border: 2px solid #d1c4e9;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fafafa;
+}
+
+.canvas-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.sketch-stage {
+  width: 100%;
+  height: 100%;
+}
+
+.sketch-stage:active {
+  cursor: crosshair;
+}
+
+.generate-button-section {
+  margin-top: 40px;
+}
+
+.generate-button {
+  width: 220px;
+  height: 52px;
+  font-size: 18px;
+  font-weight: 600;
+  background-color: #4a148c;
+  color: #ffffff;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.generate-button:hover {
+  background-color: #6a1b9a;
+}
+
+.generate-button:disabled {
+  background-color: #d1c4e9;
+  cursor: not-allowed;
+}
+
+.loading-section {
+  margin-top: 30px;
+}
+
+.loading-section .ms-Spinner-label {
+  font-size: 16px;
+  color: #4a148c;
+}
+
+.toolbar .ms-Button-icon {
+  font-size: 24px;
+}
+
+.toolbar .ms-StackItem {
+  margin: 0 10px;
+}
+
+.line-width-slider .ms-Slider-line {
+  background-color: #d1c4e9;
+}
+
+.line-width-slider .ms-Slider-slideBox:hover .ms-Slider-line {
+  background-color: #b39ddb;
+}
+
+.line-width-slider .ms-Slider-thumb {
+  border: 2px solid #4a148c;
+}
+
+.color-picker input[type='color'] {
+  border: 1px solid #d1c4e9;
+  border-radius: 4px;
+}
+
+.shape-dropdown .ms-Dropdown-title {
+  border-radius: 4px;
+  border: 1px solid #d1c4e9;
+}
+
+.shape-dropdown .ms-Dropdown-title:hover {
+  border-color: #b39ddb;
+}
+
+.konvajs-content .konvajs-stage .konva-transformer {
+  stroke: #4a148c;
+}
+
+@media (max-width: 768px) {
+  .canvas-container {
+    height: 400px;
+  }
+
+  .generate-button {
+    width: 180px;
+    height: 48px;
+    font-size: 16px;
+  }
+}
+
+.selected-feature-sketch-container {
+  padding: 40px 20px;
+}
+
+.header-text {
+  margin-bottom: 10px;
+}
+
+.subheader-text {
+  margin-bottom: 20px;
+}
+
+.toolbar {
+  margin-bottom: 20px;
+}
+
+.generate-button-section {
+  margin-top: 30px;
+}
+
+.canvas-container .konvajs-content .konva-shape:hover {
+  cursor: move;
+}
