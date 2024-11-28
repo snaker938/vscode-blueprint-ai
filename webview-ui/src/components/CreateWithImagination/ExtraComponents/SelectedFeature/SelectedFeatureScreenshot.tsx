@@ -42,9 +42,16 @@ const SelectedFeatureScreenshot: React.FC = () => {
     }
   };
 
+  const truncateFileName = (name: string, maxLength: number = 25) => {
+    if (name.length <= maxLength) return name;
+    const extension = name.slice(name.lastIndexOf('.'));
+    const truncatedName = name.slice(0, maxLength - extension.length - 3);
+    return `${truncatedName}...${extension}`;
+  };
+
   const handleGenerateClick = () => {
     if (!file) {
-      setErrorMessage('Please upload a screenshot before proceeding.');
+      setErrorMessage('Please upload a screenshot before proceeding');
       return;
     }
 
@@ -110,7 +117,7 @@ const SelectedFeatureScreenshot: React.FC = () => {
             />
             <div className="file-details">
               <Text variant="mediumPlus" className="file-name">
-                {file?.name}
+                {file ? truncateFileName(file.name, 60) : ''}
               </Text>
               <Icon
                 iconName="Cancel"

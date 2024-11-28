@@ -93,7 +93,10 @@
 }
 
 .preview-image {
-  width: 100%;
+  max-width: 100%;
+  /* width: 100%; */
+  max-height: 400px;
+  object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
@@ -103,7 +106,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 .file-name {
