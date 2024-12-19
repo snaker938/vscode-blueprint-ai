@@ -1,11 +1,22 @@
-import React, { FC, useState, useRef, useCallback } from 'react';
+import { FC, useState, useRef, useCallback } from 'react';
 import { Stage, Layer, Rect, Ellipse, Text } from 'react-konva';
-import {
-  SwatchColorPicker,
-  IconButton,
-  Button,
-  IColorCell,
-} from '@fluentui/react';
+import { IconButton, Button } from '@fluentui/react';
+import { SwatchColorPicker } from '@fluentui/react/lib/SwatchColorPicker';
+
+/**
+ * @interface IColorCell
+ * @description Represents a single color option in the SwatchColorPicker.
+ * @property {string} id - A unique identifier for the color cell.
+ * @property {string} color - The hex code of the color.
+ * @property {string} [label] - An optional label for the color.
+ * @property {number} [index] - An optional index for ordering the color cells.
+ */
+interface IColorCell {
+  id: string;
+  color: string;
+  label?: string;
+  index?: number;
+}
 
 /**
  * @constant {IColorCell[]} colors
@@ -38,8 +49,23 @@ const colors: IColorCell[] = [
  * @property {number} [fontSize] - The font size if the shape is text.
  * @property {number} rotation - Rotation angle in degrees.
  * @property {boolean} visible - Whether the shape is visible.
+ * @property {string} name - A name for the shape (used in layers).
  * @description Represents the data structure for each shape object on the Stage.
  */
+interface SketchShape {
+  id: string;
+  type: 'rect' | 'ellipse' | 'text';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fillColor: string;
+  textValue?: string;
+  fontSize?: number;
+  rotation: number;
+  visible: boolean;
+  name: string;
+}
 
 /**
  * @typedef {object} LayerNode
@@ -50,19 +76,67 @@ const colors: IColorCell[] = [
  * @property {LayerNode[]} children - Any child nodes fully contained by this shape.
  * @description Represents a single node in the hierarchical layers panel.
  */
+interface LayerNode {
+  id: string;
+  name: string;
+  type: 'rect' | 'ellipse' | 'text';
+  visible: boolean;
+  children: LayerNode[];
+}
 
 /**
  * @typedef {object} UndoRedoAction
  * @property {string} type - The type of action, e.g., 'add', 'edit', 'transform', 'delete', etc.
  * @property {Partial<SketchShape>} payload - Information needed to undo or redo the action.
- * @description Represents a single undo/redo action record.
  */
+interface UndoRedoAction {
+  type: string;
+  payload: Partial<SketchShape> & {
+    prevState?: SketchShape;
+    newState?: SketchShape;
+  };
+}
 
 interface SelectedFeatureSketchProps {
   /**
-   * @description Props placeholder. If there were any incoming props required for initialization or configuration,
-   * they would be documented and defined here.
+   * @description An optional array of initial shapes to load onto the canvas when the component mounts.
+   * If not provided, the canvas will start empty.
    */
+  initialShapes?: SketchShape[];
+
+  /**
+   * @description The width of the canvas stage. Defaults to 800 if not provided.
+   */
+  width?: number;
+
+  /**
+   * @description The height of the canvas stage. Defaults to 600 if not provided.
+   */
+  height?: number;
+
+  /**
+   * @description A callback function that is called whenever the shapes on the canvas change (e.g., shape added, moved, resized).
+   * It receives the updated array of shapes as an argument.
+   */
+  onShapesChange?: (shapes: SketchShape[]) => void;
+
+  /**
+   * @description The initial color to use for newly created shapes.
+   * Defaults to black if not provided.
+   */
+  initialColor?: string;
+
+  /**
+   * @description The initial font size to use for newly created text shapes.
+   * Defaults to 16 if not provided.
+   */
+  initialFontSize?: number;
+
+  /**
+   * @description The initial thickness (e.g. stroke width) to apply to shapes that support it.
+   * Defaults to 2 if not provided.
+   */
+  initialThickness?: number;
 }
 
 /**
@@ -76,52 +150,34 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
   props
 ) => {
   /**
-   * @state {SketchShape[]} shapes
-   * @description An array of all the shapes currently placed on the canvas.
+   * State Declarations:
+   *
+   * shapes: An array of all the shapes currently placed on the canvas.
+   *         Each shape includes properties like id, type, coordinates,
+   *         dimensions, fillColor, rotation, visibility, and name.
+   *
+   * selectedShapeId: The ID of the currently selected shape. If null, no shape is selected.
+   *
+   * currentColor: The currently selected color to apply to new or selected shapes.
+   *
+   * currentFontSize: The currently selected font size for new or selected text shapes.
+   *
+   * currentThickness: The currently selected thickness (e.g. stroke width) for shapes that support it.
+   *
+   * layerStructure: The hierarchical representation of shapes in layers. This structure shows
+   *                 parent-child relationships where shapes contained within another shape are its children.
+   *
+   * undoStack: A stack of actions that have been performed, for use in undo operations.
+   *
+   * redoStack: A stack of actions that have been undone, for use in redo operations.
    */
   const [shapes, setShapes] = useState<SketchShape[]>([]);
-
-  /**
-   * @state {string | null} selectedShapeId
-   * @description The ID of the currently selected shape. If null, no shape is selected.
-   */
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
-
-  /**
-   * @state {string} currentColor
-   * @description The currently selected color to apply to new or selected shapes.
-   */
   const [currentColor, setCurrentColor] = useState<string>('#000000');
-
-  /**
-   * @state {number} currentFontSize
-   * @description The currently selected font size for new or selected text shapes.
-   */
   const [currentFontSize, setCurrentFontSize] = useState<number>(16);
-
-  /**
-   * @state {number} currentThickness
-   * @description The currently selected thickness (e.g. stroke width) for shapes that support it.
-   */
   const [currentThickness, setCurrentThickness] = useState<number>(2);
-
-  /**
-   * @state {LayerNode[]} layerStructure
-   * @description The hierarchical representation of shapes in layers. This structure shows parent-child relationships
-   * where shapes contained within another shape are its children.
-   */
   const [layerStructure, setLayerStructure] = useState<LayerNode[]>([]);
-
-  /**
-   * @state {UndoRedoAction[]} undoStack
-   * @description A stack of actions that have been performed, for use in undo operations.
-   */
   const [undoStack, setUndoStack] = useState<UndoRedoAction[]>([]);
-
-  /**
-   * @state {UndoRedoAction[]} redoStack
-   * @description A stack of actions that have been undone, for use in redo operations.
-   */
   const [redoStack, setRedoStack] = useState<UndoRedoAction[]>([]);
 
   /**
@@ -129,141 +185,6 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
    * @description A reference to the Konva Stage component, used for measurements and coordinate transformations.
    */
   const stageRef = useRef<any>(null);
-
-  /**
-   * @function addRectangle
-   * @description Adds a new rectangle shape to the canvas.
-   * @param {number} x - The x-position where the rectangle should be placed.
-   * @param {number} y - The y-position where the rectangle should be placed.
-   * @returns {void}
-   */
-  const addRectangle = useCallback((x: number, y: number): void => {
-    // Intended: Add a rectangle to the shapes array, push undo action, update layer structure.
-  }, []);
-
-  /**
-   * @function addEllipse
-   * @description Adds a new ellipse shape to the canvas.
-   * @param {number} x - The x-position where the ellipse should be placed.
-   * @param {number} y - The y-position where the ellipse should be placed.
-   * @returns {void}
-   */
-  const addEllipse = useCallback((x: number, y: number): void => {
-    // Intended: Add an ellipse to the shapes array, push undo action, update layer structure.
-  }, []);
-
-  /**
-   * @function addText
-   * @description Adds a new text shape to the canvas.
-   * @param {number} x - The x-position where the text should be placed.
-   * @param {number} y - The y-position where the text should be placed.
-   * @param {string} initialText - The initial text content.
-   * @returns {void}
-   */
-  const addText = useCallback(
-    (x: number, y: number, initialText: string): void => {
-      // Intended: Add a text shape to the shapes array, push undo action, update layer structure.
-    },
-    []
-  );
-
-  /**
-   * @function selectShape
-   * @description Selects a shape given its ID, highlighting it and enabling transformation handles.
-   * @param {string | null} shapeId - The ID of the shape to select, or null to clear selection.
-   * @returns {void}
-   */
-  const selectShape = useCallback((shapeId: string | null): void => {
-    // Intended: Update selectedShapeId, possibly update UI state.
-  }, []);
-
-  /**
-   * @function transformShape
-   * @description Applies a transformation (move, rotate, resize) to a shape.
-   * @param {string} shapeId - The ID of the shape to transform.
-   * @param {Partial<SketchShape>} updates - The properties to update, such as x, y, width, height, rotation.
-   * @returns {void}
-   */
-  const transformShape = useCallback(
-    (shapeId: string, updates: Partial<SketchShape>): void => {
-      // Intended: Update shape in shapes array, push undo action.
-    },
-    []
-  );
-
-  /**
-   * @function editShapeText
-   * @description Edits the text content of a text shape.
-   * @param {string} shapeId - The ID of the text shape to edit.
-   * @param {string} newText - The new text content.
-   * @returns {void}
-   */
-  const editShapeText = useCallback(
-    (shapeId: string, newText: string): void => {
-      // Intended: Update textValue in the shape, push undo action.
-    },
-    []
-  );
-
-  /**
-   * @function changeShapeColor
-   * @description Changes the fill color of a given shape.
-   * @param {string} shapeId - The ID of the shape to recolor.
-   * @param {string} newColor - The new color to apply.
-   * @returns {void}
-   */
-  const changeShapeColor = useCallback(
-    (shapeId: string, newColor: string): void => {
-      // Intended: Update fillColor in the shape, push undo action.
-    },
-    []
-  );
-
-  /**
-   * @function changeShapeFontSize
-   * @description Changes the font size of a text shape.
-   * @param {string} shapeId - The ID of the text shape to resize.
-   * @param {number} newFontSize - The new font size.
-   * @returns {void}
-   */
-  const changeShapeFontSize = useCallback(
-    (shapeId: string, newFontSize: number): void => {
-      // Intended: Update fontSize in the shape, push undo action.
-    },
-    []
-  );
-
-  /**
-   * @function changeShapeThickness
-   * @description Changes the thickness (e.g. stroke width) of a shape.
-   * @param {string} shapeId - The ID of the shape to update.
-   * @param {number} newThickness - The new thickness value.
-   * @returns {void}
-   */
-  const changeShapeThickness = useCallback(
-    (shapeId: string, newThickness: number): void => {
-      // Intended: Update thickness in the shape, push undo action.
-    },
-    []
-  );
-
-  /**
-   * @function undo
-   * @description Undoes the last action performed, if any.
-   * @returns {void}
-   */
-  const undo = useCallback((): void => {
-    // Intended: Pop from undoStack, apply inverse changes, push to redoStack.
-  }, []);
-
-  /**
-   * @function redo
-   * @description Redoes the last undone action, if any.
-   * @returns {void}
-   */
-  const redo = useCallback((): void => {
-    // Intended: Pop from redoStack, re-apply changes, push to undoStack.
-  }, []);
 
   /**
    * @function updateLayerStructure
@@ -275,13 +196,601 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
   }, []);
 
   /**
+   * @function addRectangle
+   * @description Adds a new rectangle shape to the canvas.
+   * @param {number} x - The x-position where the rectangle should be placed.
+   * @param {number} y - The y-position where the rectangle should be placed.
+   * @returns {void}
+   */
+  const addRectangle = useCallback(
+    (x: number, y: number): void => {
+      // Create a unique ID for the shape
+      const newShape: SketchShape = {
+        id: 'shape_' + Date.now().toString(),
+        type: 'rect',
+        x,
+        y,
+        width: 100,
+        height: 100,
+        fillColor: currentColor,
+        rotation: 0,
+        visible: true,
+        name: `Rectangle ${shapes.length + 1}`,
+      };
+
+      // Add the new rectangle to the shapes array
+      setShapes((prev) => {
+        const updatedShapes = [...prev, newShape];
+        // Push undo action for adding this shape
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          { type: 'add', payload: { newState: newShape } },
+        ]);
+        // Clear the redo stack since we performed a new action
+        setRedoStack([]);
+        // If there's a callback for shapes change, call it
+        props.onShapesChange?.(updatedShapes);
+        return updatedShapes;
+      });
+
+      // Update the layer structure after adding the shape
+      updateLayerStructure();
+    },
+    [
+      currentColor,
+      shapes,
+      props,
+      setShapes,
+      setUndoStack,
+      setRedoStack,
+      updateLayerStructure,
+    ]
+  );
+
+  /**
+   * @function addEllipse
+   * @description Adds a new ellipse shape to the canvas.
+   * @param {number} x - The x-position where the ellipse should be placed.
+   * @param {number} y - The y-position where the ellipse should be placed.
+   * @returns {void}
+   */
+  const addEllipse = useCallback(
+    (x: number, y: number): void => {
+      // Create a unique ID for the shape
+      const newShape: SketchShape = {
+        id: 'shape_' + Date.now().toString(),
+        type: 'ellipse',
+        x,
+        y,
+        width: 100,
+        height: 100,
+        fillColor: currentColor,
+        rotation: 0,
+        visible: true,
+        name: `Ellipse ${shapes.length + 1}`,
+      };
+
+      // Add the new ellipse to the shapes array
+      setShapes((prev) => {
+        const updatedShapes = [...prev, newShape];
+        // Push undo action for adding this shape
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          { type: 'add', payload: { newState: newShape } },
+        ]);
+        // Clear the redo stack since we performed a new action
+        setRedoStack([]);
+        // If there's a callback for shapes change, call it
+        props.onShapesChange?.(updatedShapes);
+        return updatedShapes;
+      });
+
+      // Update the layer structure after adding the shape
+      updateLayerStructure();
+    },
+    [
+      currentColor,
+      shapes,
+      props,
+      setShapes,
+      setUndoStack,
+      setRedoStack,
+      updateLayerStructure,
+    ]
+  );
+
+  /**
+   * @function addText
+   * @description Adds a new text shape to the canvas.
+   * @param {number} x - The x-position where the text should be placed.
+   * @param {number} y - The y-position where the text should be placed.
+   * @param {string} initialText - The initial text content.
+   * @returns {void}
+   */
+  const addText = useCallback(
+    (x: number, y: number, initialText: string): void => {
+      // Create a unique ID for the shape
+      const newShape: SketchShape = {
+        id: 'shape_' + Date.now().toString(),
+        type: 'text',
+        x,
+        y,
+        width: 0, // Not used for text
+        height: 0, // Not used for text
+        fillColor: currentColor,
+        rotation: 0,
+        visible: true,
+        name: `Text ${shapes.length + 1}`,
+        textValue: initialText,
+        fontSize: currentFontSize,
+      };
+
+      // Add the new text shape to the shapes array
+      setShapes((prev) => {
+        const updatedShapes = [...prev, newShape];
+        // Push undo action for adding this shape
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          { type: 'add', payload: { newState: newShape } },
+        ]);
+        // Clear the redo stack since we performed a new action
+        setRedoStack([]);
+        // If there's a callback for shapes change, call it
+        props.onShapesChange?.(updatedShapes);
+        return updatedShapes;
+      });
+
+      // Update the layer structure after adding the shape
+      updateLayerStructure();
+    },
+    [
+      currentColor,
+      currentFontSize,
+      shapes,
+      props,
+      setShapes,
+      setUndoStack,
+      setRedoStack,
+      updateLayerStructure,
+    ]
+  );
+
+  /**
+   * @function selectShape
+   * @description Selects a shape given its ID, highlighting it and enabling transformation handles.
+   * @param {string | null} shapeId - The ID of the shape to select, or null to clear selection.
+   * @returns {void}
+   */
+  const selectShape = useCallback(
+    (shapeId: string | null): void => {
+      // If a shapeId is provided, select that shape; if null, clear selection
+      setSelectedShapeId(shapeId);
+      // Selecting a shape might also involve updating UI or enabling transform handles,
+      // but here we assume the presence of a Konva.Transformer elsewhere in the code that
+      // appears when selectedShapeId is set.
+    },
+    [setSelectedShapeId]
+  );
+
+  /**
+   * @function transformShape
+   * @description Applies a transformation (move, rotate, resize) to a shape.
+   * @param {string} shapeId - The ID of the shape to transform.
+   * @param {Partial<SketchShape>} updates - The properties to update, such as x, y, width, height, rotation.
+   * @returns {void}
+   */
+  const transformShape = useCallback(
+    (shapeId: string, updates: Partial<SketchShape>): void => {
+      setShapes((prevShapes) => {
+        const index = prevShapes.findIndex((s) => s.id === shapeId);
+        if (index === -1) return prevShapes;
+
+        const oldShape = prevShapes[index];
+        const newShape = { ...oldShape, ...updates };
+        const updatedShapes = [...prevShapes];
+        updatedShapes[index] = newShape;
+
+        // Push undo action for transform
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          {
+            type: 'transform',
+            payload: { prevState: oldShape, newState: newShape },
+          },
+        ]);
+        // Clear redo stack on new action
+        setRedoStack([]);
+        // Callback if available
+        props.onShapesChange?.(updatedShapes);
+
+        // Update layer structure after transform
+        updateLayerStructure();
+        return updatedShapes;
+      });
+    },
+    [props, setShapes, setUndoStack, setRedoStack, updateLayerStructure]
+  );
+
+  /**
+   * @function editShapeText
+   * @description Edits the text content of a text shape.
+   * @param {string} shapeId - The ID of the text shape to edit.
+   * @param {string} newText - The new text content.
+   * @returns {void}
+   */
+  const editShapeText = useCallback(
+    (shapeId: string, newText: string): void => {
+      setShapes((prevShapes) => {
+        const index = prevShapes.findIndex(
+          (s) => s.id === shapeId && s.type === 'text'
+        );
+        if (index === -1) return prevShapes;
+
+        const oldShape = prevShapes[index];
+        const newShape = { ...oldShape, textValue: newText };
+        const updatedShapes = [...prevShapes];
+        updatedShapes[index] = newShape;
+
+        // Push undo action for editing text
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          {
+            type: 'edit',
+            payload: { prevState: oldShape, newState: newShape },
+          },
+        ]);
+        // Clear redo stack on new action
+        setRedoStack([]);
+        // Callback if available
+        props.onShapesChange?.(updatedShapes);
+
+        // Update layer structure after text edit
+        updateLayerStructure();
+        return updatedShapes;
+      });
+    },
+    [props, setShapes, setUndoStack, setRedoStack, updateLayerStructure]
+  );
+
+  /**
+   * @function changeShapeColor
+   * @description Changes the fill color of a given shape.
+   * @param {string} shapeId - The ID of the shape to recolor.
+   * @param {string} newColor - The new color to apply.
+   * @returns {void}
+   */
+  const changeShapeColor = useCallback(
+    (shapeId: string, newColor: string): void => {
+      setShapes((prevShapes) => {
+        const index = prevShapes.findIndex((s) => s.id === shapeId);
+        if (index === -1) return prevShapes;
+
+        const oldShape = prevShapes[index];
+        const newShape = { ...oldShape, fillColor: newColor };
+        const updatedShapes = [...prevShapes];
+        updatedShapes[index] = newShape;
+
+        // Push undo action for color change
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          {
+            type: 'color',
+            payload: { prevState: oldShape, newState: newShape },
+          },
+        ]);
+        // Clear redo stack on new action
+        setRedoStack([]);
+        // Callback if available
+        props.onShapesChange?.(updatedShapes);
+
+        // Update layer structure after color change
+        updateLayerStructure();
+        return updatedShapes;
+      });
+    },
+    [props, setShapes, setUndoStack, setRedoStack, updateLayerStructure]
+  );
+
+  /**
+   * @function changeShapeFontSize
+   * @description Changes the font size of a text shape.
+   * @param {string} shapeId - The ID of the text shape to resize.
+   * @param {number} newFontSize - The new font size.
+   * @returns {void}
+   */
+  const changeShapeFontSize = useCallback(
+    (shapeId: string, newFontSize: number): void => {
+      setShapes((prevShapes) => {
+        const index = prevShapes.findIndex(
+          (s) => s.id === shapeId && s.type === 'text'
+        );
+        if (index === -1) return prevShapes;
+
+        const oldShape = prevShapes[index];
+        const newShape = { ...oldShape, fontSize: newFontSize };
+        const updatedShapes = [...prevShapes];
+        updatedShapes[index] = newShape;
+
+        // Push undo action for font size change
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          {
+            type: 'fontSize',
+            payload: { prevState: oldShape, newState: newShape },
+          },
+        ]);
+        // Clear redo stack on new action
+        setRedoStack([]);
+        // Callback if available
+        props.onShapesChange?.(updatedShapes);
+
+        // Update layer structure after font size change
+        updateLayerStructure();
+        return updatedShapes;
+      });
+    },
+    [props, setShapes, setUndoStack, setRedoStack, updateLayerStructure]
+  );
+
+  /**
+   * @function changeShapeThickness
+   * @description Changes the thickness (e.g. stroke width) of a shape.
+   * @param {string} shapeId - The ID of the shape to update.
+   * @param {number} newThickness - The new thickness value.
+   * @returns {void}
+   */
+  const changeShapeThickness = useCallback(
+    (shapeId: string, newThickness: number): void => {
+      // Assuming shapes that support thickness (rect, ellipse) have a strokeWidth property.
+      setShapes((prevShapes) => {
+        const index = prevShapes.findIndex(
+          (s) => s.id === shapeId && (s.type === 'rect' || s.type === 'ellipse')
+        );
+        if (index === -1) return prevShapes;
+
+        const oldShape = prevShapes[index];
+        const newShape = { ...oldShape, strokeWidth: newThickness };
+        const updatedShapes = [...prevShapes];
+        updatedShapes[index] = newShape;
+
+        // Push undo action for thickness change
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          {
+            type: 'thickness',
+            payload: { prevState: oldShape, newState: newShape },
+          },
+        ]);
+        // Clear redo stack on new action
+        setRedoStack([]);
+        // Callback if available
+        props.onShapesChange?.(updatedShapes);
+
+        // Update layer structure after thickness change
+        updateLayerStructure();
+        return updatedShapes;
+      });
+    },
+    [props, setShapes, setUndoStack, setRedoStack, updateLayerStructure]
+  );
+
+  /**
+   * @function undo
+   * @description Undoes the last action performed, if any.
+   * @returns {void}
+   */
+  const undo = useCallback((): void => {
+    setUndoStack((prevUndo) => {
+      if (prevUndo.length === 0) return prevUndo;
+
+      const action = prevUndo[prevUndo.length - 1];
+      const newUndo = prevUndo.slice(0, -1);
+
+      // Apply inverse changes based on action type
+      setShapes((prevShapes) => {
+        let updatedShapes = prevShapes;
+        if (action.type === 'add' && action.payload.newState) {
+          // Undo 'add': remove the newly added shape
+          updatedShapes = prevShapes.filter(
+            (s) => s.id !== action.payload.newState?.id
+          );
+        } else if (
+          (action.type === 'transform' ||
+            action.type === 'edit' ||
+            action.type === 'color' ||
+            action.type === 'fontSize' ||
+            action.type === 'thickness') &&
+          action.payload.prevState
+        ) {
+          // Undo these: revert to prevState
+          updatedShapes = prevShapes.map((s) =>
+            s.id === action.payload.prevState?.id
+              ? action.payload.prevState!
+              : s
+          );
+        }
+        // If there's a callback for shapes change, call it
+        props.onShapesChange?.(updatedShapes);
+        updateLayerStructure();
+        return updatedShapes;
+      });
+
+      // Push this action onto redoStack
+      setRedoStack((prevRedo) => [...prevRedo, action]);
+
+      return newUndo;
+    });
+  }, [props, updateLayerStructure, setShapes, setUndoStack, setRedoStack]);
+
+  /**
+   * @function redo
+   * @description Redoes the last undone action, if any.
+   * @returns {void}
+   */
+  const redo = useCallback((): void => {
+    setRedoStack((prevRedo) => {
+      if (prevRedo.length === 0) return prevRedo;
+
+      const action = prevRedo[prevRedo.length - 1];
+      const newRedo = prevRedo.slice(0, -1);
+
+      // Re-apply changes
+      setShapes((prevShapes) => {
+        let updatedShapes = prevShapes;
+        if (action.type === 'add' && action.payload.newState) {
+          // Redo 'add': add the shape again
+          updatedShapes = [...prevShapes, action.payload.newState];
+        } else if (
+          (action.type === 'transform' ||
+            action.type === 'edit' ||
+            action.type === 'color' ||
+            action.type === 'fontSize' ||
+            action.type === 'thickness') &&
+          action.payload.newState
+        ) {
+          // Redo these: apply newState
+          updatedShapes = prevShapes.map((s) =>
+            s.id === action.payload.newState?.id ? action.payload.newState! : s
+          );
+        }
+        // If there's a callback for shapes change, call it
+        props.onShapesChange?.(updatedShapes);
+        updateLayerStructure();
+        return updatedShapes;
+      });
+
+      // Push this action onto undoStack
+      setUndoStack((prevUndo) => [...prevUndo, action]);
+
+      return newRedo;
+    });
+  }, [props, updateLayerStructure, setShapes, setUndoStack, setRedoStack]);
+
+  /**
    * @function determineParentChildRelationships
    * @description Determines which shapes are fully contained by others to establish parent-child relationships.
    * @returns {void}
    */
   const determineParentChildRelationships = useCallback((): void => {
-    // Intended: Based on shapes' coordinates and dimensions, figure out containment.
-  }, []);
+    // To determine parent-child relationships, we can consider the bounding boxes of each shape.
+    // A shape A is considered a parent of shape B if the bounding box of B is fully contained within A's bounding box.
+    // For rectangles and ellipses, we have x, y, width, and height.
+    // For ellipses, x,y is center and width/height are the full width/height, so bounding box is straightforward.
+    // For text, we must guess bounding box based on text length and fontSize.
+    // In this example, we will make a simplifying assumption:
+    //   For text, approximate the bounding box as:
+    //   width = (textValue?.length ?? 1) * (fontSize ?? 16) * 0.6
+    //   height = fontSize ?? 16
+    // Rotation is ignored for simplicity, considering only axis-aligned bounding boxes.
+
+    function getBoundingBox(shape: SketchShape) {
+      let left: number;
+      let top: number;
+      let right: number;
+      let bottom: number;
+
+      if (shape.type === 'rect') {
+        left = shape.x;
+        top = shape.y;
+        right = shape.x + shape.width;
+        bottom = shape.y + shape.height;
+      } else if (shape.type === 'ellipse') {
+        // For ellipse, x,y is the center, width/height are total
+        left = shape.x - shape.width / 2;
+        top = shape.y - shape.height / 2;
+        right = shape.x + shape.width / 2;
+        bottom = shape.y + shape.height / 2;
+      } else {
+        // 'text'
+        const length = shape.textValue ? shape.textValue.length : 1;
+        const fontSize = shape.fontSize ?? 16;
+        const textWidth = length * fontSize * 0.6;
+        const textHeight = fontSize;
+        left = shape.x;
+        top = shape.y;
+        right = shape.x + textWidth;
+        bottom = shape.y + textHeight;
+      }
+
+      return { left, top, right, bottom };
+    }
+
+    function isContained(
+      inner: { left: number; top: number; right: number; bottom: number },
+      outer: { left: number; top: number; right: number; bottom: number }
+    ) {
+      return (
+        inner.left >= outer.left &&
+        inner.right <= outer.right &&
+        inner.top >= outer.top &&
+        inner.bottom <= outer.bottom
+      );
+    }
+
+    // First, compute bounding boxes for all shapes
+    const boundingBoxes = shapes.map((s) => ({
+      shape: s,
+      box: getBoundingBox(s),
+    }));
+
+    // We will build a hierarchy by determining which shapes are parents of which.
+    // A shape with no parent is a root node. A shape fully inside another is a child.
+    // If multiple shapes contain a shape, choose the one that fits it best. For simplicity, choose the first found.
+
+    // Determine parent for each shape
+    const parentMap = new Map<string, string | null>(); // shapeId -> parentId
+    shapes.forEach((shape) => parentMap.set(shape.id, null));
+
+    for (let i = 0; i < boundingBoxes.length; i++) {
+      for (let j = 0; j < boundingBoxes.length; j++) {
+        if (i === j) continue;
+        const inner = boundingBoxes[i];
+        const outer = boundingBoxes[j];
+
+        // Check if inner is contained by outer
+        if (isContained(inner.box, outer.box)) {
+          // If already has a parent, we could choose the one that is smallest or just skip.
+          // We'll just set the first found parent for simplicity.
+          if (parentMap.get(inner.shape.id) === null) {
+            parentMap.set(inner.shape.id, outer.shape.id);
+          } else {
+            // If multiple containments are found,
+            // you might want a rule to choose the best parent.
+            // For now, do nothing and stick with the first found parent.
+          }
+        }
+      }
+    }
+
+    // Now we have a parent map. Let's build the layerStructure (tree).
+    function createNode(shape: SketchShape): LayerNode {
+      return {
+        id: shape.id,
+        name: shape.name,
+        type: shape.type,
+        visible: shape.visible,
+        children: [],
+      };
+    }
+
+    const nodeMap = new Map<string, LayerNode>();
+    shapes.forEach((s) => nodeMap.set(s.id, createNode(s)));
+
+    // Build hierarchy by adding children to their parents
+    const roots: LayerNode[] = [];
+    nodeMap.forEach((node, id) => {
+      const parentId = parentMap.get(id);
+      if (parentId && nodeMap.has(parentId)) {
+        nodeMap.get(parentId)!.children.push(node);
+      } else {
+        // no parent, this is a root
+        roots.push(node);
+      }
+    });
+
+    // Update layerStructure state
+    setLayerStructure(roots);
+  }, [shapes, setLayerStructure]);
 
   /**
    * @function determineOverlaps
@@ -289,8 +798,106 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
    * @returns {void}
    */
   const determineOverlaps = useCallback((): void => {
-    // Intended: Calculate intersection areas between shapes to show overlaps.
-  }, []);
+    // Overlaps can be determined by checking the intersection areas of axis-aligned bounding boxes.
+    // Similar to determineParentChildRelationships, we'll compute bounding boxes for each shape.
+    // For every pair of shapes, we find the overlap area (if any).
+    // We'll then store the total overlap area per shape, and reflect it in the layerStructure nodes.
+
+    function getBoundingBox(shape: SketchShape) {
+      let left: number;
+      let top: number;
+      let right: number;
+      let bottom: number;
+
+      if (shape.type === 'rect') {
+        left = shape.x;
+        top = shape.y;
+        right = shape.x + shape.width;
+        bottom = shape.y + shape.height;
+      } else if (shape.type === 'ellipse') {
+        // For ellipse, x,y is the center, width/height are total
+        left = shape.x - shape.width / 2;
+        top = shape.y - shape.height / 2;
+        right = shape.x + shape.width / 2;
+        bottom = shape.y + shape.height / 2;
+      } else {
+        // 'text'
+        const length = shape.textValue ? shape.textValue.length : 1;
+        const fontSize = shape.fontSize ?? 16;
+        const textWidth = length * fontSize * 0.6;
+        const textHeight = fontSize;
+        left = shape.x;
+        top = shape.y;
+        right = shape.x + textWidth;
+        bottom = shape.y + textHeight;
+      }
+
+      return { left, top, right, bottom };
+    }
+
+    function intersectionArea(
+      a: { left: number; top: number; right: number; bottom: number },
+      b: { left: number; top: number; right: number; bottom: number }
+    ) {
+      const interLeft = Math.max(a.left, b.left);
+      const interTop = Math.max(a.top, b.top);
+      const interRight = Math.min(a.right, b.right);
+      const interBottom = Math.min(a.bottom, b.bottom);
+
+      if (interRight > interLeft && interBottom > interTop) {
+        return (interRight - interLeft) * (interBottom - interTop);
+      }
+      return 0;
+    }
+
+    const boundingBoxes = shapes.map((s) => ({
+      shape: s,
+      box: getBoundingBox(s),
+    }));
+
+    // We'll compute total overlap area per shape
+    const overlapMap = new Map<string, number>();
+    shapes.forEach((s) => overlapMap.set(s.id, 0));
+
+    for (let i = 0; i < boundingBoxes.length; i++) {
+      for (let j = i + 1; j < boundingBoxes.length; j++) {
+        const area = intersectionArea(
+          boundingBoxes[i].box,
+          boundingBoxes[j].box
+        );
+        if (area > 0) {
+          // Add this area to both shapes' overlap totals
+          overlapMap.set(
+            boundingBoxes[i].shape.id,
+            overlapMap.get(boundingBoxes[i].shape.id)! + area
+          );
+          overlapMap.set(
+            boundingBoxes[j].shape.id,
+            overlapMap.get(boundingBoxes[j].shape.id)! + area
+          );
+        }
+      }
+    }
+
+    // Now we have overlap areas per shape. We should reflect this in the layerStructure.
+    // We'll do so by rebuilding the layerStructure with overlap info.
+    // If we want to display overlap info in the layers panel, we might, for example, rename the node to include overlap area.
+    // Or if we want a dedicated field, we could store it in the node. For now, let's append overlap info to node name.
+
+    function rebuildLayerStructureWithOverlap(nodes: LayerNode[]): LayerNode[] {
+      return nodes.map((node) => {
+        const overlapArea = overlapMap.get(node.id) ?? 0;
+        const newName = `${node.name} (overlap: ${overlapArea})`;
+        return {
+          ...node,
+          name: newName,
+          children: rebuildLayerStructureWithOverlap(node.children),
+        };
+      });
+    }
+
+    setLayerStructure((prev) => rebuildLayerStructureWithOverlap(prev));
+  }, [shapes, setLayerStructure]);
 
   /**
    * @function renameLayerNode
@@ -301,9 +908,38 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
    */
   const renameLayerNode = useCallback(
     (nodeId: string, newName: string): void => {
-      // Intended: Update layerStructure state, apply naming changes to shapes as needed.
+      // Find the shape with the given nodeId and update its name
+      setShapes((prevShapes) => {
+        const index = prevShapes.findIndex((s) => s.id === nodeId);
+        if (index === -1) return prevShapes;
+
+        const oldShape = prevShapes[index];
+        const newShape = { ...oldShape, name: newName };
+        const updatedShapes = [...prevShapes];
+        updatedShapes[index] = newShape;
+
+        // Since renaming does not affect shape geometry or visibility,
+        // we can treat this like an 'edit' action.
+        setUndoStack((prevUndo) => [
+          ...prevUndo,
+          {
+            type: 'edit',
+            payload: { prevState: oldShape, newState: newShape },
+          },
+        ]);
+        // Clear the redo stack on a new action
+        setRedoStack([]);
+
+        // If there's a callback for shapes change, call it
+        props.onShapesChange?.(updatedShapes);
+
+        // Update the layer structure after renaming
+        updateLayerStructure();
+
+        return updatedShapes;
+      });
     },
-    []
+    [props, setShapes, setUndoStack, setRedoStack, updateLayerStructure]
   );
 
   /**
@@ -312,9 +948,14 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
    * @param {string} nodeId - The ID of the layer node (shape) to select.
    * @returns {void}
    */
-  const selectLayerNode = useCallback((nodeId: string): void => {
-    // Intended: Set selectedShapeId to the shape's ID, possibly update highlight in layers panel.
-  }, []);
+  const selectLayerNode = useCallback(
+    (nodeId: string): void => {
+      // We assume nodeId corresponds directly to a shape's id.
+      // Just select the shape with the given id.
+      selectShape(nodeId);
+    },
+    [selectShape]
+  );
 
   /**
    * @function toggleVisibility
@@ -322,9 +963,49 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
    * @param {string} nodeId - The ID of the node to toggle.
    * @returns {void}
    */
-  const toggleVisibility = useCallback((nodeId: string): void => {
-    // Intended: Flip visible property for shape and children, update shapes and layerStructure.
-  }, []);
+  const toggleVisibility = useCallback(
+    (nodeId: string): void => {
+      // We need to toggle the visibility of the specified node and all its descendants.
+      // To do this, we first need to find the node in layerStructure, gather all descendant IDs,
+      // and then update the shapes accordingly.
+
+      function findNode(nodes: LayerNode[], id: string): LayerNode | null {
+        for (const n of nodes) {
+          if (n.id === id) return n;
+          const child = findNode(n.children, id);
+          if (child) return child;
+        }
+        return null;
+      }
+
+      function getDescendantIds(node: LayerNode): string[] {
+        let ids = [node.id];
+        for (const child of node.children) {
+          ids = ids.concat(getDescendantIds(child));
+        }
+        return ids;
+      }
+
+      const node = findNode(layerStructure, nodeId);
+      if (!node) return;
+
+      const allIds = getDescendantIds(node);
+
+      setShapes((prevShapes) => {
+        // Toggle visibility of all these shapes
+        return prevShapes.map((s) => {
+          if (allIds.includes(s.id)) {
+            return { ...s, visible: !s.visible };
+          }
+          return s;
+        });
+      });
+
+      // After updating shapes, rebuild the layer structure to reflect changes
+      updateLayerStructure();
+    },
+    [layerStructure, updateLayerStructure, setShapes]
+  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -350,7 +1031,39 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
          * - Icons or buttons for toggling visibility
          * - Clickable nodes to select shapes
          */}
-        {/* Placeholder for layers UI */}
+        {layerStructure.map((node) => (
+          <div
+            key={node.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '4px',
+            }}
+          >
+            <Button
+              style={{ marginRight: '4px' }}
+              onClick={() => toggleVisibility(node.id)}
+            >
+              {node.visible ? '👁️' : '🚫'}
+            </Button>
+            <span
+              style={{ cursor: 'pointer', flexGrow: 1 }}
+              onClick={() => selectLayerNode(node.id)}
+            >
+              {node.name}
+            </span>
+            <IconButton
+              iconProps={{ iconName: 'Edit' }}
+              title="Rename"
+              onClick={() => {
+                const newName = prompt('Enter new name:', node.name);
+                if (newName) {
+                  renameLayerNode(node.id, newName);
+                }
+              }}
+            />
+          </div>
+        ))}
       </div>
 
       {/* 
@@ -370,19 +1083,9 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
             gap: '8px',
             padding: '8px',
             borderBottom: '1px solid #ccc',
+            alignItems: 'center',
           }}
         >
-          {/**
-           * @description Toolbar buttons and controls:
-           * - Undo button: calls undo()
-           * - Redo button: calls redo()
-           * - Add rectangle: calls addRectangle(x,y) with chosen coords
-           * - Add ellipse: calls addEllipse(x,y)
-           * - Add text: calls addText(x,y,"Sample")
-           * - Color picker: uses SwatchColorPicker to select currentColor
-           * - Font size input: sets currentFontSize
-           * - Thickness input: sets currentThickness
-           */}
           <IconButton
             iconProps={{ iconName: 'Undo' }}
             title="Undo"
@@ -395,21 +1098,33 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
           />
           <Button
             onClick={() => {
-              /* addRectangle(...) */
+              const pos = stageRef.current?.getPointerPosition() || {
+                x: 100,
+                y: 100,
+              };
+              addRectangle(pos.x, pos.y);
             }}
           >
             Add Rectangle
           </Button>
           <Button
             onClick={() => {
-              /* addEllipse(...) */
+              const pos = stageRef.current?.getPointerPosition() || {
+                x: 150,
+                y: 150,
+              };
+              addEllipse(pos.x, pos.y);
             }}
           >
             Add Ellipse
           </Button>
           <Button
             onClick={() => {
-              /* addText(...) */
+              const pos = stageRef.current?.getPointerPosition() || {
+                x: 200,
+                y: 200,
+              };
+              addText(pos.x, pos.y, 'Sample');
             }}
           >
             Add Text
@@ -418,39 +1133,122 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
             columnCount={4}
             colorCells={colors}
             onChange={(_, color) => {
-              /* setCurrentColor(color?.color ?? '#000000') */
+              setCurrentColor(color ?? '#000000');
             }}
           />
-          {/* Font size and thickness inputs - placeholder */}
           <input
             type="number"
             placeholder="Font Size"
+            style={{ width: '80px' }}
             onChange={(e) => {
-              /* setCurrentFontSize(parseInt(e.target.value, 10)) */
+              const val = parseInt(e.target.value, 10);
+              if (!isNaN(val)) setCurrentFontSize(val);
             }}
           />
           <input
             type="number"
             placeholder="Thickness"
+            style={{ width: '80px' }}
             onChange={(e) => {
-              /* setCurrentThickness(parseInt(e.target.value, 10)) */
+              const val = parseInt(e.target.value, 10);
+              if (!isNaN(val)) setCurrentThickness(val);
             }}
           />
+
+          {/* Buttons to trigger parent/child and overlap calculations */}
+          <Button
+            onClick={() => {
+              determineParentChildRelationships();
+              determineOverlaps();
+              updateLayerStructure();
+            }}
+          >
+            Update Hierarchy & Overlaps
+          </Button>
         </div>
 
-        {/**
-         * @description The Konva Stage and Layer for rendering shapes.
-         * On shape selection: selectShape(...)
-         * On shape transform: transformShape(...)
-         */}
-        <Stage ref={stageRef} width={800} height={600}>
+        {/* Conditional UI for modifying the selected shape */}
+        {selectedShapeId && (
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              padding: '8px',
+              borderBottom: '1px solid #ccc',
+              alignItems: 'center',
+            }}
+          >
+            {/* Apply the current color to the selected shape */}
+            <Button
+              onClick={() => {
+                if (selectedShapeId) {
+                  changeShapeColor(selectedShapeId, currentColor);
+                }
+              }}
+            >
+              Apply Color
+            </Button>
+
+            {/* Apply the current font size if the selected shape is text */}
+            <Button
+              onClick={() => {
+                const shape = shapes.find((s) => s.id === selectedShapeId);
+                if (shape && shape.type === 'text') {
+                  changeShapeFontSize(selectedShapeId, currentFontSize);
+                }
+              }}
+            >
+              Apply Font Size
+            </Button>
+
+            {/* Apply the current thickness if the selected shape is rect or ellipse */}
+            <Button
+              onClick={() => {
+                const shape = shapes.find((s) => s.id === selectedShapeId);
+                if (
+                  shape &&
+                  (shape.type === 'rect' || shape.type === 'ellipse')
+                ) {
+                  changeShapeThickness(selectedShapeId, currentThickness);
+                }
+              }}
+            >
+              Apply Thickness
+            </Button>
+
+            {/* If the shape is text, allow editing its text content */}
+            {(() => {
+              const shape = shapes.find((s) => s.id === selectedShapeId);
+              if (shape && shape.type === 'text') {
+                // For simplicity, just prompt for new text
+                return (
+                  <Button
+                    onClick={() => {
+                      const newText = prompt(
+                        'Enter new text:',
+                        shape.textValue || ''
+                      );
+                      if (newText !== null) {
+                        editShapeText(selectedShapeId, newText);
+                      }
+                    }}
+                  >
+                    Edit Text
+                  </Button>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        )}
+
+        <Stage
+          ref={stageRef}
+          width={props.width ?? 800}
+          height={props.height ?? 600}
+          style={{ background: '#f0f0f0' }}
+        >
           <Layer>
-            {/* 
-              Map over shapes and render their corresponding components (Rect, Ellipse, Text).
-              Each shape would potentially have a transformer if it's the selected shape.
-              On click, setSelectedShapeId.
-              On drag or transform end, transformShape.
-            */}
             {shapes.map((shape) => {
               if (shape.type === 'rect') {
                 return (
@@ -463,12 +1261,13 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
                     fill={shape.fillColor}
                     rotation={shape.rotation}
                     visible={shape.visible}
-                    onClick={() => {
-                      /* selectShape(shape.id) */
-                    }}
+                    onClick={() => selectShape(shape.id)}
                     draggable
-                    onDragEnd={() => {
-                      /* transformShape(shape.id, { x: ..., y: ... }) */
+                    onDragEnd={(e) => {
+                      transformShape(shape.id, {
+                        x: e.target.x(),
+                        y: e.target.y(),
+                      });
                     }}
                   />
                 );
@@ -485,12 +1284,13 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
                     fill={shape.fillColor}
                     rotation={shape.rotation}
                     visible={shape.visible}
-                    onClick={() => {
-                      /* selectShape(shape.id) */
-                    }}
+                    onClick={() => selectShape(shape.id)}
                     draggable
-                    onDragEnd={() => {
-                      /* transformShape(shape.id, { x: ..., y: ... }) */
+                    onDragEnd={(e) => {
+                      transformShape(shape.id, {
+                        x: e.target.x(),
+                        y: e.target.y(),
+                      });
                     }}
                   />
                 );
@@ -507,12 +1307,13 @@ export const SelectedFeatureSketch: FC<SelectedFeatureSketchProps> = (
                     fill={shape.fillColor}
                     rotation={shape.rotation}
                     visible={shape.visible}
-                    onClick={() => {
-                      /* selectShape(shape.id) */
-                    }}
+                    onClick={() => selectShape(shape.id)}
                     draggable
-                    onDragEnd={() => {
-                      /* transformShape(shape.id, { x: ..., y: ... }) */
+                    onDragEnd={(e) => {
+                      transformShape(shape.id, {
+                        x: e.target.x(),
+                        y: e.target.y(),
+                      });
                     }}
                   />
                 );
