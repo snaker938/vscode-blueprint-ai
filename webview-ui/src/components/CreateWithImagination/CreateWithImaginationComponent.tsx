@@ -6,7 +6,7 @@ import SelectedFeatureText from './ExtraComponents/SelectedFeature/SelectedFeatu
 import SelectedFeatureScreenshot from './ExtraComponents/SelectedFeature/SelectedFeatureScreenshot';
 
 import './CreateWithImaginationComponent.css';
-// import SelectedFeatureSketch from './ExtraComponents/SelectedFeature/SelectedFeatureSketch';
+import SelectedFeatureSketch from './ExtraComponents/SelectedFeature/SelectedFeatureSketch';
 
 const CreateWithImagination: React.FC = () => {
   const [selectedFeature, setSelectedFeature] = useState('text');
@@ -75,7 +75,7 @@ const CreateWithImagination: React.FC = () => {
 
         {selectedFeature === 'screenshot' && <SelectedFeatureScreenshot />}
 
-        {/* {selectedFeature === 'sketch' && <SelectedFeatureSketch />} */}
+        {selectedFeature === 'sketch' && <SelectedFeatureSketch />}
       </Stack>
       <AiFeaturesModal isOpen={isModalOpen} onClose={closeModal} />
     </div>
