@@ -13,19 +13,16 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarItem.tooltip = 'Open Blueprint AI';
   statusBarItem.command = 'blueprint-ai.openWebview';
   statusBarItem.show();
-
-  // Push the status bar item to context so it's disposed of on deactivate
   context.subscriptions.push(statusBarItem);
 
   // Register the command to open the webview
   const disposable = vscode.commands.registerCommand(
     'blueprint-ai.openWebview',
     () => {
+      // Simply create/show the panel; no prompting here.
       MainWebViewPanel.createOrShow(context.extensionUri);
     }
   );
-
-  // Push the command to context so it's disposed of on deactivate
   context.subscriptions.push(disposable);
 }
 

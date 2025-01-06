@@ -1,5 +1,34 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { getBlueprintLayout } from '../ai/BlueprintAiService';
+
+/**
+ * Helper function to prompt the user to set/update the OpenAI API key.
+ */
+async function promptUserToSetApiKey(): Promise<void> {
+  const config = vscode.workspace.getConfiguration('blueprintAI');
+
+  const enteredKey = await vscode.window.showInputBox({
+    prompt: 'Enter your OpenAI API Key',
+    placeHolder: 'sk-...',
+    ignoreFocusOut: true,
+  });
+
+  if (enteredKey) {
+    await config.update(
+      'openaiApiKey',
+      enteredKey,
+      vscode.ConfigurationTarget.Global
+    );
+    vscode.window.showInformationMessage(
+      'OpenAI API key saved. You can now use Blueprint AI features.'
+    );
+  } else {
+    vscode.window.showWarningMessage(
+      'No API key entered. Blueprint AI features will not work until you set one.'
+    );
+  }
+}
 
 export class MainWebViewPanel {
   public static currentPanel: MainWebViewPanel | undefined;
@@ -51,22 +80,86 @@ export class MainWebViewPanel {
       this._disposables
     );
 
+    /**
+     * Listen for messages from the webview.
+     * Specifically, we handle 'blueprintAI.generateLayout'.
+     */
+    this._panel.webview.onDidReceiveMessage(async (message) => {
+      const { command, payload } = message;
+
+      switch (command) {
+        case 'blueprintAI.generateLayout':
+          try {
+            const layoutJson = await getBlueprintLayout({
+              userText: payload.userText,
+              base64Image: payload.base64Image,
+            });
+
+            // Post success response back to the webview
+            this._panel.webview.postMessage({
+              command: 'blueprintAI.result',
+              payload: { layoutJson },
+            });
+          } catch (error: any) {
+            console.error('Error in blueprintAI.generateLayout:', error);
+
+            // Convert error to string
+            const errorMsg = error.message || String(error);
+
+            // Let's detect different errors:
+            if (errorMsg.includes('OpenAI API key not found')) {
+              // Missing key
+              await this._handleTwoButtonError(
+                'You have not set an API key for Blueprint AI. AI features will not work until you do so.',
+                'Close',
+                'Set API Key',
+                promptUserToSetApiKey
+              );
+            } else if (errorMsg.includes('Invalid OpenAI API key')) {
+              // Invalid key
+              await this._handleTwoButtonError(
+                'Your OpenAI API key appears to be invalid. Please set a valid key.',
+                'Close',
+                'Set API Key',
+                promptUserToSetApiKey
+              );
+            } else {
+              // Some other error
+              vscode.window.showErrorMessage(errorMsg);
+            }
+
+            // Notify webview of the error so it can stop the spinner
+            this._panel.webview.postMessage({
+              command: 'blueprintAI.result',
+              payload: { error: errorMsg },
+            });
+          }
+          break;
+
+        case 'alert':
+          // We can show the alert message from the webview
+          vscode.window.showErrorMessage(payload?.text || 'Unknown error');
+          break;
+      }
+    });
+
+    /**
+     * Example: additional message handling
+     */
     this._panel.webview.onDidReceiveMessage(
       (message) => {
-        switch (message.command) {
-          case 'alert':
-            vscode.window.showErrorMessage(message.text);
-            return;
-        }
+        // Put other commands here if needed
       },
       null,
       this._disposables
     );
   }
 
+  /**
+   * Cleanup
+   */
   public dispose() {
     MainWebViewPanel.currentPanel = undefined;
-
     this._panel.dispose();
 
     while (this._disposables.length) {
@@ -77,6 +170,9 @@ export class MainWebViewPanel {
     }
   }
 
+  /**
+   * Called when panel is shown or becomes visible
+   */
   private _update() {
     const webview = this._panel.webview;
     this._panel.title = 'Blueprint AI';
@@ -98,7 +194,6 @@ export class MainWebViewPanel {
     let html = await fs.promises.readFile(indexPath.fsPath, 'utf8');
 
     html = this._fixHtml(html, webview, distUri);
-
     return html;
   }
 
@@ -132,7 +227,18 @@ export class MainWebViewPanel {
             ">`
     );
 
-    // Update script tags and add nonce
+    // Inject acquireVsCodeApi at top of <body>
+    html = html.replace(
+      /<body[^>]*>/,
+      `<body>
+        <script nonce="${nonce}">
+          (function() {
+            window.vscode = acquireVsCodeApi();
+          })();
+        </script>`
+    );
+
+    // Update script tags (add nonce, fix src)
     html = html.replace(
       /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, src) => {
@@ -167,7 +273,7 @@ export class MainWebViewPanel {
       }
     );
 
-    // Update anchor tags if needed
+    // Optional: update <a> tags if needed
     html = html.replace(
       /<a\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, href) => {
@@ -182,8 +288,35 @@ export class MainWebViewPanel {
 
     return html;
   }
+
+  /**
+   * Helper to show a two-button error popup
+   * with the first label on the left, and the second label on the right.
+   */
+  private async _handleTwoButtonError(
+    errorMessage: string,
+    buttonLabelLeft: string,
+    buttonLabelRight: string,
+    rightButtonCallback: () => Promise<void>
+  ): Promise<void> {
+    // The order of items here determines which is on left vs right
+    const choice = await vscode.window.showErrorMessage(
+      errorMessage,
+      buttonLabelLeft,
+      buttonLabelRight
+    );
+
+    if (choice === buttonLabelRight) {
+      // Only if user clicks the right button do we call the callback
+      await rightButtonCallback();
+    }
+    // If they pick "Close" (left) or dismiss, do nothing else.
+  }
 }
 
+/**
+ * Returns the webview options for local resource loading
+ */
 function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
   return {
     enableScripts: true,
@@ -193,6 +326,9 @@ function getWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
   };
 }
 
+/**
+ * Generates a random nonce for CSP
+ */
 function getNonce() {
   let text = '';
   const possible =
