@@ -10,7 +10,7 @@ import {
 import './SelectedFeatureText.css';
 
 // Hypothetical utility that handles image compression + OCR => bounding boxes
-import { processImageAndOcr } from './utils/ImageProcessing';
+import { processImageAndOcr } from './utils/ImageProcessing/imageProcessing';
 
 // Parser
 // import { parseAiOutput } from './utils/AiParser';
@@ -141,15 +141,20 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
     let finalBase64: string | undefined;
     let boundingBoxes: any[] = [];
     let imageDimensions = { width: 0, height: 0 };
+    let recognizedText = '';
 
     // If the user uploaded an image, run OCR + bounding box analysis
     if (uploadedImage && imagePreviewUrl) {
       try {
-        const result = await processImageAndOcr(uploadedImage, {
-          maxWidth: 1200,
-          maxBBoxes: 80, // Summarize if we get more than 80
-          minConfidence: 60, // Filter out low confidence lines
-        });
+        const result = await processImageAndOcr(
+          uploadedImage,
+          {
+            maxWidth: 1200,
+            maxBBoxes: 80,
+            minConfidence: 60,
+          },
+          true
+        );
 
         finalBase64 = result.compressedBase64;
         boundingBoxes = result.boundingBoxes;
@@ -157,6 +162,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
           width: result.imageWidth,
           height: result.imageHeight,
         };
+        recognizedText = result.recognizedText;
       } catch (err: any) {
         window.vscode.postMessage({
           command: 'alert',
@@ -173,6 +179,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
       payload: {
         userText: textValue,
         base64Image: finalBase64,
+        recognizedText,
         boundingBoxes,
         imageDimensions,
       },

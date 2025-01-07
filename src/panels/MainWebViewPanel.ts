@@ -93,6 +93,9 @@ export class MainWebViewPanel {
             const layoutJson = await getBlueprintLayout({
               userText: payload.userText,
               base64Image: payload.base64Image,
+              recognizedText: payload.recognizedText,
+              boundingBoxes: payload.boundingBoxes,
+              imageDimensions: payload.imageDimensions,
             });
 
             // Post success response back to the webview
@@ -217,14 +220,16 @@ export class MainWebViewPanel {
     html = html.replace(
       /<head>/,
       `<head>
-            <meta http-equiv="Content-Security-Policy" content="
-                default-src 'none';
-                img-src ${webview.cspSource} https: data:;
-                script-src 'nonce-${nonce}' ${webview.cspSource};
-                style-src ${webview.cspSource} 'unsafe-inline';
-                font-src ${webview.cspSource} https: data:;
-                connect-src ${webview.cspSource} https:;
-            ">`
+        <meta http-equiv="Content-Security-Policy" content="
+          default-src 'none';
+          img-src ${webview.cspSource} https: data:;
+          script-src 'nonce-${nonce}' ${webview.cspSource} 'self' 'unsafe-eval' https://cdn.jsdelivr.net;
+          style-src ${webview.cspSource} 'unsafe-inline';
+          font-src ${webview.cspSource} https: data:;
+          connect-src ${webview.cspSource} https: data:;
+          worker-src 'self' blob:;
+        ">
+      `
     );
 
     // Inject acquireVsCodeApi at top of <body>

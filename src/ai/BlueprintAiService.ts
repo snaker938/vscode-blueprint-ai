@@ -150,41 +150,60 @@ Replicate any major color themes or structural elements implied by this screensh
 `;
   }
 
-  try {
-    const endpointUrl = 'https://api.openai.com/v1/chat/completions';
-    const requestBody = {
-      model: 'gpt-4', // or 'gpt-3.5-turbo'
-      temperature: 0.7,
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        {
-          role: 'user',
-          content: '', // We combine everything in 'system' to unify instructions
-        },
-      ],
-    };
+  console.log(
+    'System prompt:',
+    systemPrompt,
+    '\n\n',
+    'User text:',
+    userText,
+    '\n\n',
+    'Recognized text:',
+    recognizedText,
+    '\n\n',
+    'Bounding boxes:',
+    boundingBoxes,
+    '\n\n',
+    'Image dimensions:',
+    imageDimensions
+  );
 
-    const response = await axios.post(endpointUrl, requestBody, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openaiApiKey}`,
-      },
-    });
+  return 'TODO: Implement Blueprint AI layout generation';
 
-    if (response.status === 401) {
-      throw new Error('Invalid OpenAI API key');
-    }
+  // try {
+  //   const endpointUrl = 'https://api.openai.com/v1/chat/completions';
+  //   const requestBody = {
+  //     model: 'gpt-4', // or 'gpt-3.5-turbo'
+  //     temperature: 0.7,
+  //     messages: [
+  //       {
+  //         role: 'system',
+  //         content: systemPrompt,
+  //       },
+  //       {
+  //         role: 'user',
+  //         content: '', // We combine everything in 'system' to unify instructions
+  //       },
+  //     ],
+  //   };
 
-    const aiText = response.data.choices?.[0]?.message?.content || '';
-    return aiText.trim();
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      throw new Error('Invalid OpenAI API key');
-    }
-    console.error('Blueprint AI error:', error?.message || error);
-    throw error;
-  }
+  //   const response = await axios.post(endpointUrl, requestBody, {
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       Authorization: `Bearer ${openaiApiKey}`,
+  //     },
+  //   });
+
+  //   if (response.status === 401) {
+  //     throw new Error('Invalid OpenAI API key');
+  //   }
+
+  //   const aiText = response.data.choices?.[0]?.message?.content || '';
+  //   return aiText.trim();
+  // } catch (error: any) {
+  //   if (error.response?.status === 401) {
+  //     throw new Error('Invalid OpenAI API key');
+  //   }
+  //   console.error('Blueprint AI error:', error?.message || error);
+  //   throw error;
+  // }
 }
