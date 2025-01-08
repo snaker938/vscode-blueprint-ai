@@ -2,9 +2,8 @@
  * blueprintAiProcessing.ts
  *
  * 1) Sharp-based image preprocessing (PNG, upscale, grayscale, threshold).
- * 2) image-js morphological ops + label() for region detection.
- * 3) Tesseract.js@4.0.2 OCR for recognized text + bounding boxes,
- *    referencing your custom doc.
+ * 2) image-js morphological ops + ROI manager for region detection.
+ * 3) Tesseract.js@4.0.2 OCR for recognized text + bounding boxes.
  *
  * Exports functions used by blueprintAiService.ts
  */
@@ -25,21 +24,18 @@ import { TesseractWord, BBox, RegionBox } from './blueprintAiTypes';
 export async function performSharpPreprocessing(
   rawBuffer: Buffer
 ): Promise<Buffer> {
-  // Check input width
+  // 1. Read metadata to see the current width
   const meta = await sharp(rawBuffer).metadata();
   let targetWidth = meta.width ?? 1200;
 
-  // If <1200, do approximate 2x upscale
+  // 2. If <1200, naive ~2x upscale
   if (targetWidth < 1200) {
     targetWidth = Math.round(targetWidth * 2);
   }
 
-  // Sharp pipeline: resize -> grayscale -> threshold -> png
+  // 3. Sharp pipeline: resize -> grayscale -> threshold -> png
   const outBuf = await sharp(rawBuffer, { limitInputPixels: false })
-    .resize({
-      width: targetWidth,
-      withoutEnlargement: true,
-    })
+    .resize({ width: targetWidth, withoutEnlargement: true })
     .grayscale()
     .threshold(128)
     .png({ quality: 100 })
@@ -49,38 +45,39 @@ export async function performSharpPreprocessing(
 }
 
 /**
- * Step 2) image-js morphological ops + label() => region detection
- *  - close({ iterations: 1 }) => fill small holes
+ * Step 2) image-js morphological ops => region detection
+ *  - Convert to grey() before morphological close/open
+ *  - close({ iterations: 1 }) => fill holes
  *  - open({ iterations: 1 }) => remove specks
- *  - grey() => mask() => label({ allowCorners: false })
- *  - iterate all labeled ROIs => bounding boxes => region naming
+ *  - mask({ threshold: 0.5 }) => ROI manager => getRois()
+ *  - produce RegionBox[]
  */
 export async function performMorphRegionDetection(
   inputBuffer: Buffer
 ): Promise<{ cleanedBuffer: Buffer; regionData: RegionBox[] }> {
-  // 1. Load the image via image-js
+  // 1. Load with image-js
   const jsImage = await Image.load(inputBuffer);
 
-  // 2. Morphological close + open
-  const closed = jsImage.close({ iterations: 1 }); // fill small holes
-  const opened = closed.open({ iterations: 1 }); // remove small specks
+  // 2. Convert to greyscale (required for morphological ops on image-js)
+  const grey = jsImage.grey();
 
-  // 3. Convert to grey => produce a 1-bit mask => threshold ~0.5
-  const grey = opened.grey();
-  const mask = grey.mask({ threshold: 0.5 });
+  // 3. Morphological close + open on the grayscale image
+  const closed = grey.close({ iterations: 1 });
+  const opened = closed.open({ iterations: 1 });
 
-  // 4. Use the ROI manager on the "opened" image (so bounding boxes refer back to it)
+  // 4. Create a binary mask from the opened image
+  const mask = opened.mask({ threshold: 0.5 });
+
+  // 5. Use the ROI manager to find bounding boxes
   const manager = opened.getRoiManager();
   manager.fromMask(mask);
 
-  // Retrieve all ROIs
-  // e.g., { positive: true, minSurface: 1 } can filter out too-small regions
+  // 6. Retrieve the ROIs
   const rois = manager.getRois({ positive: true });
 
   const regionData: RegionBox[] = [];
   const { width: totalW, height: totalH } = opened;
 
-  // Each ROI has minX, minY, maxX, maxY, among other properties
   for (const roi of rois) {
     const { minX, minY, maxX, maxY } = roi;
     const w = maxX - minX + 1;
@@ -98,17 +95,10 @@ export async function performMorphRegionDetection(
       name = 'footer';
     }
 
-    regionData.push({
-      name,
-      x: minX,
-      y: minY,
-      width: w,
-      height: h,
-    });
+    regionData.push({ name, x: minX, y: minY, width: w, height: h });
   }
 
-  // 5. Convert final "opened" image back to PNG => cast to Buffer
-  //    This "cleaned" image is your morphological output
+  // 7. Convert final "opened" image to PNG => Buffer
   const pngBytes = opened.toBuffer({ format: 'png' });
   const cleanedBuffer = Buffer.from(pngBytes);
 
@@ -117,35 +107,34 @@ export async function performMorphRegionDetection(
 
 /**
  * Step 3) Tesseract.js@4.0.2 OCR:
- *  - createWorker('eng'...) => worker
- *  - setParameters to set PSM (via PSM enum) + DPI
- *  - recognize(...) => parse data.words => BBox
+ *  - createWorker('eng', 1, options)
+ *  - setParameters to set PSM + DPI
+ *  - recognize() => parse data.words => BBox
  */
 export async function performOcr(
   finalCleanedBuffer: Buffer
 ): Promise<{ recognizedText: string; wordBoxes: BBox[] }> {
-  // createWorker from Tesseract.js, specifying English
-  // Note: v4.0.2 syntax might differ from newer versions
+  // 1. Create Tesseract worker
   const worker = await createWorker('eng', 1, {
     logger: (m) => console.log(m),
   });
 
-  // Set Tesseract parameters
-  // Use PSM.SINGLE_LINE or PSM.SPARSE_TEXT to avoid type errors
+  // 2. Set Tesseract parameters
   await worker.setParameters({
+    // Use e.g. SINGLE_LINE or SPARSE_TEXT to avoid type errors
     tessedit_pageseg_mode: PSM.SINGLE_LINE,
     user_defined_dpi: '300',
   });
 
-  // Perform OCR
+  // 3. Recognize
   const { data } = await worker.recognize(finalCleanedBuffer);
 
-  // Terminate worker
+  // 4. Terminate worker
   await worker.terminate();
 
-  // Build recognizedText + wordBoxes
+  // 5. Build recognizedText + wordBoxes
   const recognizedText: string = data.text || '';
-  // In older Tesseract.js, "words" might not be typed, so cast to "any"
+  // "words" might not be typed, so cast to 'any'
   const words = (data as any).words || [];
 
   const wordBoxes: BBox[] = words.map((w: TesseractWord) => ({
