@@ -7,7 +7,6 @@ import { getBlueprintLayout } from '../ai/BlueprintAiService';
  */
 async function promptUserToSetApiKey(): Promise<void> {
   const config = vscode.workspace.getConfiguration('blueprintAI');
-
   const enteredKey = await vscode.window.showInputBox({
     prompt: 'Enter your OpenAI API Key',
     placeHolder: 'sk-...',
@@ -82,7 +81,11 @@ export class MainWebViewPanel {
 
     /**
      * Listen for messages from the webview.
-     * Specifically, we handle 'blueprintAI.generateLayout'.
+     * This file should act purely as a middleman according to the setup guide:
+     *  - We take userText + raw screenshot bytes
+     *  - Pass them to getBlueprintLayout (in BlueprintAiService)
+     *  - Return the AI result or an error to the webview
+     *  - No advanced processing is done here
      */
     this._panel.webview.onDidReceiveMessage(async (message) => {
       const { command, payload } = message;
@@ -90,15 +93,17 @@ export class MainWebViewPanel {
       switch (command) {
         case 'blueprintAI.generateLayout':
           try {
+            // Convert raw array of bytes to a Node Buffer
+            const arrayOfBytes: number[] = payload.arrayBuffer || [];
+            const buffer = Buffer.from(arrayOfBytes);
+
+            // Call getBlueprintLayout for all Sharp / Tesseract / AI logic
             const layoutJson = await getBlueprintLayout({
               userText: payload.userText,
-              base64Image: payload.base64Image,
-              recognizedText: payload.recognizedText,
-              boundingBoxes: payload.boundingBoxes,
-              imageDimensions: payload.imageDimensions,
+              rawScreenshot: buffer, // rename or add any extra fields as needed
             });
 
-            // Post success response back to the webview
+            // Return the final layout JSON to the webview
             this._panel.webview.postMessage({
               command: 'blueprintAI.result',
               payload: { layoutJson },
@@ -106,12 +111,10 @@ export class MainWebViewPanel {
           } catch (error: any) {
             console.error('Error in blueprintAI.generateLayout:', error);
 
-            // Convert error to string
             const errorMsg = error.message || String(error);
 
-            // Let's detect different errors:
+            // Handle API key errors or other exceptions
             if (errorMsg.includes('OpenAI API key not found')) {
-              // Missing key
               await this._handleTwoButtonError(
                 'You have not set an API key for Blueprint AI. AI features will not work until you do so.',
                 'Close',
@@ -119,7 +122,6 @@ export class MainWebViewPanel {
                 promptUserToSetApiKey
               );
             } else if (errorMsg.includes('Invalid OpenAI API key')) {
-              // Invalid key
               await this._handleTwoButtonError(
                 'Your OpenAI API key appears to be invalid. Please set a valid key.',
                 'Close',
@@ -127,7 +129,6 @@ export class MainWebViewPanel {
                 promptUserToSetApiKey
               );
             } else {
-              // Some other error
               vscode.window.showErrorMessage(errorMsg);
             }
 
@@ -140,18 +141,16 @@ export class MainWebViewPanel {
           break;
 
         case 'alert':
-          // We can show the alert message from the webview
+          // Display an alert from the webview
           vscode.window.showErrorMessage(payload?.text || 'Unknown error');
           break;
       }
     });
 
-    /**
-     * Example: additional message handling
-     */
+    // Additional message handling if needed
     this._panel.webview.onDidReceiveMessage(
       (message) => {
-        // Put other commands here if needed
+        // No extra commands needed for now
       },
       null,
       this._disposables
@@ -295,8 +294,8 @@ export class MainWebViewPanel {
   }
 
   /**
-   * Helper to show a two-button error popup
-   * with the first label on the left, and the second label on the right.
+   * Two-button error popup for missing or invalid API keys.
+   * The first label is on the left, second label is on the right.
    */
   private async _handleTwoButtonError(
     errorMessage: string,
@@ -304,7 +303,6 @@ export class MainWebViewPanel {
     buttonLabelRight: string,
     rightButtonCallback: () => Promise<void>
   ): Promise<void> {
-    // The order of items here determines which is on left vs right
     const choice = await vscode.window.showErrorMessage(
       errorMessage,
       buttonLabelLeft,
@@ -312,10 +310,9 @@ export class MainWebViewPanel {
     );
 
     if (choice === buttonLabelRight) {
-      // Only if user clicks the right button do we call the callback
       await rightButtonCallback();
     }
-    // If they pick "Close" (left) or dismiss, do nothing else.
+    // If user picks left or dismisses, do nothing
   }
 }
 

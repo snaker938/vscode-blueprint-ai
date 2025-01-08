@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Text,
   TextField,
@@ -8,12 +8,6 @@ import {
   Spinner,
 } from '@fluentui/react';
 import './SelectedFeatureText.css';
-
-// Hypothetical utility that handles image compression + OCR => bounding boxes
-import { processImageAndOcr } from './utils/ImageProcessing/imageProcessing';
-
-// Parser
-// import { parseAiOutput } from './utils/AiParser';
 
 declare global {
   interface Window {
@@ -30,50 +24,18 @@ interface SelectedFeatureTextProps {
 const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   openModal,
 }) => {
-  // Image upload + preview states
+  // State for the uploaded image and preview
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-
-  // Loading state for the entire “Generate” action
-  const [loading, setLoading] = useState<boolean>(false);
 
   // Text input from the user
   const [textValue, setTextValue] = useState<string>('');
 
-  // AI raw response (JSON string)
-  const [aiResponse, setAiResponse] = useState<string>('');
+  // Loading state for spinner feedback
+  const [loading, setLoading] = useState<boolean>(false);
 
   /**
-   * Listen for messages from the VSCode extension backend.
-   * If we receive 'blueprintAI.result', we either show an error or display the AI output.
-   */
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const { command, payload } = event.data;
-
-      if (command === 'blueprintAI.result') {
-        // Stop the spinner
-        setLoading(false);
-
-        if (payload.error) {
-          // Show the error as an alert in VSCode
-          window.vscode.postMessage({
-            command: 'alert',
-            text: `Error: ${payload.error}`,
-          });
-        } else {
-          // We have a successful AI JSON output
-          setAiResponse(payload.layoutJson);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  /**
-   * Trigger hidden file input
+   * Trigger hidden file input to choose an image
    */
   const handleUploadClick = () => {
     document.getElementById('imageUploadInput')?.click();
@@ -87,8 +49,8 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
+      // Basic validation
       if (!file.type.startsWith('image/')) {
-        // Not an image file
         window.vscode.postMessage({
           command: 'alert',
           text: 'Please upload a valid image file.',
@@ -96,7 +58,6 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        // File too large
         window.vscode.postMessage({
           command: 'alert',
           text: 'File size exceeds the 5MB limit.',
@@ -106,6 +67,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
       setUploadedImage(file);
 
+      // For preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviewUrl(reader.result as string);
@@ -134,71 +96,43 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
   /**
    * Called when user clicks "Generate"
+   * - Reads image as ArrayBuffer
+   * - Sends { userText, arrayBuffer } to the extension
    */
   const handleGenerateClick = async () => {
+    if (!uploadedImage) {
+      window.vscode.postMessage({
+        command: 'alert',
+        text: 'Please select an image before generating.',
+      });
+      return;
+    }
+
     setLoading(true);
 
-    let finalBase64: string | undefined;
-    let boundingBoxes: any[] = [];
-    let imageDimensions = { width: 0, height: 0 };
-    let recognizedText = '';
+    try {
+      // Convert the File to an ArrayBuffer
+      const arrayBuffer = await uploadedImage.arrayBuffer();
+      // Convert arrayBuffer to a typed array, then to a normal array
+      const rawBytes = Array.from(new Uint8Array(arrayBuffer));
 
-    // If the user uploaded an image, run OCR + bounding box analysis
-    if (uploadedImage && imagePreviewUrl) {
-      try {
-        const result = await processImageAndOcr(
-          uploadedImage,
-          {
-            maxWidth: 1200,
-            maxBBoxes: 80,
-            minConfidence: 60,
-          },
-          true
-        );
-
-        finalBase64 = result.compressedBase64;
-        boundingBoxes = result.boundingBoxes;
-        imageDimensions = {
-          width: result.imageWidth,
-          height: result.imageHeight,
-        };
-        recognizedText = result.recognizedText;
-      } catch (err: any) {
-        window.vscode.postMessage({
-          command: 'alert',
-          text: `Image processing error: ${err?.message || String(err)}`,
-        });
-        setLoading(false);
-        return;
-      }
+      // Post everything to the extension backend
+      window.vscode.postMessage({
+        command: 'blueprintAI.generateLayout',
+        payload: {
+          userText: textValue,
+          arrayBuffer: rawBytes,
+        },
+      });
+    } catch (err: any) {
+      window.vscode.postMessage({
+        command: 'alert',
+        text: `Error reading image file: ${err?.message || String(err)}`,
+      });
+      setLoading(false);
+      return;
     }
-
-    // Send a request to the extension with all relevant data
-    window.vscode.postMessage({
-      command: 'blueprintAI.generateLayout',
-      payload: {
-        userText: textValue,
-        base64Image: finalBase64,
-        recognizedText,
-        boundingBoxes,
-        imageDimensions,
-      },
-    });
   };
-
-  /**
-   * Optionally parse the AI output whenever it changes,
-   * so we can convert it into actual CraftJS layout components, etc.
-   */
-  useEffect(() => {
-    if (aiResponse) {
-      // e.g., parseAiOutput might produce a structure that your parser uses
-      // for a CraftJS page. We'll just log or handle it here.
-      // const parsedLayout = parseAiOutput(aiResponse);
-      // console.log('Parsed Layout:', parsedLayout);
-      // You might store this in local state or pass to a CraftJS editor
-    }
-  }, [aiResponse]);
 
   return (
     <div className="selected-feature-text-container">
@@ -207,6 +141,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
       </Text>
 
       <div className="input-box-container">
+        {/* If image is chosen, show a small preview + remove button */}
         {uploadedImage && (
           <div className="uploaded-image-container">
             <img
@@ -229,15 +164,17 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
           </div>
         )}
 
+        {/* Text field for user's prompt */}
         <TextField
           placeholder="Talk with Blueprint AI..."
           className="input-textbox"
           multiline
           rows={5}
           value={textValue}
-          onChange={(_, newVal) => setTextValue(newVal || '')}
+          onChange={(_, val) => setTextValue(val || '')}
         />
 
+        {/* Icons for AI modal + file upload */}
         <div className="input-box-icons">
           <div className="icon-button-group">
             <IconButton
@@ -246,9 +183,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
               className="icon-button ai-features-button"
               title="AI features"
             />
-
             <div className="separator-vertical" />
-
             <IconButton
               iconProps={{ iconName: 'Picture' }}
               onClick={handleUploadClick}
@@ -276,6 +211,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         </PrimaryButton>
       </div>
 
+      {/* Show a spinner if in loading state */}
       {loading && (
         <div className="loading-section">
           <Spinner
@@ -285,15 +221,6 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
                 : 'Processing your prompt...'
             }
           />
-        </div>
-      )}
-
-      {aiResponse && (
-        <div className="ai-response-container">
-          <Text variant="medium" block>
-            AI Output (JSON):
-          </Text>
-          <pre>{aiResponse}</pre>
         </div>
       )}
     </div>
