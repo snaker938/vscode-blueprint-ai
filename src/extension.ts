@@ -1,10 +1,14 @@
 import * as vscode from 'vscode';
 import { MainWebViewPanel } from './panels/MainWebViewPanel';
+import { setExtensionContext } from './utils/extensionContext';
 
 export function activate(context: vscode.ExtensionContext) {
+  // 1) Save the context globally
+  setExtensionContext(context);
+
   console.log('Blueprint AI extension is now active!');
 
-  // Create a status bar item and make it visible immediately
+  // 2) Example: Create status bar item
   const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
     100
@@ -15,15 +19,16 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
 
-  // Register the command to open the webview
+  // 3) Register command
   const disposable = vscode.commands.registerCommand(
     'blueprint-ai.openWebview',
     () => {
-      // Simply create/show the panel; no prompting here.
       MainWebViewPanel.createOrShow(context.extensionUri);
     }
   );
   context.subscriptions.push(disposable);
 }
 
-export function deactivate() {}
+export function deactivate() {
+  // optional cleanup
+}

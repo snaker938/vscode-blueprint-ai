@@ -1,53 +1,64 @@
 /**
- * blueprintAiService.ts
+ * BlueprintAiService.ts
  *
- * The main entry point: getBlueprintLayout() used by your extension.
- * Calls the 3 functions from blueprintAiProcessing, merges data,
- * redacts personal data, logs a final "PUT YOUR PROMPT HERE" prompt,
- * returns a dummy single-page layout JSON.
+ * Main AI entry point for your extension:
+ *  - Accepts user text + raw screenshot
+ *  - Performs OCR to extract text
+ *  - Builds a system prompt with "INSERT BASE PROMPT" placeholder
+ *  - Logs prompt to the console (no actual AI request yet)
+ *  - Returns a dummy CraftJS-style JSON layout as a string
  */
 
-import { BlueprintAIRequest, BBox, RegionBox } from './blueprintAiTypes';
+import { runPythonOcr } from './pythonBridge'; // Adjust this import to match where you placed your OCR bridge
+// Or wherever you have your "runPythonOcr" or "pythonOcrBridge" function
 
-import {
-  performSharpPreprocessing,
-  performMorphRegionDetection,
-  performOcr,
-} from './blueprintAiProcessing';
+/**
+ * Data shape for requests to getBlueprintLayout
+ */
+interface BlueprintAIRequest {
+  userText: string;
+  rawScreenshot: Buffer;
+}
 
+/**
+ * The main exported function that your MainWebViewPanel calls.
+ */
 export async function getBlueprintLayout(
   request: BlueprintAIRequest
 ): Promise<string> {
   const { userText, rawScreenshot } = request;
 
   try {
-    // 1) Sharp for preprocessing
-    const preprocessedBuffer = await performSharpPreprocessing(rawScreenshot);
+    // 1. Perform Python-based OCR on the screenshot
+    //    runPythonOcr is a function that spawns your "ocr_service.py" script
+    //    and returns an array of { text, confidence, bbox } objects
+    const ocrResults = await runPythonOcr(rawScreenshot);
 
-    // 2) image-js for morphological region detection
-    const { cleanedBuffer, regionData } = await performMorphRegionDetection(
-      preprocessedBuffer
-    );
+    // 2. Combine all recognized text into a single string
+    //    (If you prefer a more advanced approach, preserve bounding boxes, etc.)
+    const recognizedText = ocrResults
+      .map((item) => item.text)
+      .filter(Boolean)
+      .join('\n');
 
-    // 3) Tesseract.js for OCR
-    const { recognizedText, wordBoxes } = await performOcr(cleanedBuffer);
+    // 3. Build the system prompt
+    const systemPrompt = `
+INSERT BASE PROMPT
 
-    // Merge all data
-    const mergedData = _mergeData(
-      userText,
-      recognizedText,
-      regionData,
-      wordBoxes
-    );
-    const sanitizedData = _redactSensitiveData(mergedData);
+User's textual prompt:
+"${userText}"
 
-    // Build final system prompt
-    const systemPrompt = _buildSystemPrompt(sanitizedData);
+OCR recognized text:
+"${recognizedText}"
+`;
+
+    // 4. Log the final system prompt to the console
     console.log('\n===== FINAL SYSTEM PROMPT =====\n');
-    console.log(systemPrompt);
+    console.log(systemPrompt.trim());
     console.log('\n================================\n');
 
-    // Return dummy single-page CraftJS layout
+    // 5. For now, we return a dummy single-page layout.
+    //    Later, you'll replace this with your AI-based layout generation.
     const dummyLayout = {
       layout: {
         type: 'Container',
@@ -55,85 +66,36 @@ export async function getBlueprintLayout(
         children: [
           {
             type: 'Heading',
-            props: {
-              text: 'DUMMY CraftJS Layout (from advanced pipeline)',
-            },
+            props: { text: 'DUMMY CraftJS Layout (from BlueprintAiService)' },
             children: [],
           },
         ],
       },
     };
 
+    // Return the dummy layout as a string
     return JSON.stringify(dummyLayout, null, 2);
   } catch (err: unknown) {
+    // Error handling
     const errorMsg = err instanceof Error ? err.message : String(err);
-    throw new Error(errorMsg);
+    console.error('BlueprintAiService error:', errorMsg);
+
+    // Return (or re-throw) a minimal fallback layout so the UI doesn't break
+    const fallbackLayout = {
+      layout: {
+        type: 'Container',
+        props: { style: { padding: 20, backgroundColor: '#fcc' } },
+        children: [
+          {
+            type: 'Heading',
+            props: {
+              text: `Error in BlueprintAiService: ${errorMsg}`,
+            },
+            children: [],
+          },
+        ],
+      },
+    };
+    return JSON.stringify(fallbackLayout, null, 2);
   }
-}
-
-/** Combine user prompt, region data, OCR. */
-function _mergeData(
-  userText: string,
-  recognizedText: string,
-  regionData: RegionBox[],
-  wordBoxes: BBox[]
-): any {
-  return {
-    userPrompt: userText,
-    recognizedText,
-    regions: regionData,
-    wordBoxes,
-  };
-}
-
-/** Simple personal data redaction from recognized text + words. */
-function _redactSensitiveData(data: any): any {
-  const sanitized = { ...data };
-
-  if (typeof sanitized.recognizedText === 'string') {
-    sanitized.recognizedText = sanitized.recognizedText
-      .replace(
-        /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
-        '[REDACTED_EMAIL]'
-      )
-      .replace(/\b\d{3}-\d{3}-\d{4}\b/g, '[REDACTED_PHONE]');
-  }
-
-  if (Array.isArray(sanitized.wordBoxes)) {
-    sanitized.wordBoxes = sanitized.wordBoxes.map((b: BBox) => {
-      const updated = { ...b };
-      updated.text = updated.text
-        .replace(
-          /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
-          '[REDACTED_EMAIL]'
-        )
-        .replace(/\b\d{3}-\d{3}-\d{4}\b/g, '[REDACTED_PHONE]');
-      return updated;
-    });
-  }
-
-  return sanitized;
-}
-
-/** Build final system prompt "PUT YOUR PROMPT HERE" etc. */
-function _buildSystemPrompt(data: any): string {
-  const basePrompt = 'PUT YOUR PROMPT HERE';
-  return `
-${basePrompt}
-
-User's textual prompt:
-"${data.userPrompt}"
-
-Recognized text (some may be redacted):
-"${data.recognizedText}"
-
-Regions:
-${JSON.stringify(data.regions, null, 2)}
-
-Word bounding boxes:
-${JSON.stringify(data.wordBoxes, null, 2)}
-
-Disclaimer:
-We tried removing personal data (emails, phones). If any remains, please ignore or anonymize.
-`.trim();
 }

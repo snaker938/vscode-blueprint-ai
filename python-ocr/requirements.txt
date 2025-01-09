@@ -1,0 +1,9 @@
+# requirements.txt for your Python OCR script.
+
+# Core libraries:
+numpy
+opencv-python-headless
+
+# EasyOCR depends on PyTorch, but easyocr's setup.py 
+# automatically installs the correct Torch version if missing:
+easyocr

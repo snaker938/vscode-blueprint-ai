@@ -3,3 +3,7 @@ dist
 node_modules
 .vscode-test/
 *.vsix
+
+# Do not includ root/python-ocr/venv
+# because it's a virtual environment.
+venv/
