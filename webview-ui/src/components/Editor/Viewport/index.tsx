@@ -1,0 +1,68 @@
+import React, { useEffect } from 'react';
+import { useEditor } from '@craftjs/core';
+import cx from 'classnames';
+
+// import { LeftSidebar } from './LeftSidebar'; // (pseudo) your new left sidebar
+// import { RightSidebar } from './RightSidebar'; // (pseudo) your property bar sidebar
+
+export const Viewport: React.FC<{ children?: React.ReactNode }> = ({
+  children,
+}) => {
+  const {
+    enabled,
+    connectors,
+    actions: { setOptions },
+  } = useEditor((state) => ({
+    enabled: state.options.enabled,
+  }));
+
+  useEffect(() => {
+    // If running in an iframe or doc site:
+    if (typeof window === 'undefined') return;
+
+    window.requestAnimationFrame(() => {
+      // Let a parent window know the editor is loaded
+      window.parent.postMessage({ LANDING_PAGE_LOADED: true }, '*');
+
+      // Auto-enable editing after a short delay
+      setTimeout(() => {
+        setOptions((options) => {
+          options.enabled = true;
+        });
+      }, 200);
+    });
+  }, [setOptions]);
+
+  return (
+    <div className="viewport w-full h-full relative">
+      {/* Main layout: left sidebar + center craftjs-renderer + right sidebar */}
+      <div className={cx(['flex h-full w-full overflow-hidden flex-row'])}>
+        {/* LeftSidebar: showing Components, Layers, Pages, plus undo/redo/etc. */}
+        {/* <LeftSidebar /> */}
+
+        {/* Main content area */}
+        <div
+          className={cx([
+            'craftjs-renderer flex-1 h-full w-full transition pb-8 overflow-auto relative',
+            {
+              'bg-gray-200': enabled, // adjust the background to your preference
+            },
+          ])}
+          ref={(ref) => {
+            if (ref) {
+              connectors.select(connectors.hover(ref, ''), '');
+            }
+          }}
+        >
+          <div className="pt-6 flex flex-col items-center min-h-full">
+            {/* The user’s page or craft elements go here */}
+            {children}
+          </div>
+        </div>
+
+        {/* RightSidebar: property panels / settings */}
+        {/* <RightSidebar /> */}
+      </div>
+    </div>
+  );
+};

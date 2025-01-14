@@ -4,6 +4,7 @@ import App from './App';
 import './global.css';
 
 import CreateWithImaginationPage from './pages/CreateWithImagination/CreateWithImaginationPage';
+import EditingInterface from './pages/EditingInterface.tsx/EditingInterface';
 
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('root');
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/create" element={<CreateWithImaginationPage />} />
+        <Route path="/editing" element={<EditingInterface />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

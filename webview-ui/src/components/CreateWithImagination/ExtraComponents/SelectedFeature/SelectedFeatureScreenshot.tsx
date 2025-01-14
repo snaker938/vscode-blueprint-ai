@@ -7,6 +7,7 @@ import {
   MessageBar,
   MessageBarType,
 } from '@fluentui/react';
+import { useNavigate } from 'react-router-dom';
 import './SelectedFeatureScreenshot.css';
 
 const SelectedFeatureScreenshot: React.FC = () => {
@@ -14,6 +15,9 @@ const SelectedFeatureScreenshot: React.FC = () => {
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // 2) Initialize navigate
+  const navigate = useNavigate();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setErrorMessage('');
@@ -57,7 +61,8 @@ const SelectedFeatureScreenshot: React.FC = () => {
     // Simulate a loading process
     setTimeout(() => {
       setLoading(false);
-      // Redirect to /editing-interface
+      // 3) Navigate to "/editing" when loading completes
+      navigate('/editing');
     }, 3000);
   };
 

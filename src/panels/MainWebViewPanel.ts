@@ -220,13 +220,13 @@ export class MainWebViewPanel {
       /<head>/,
       `<head>
         <meta http-equiv="Content-Security-Policy" content="
-          default-src 'none';
-          img-src ${webview.cspSource} https: data:;
-          script-src 'nonce-${nonce}' ${webview.cspSource} 'self' 'unsafe-eval' https://cdn.jsdelivr.net;
-          style-src ${webview.cspSource} 'unsafe-inline';
-          font-src ${webview.cspSource} https: data:;
-          connect-src ${webview.cspSource} https: data:;
-          worker-src 'self' blob:;
+        default-src 'none';
+        img-src ${webview.cspSource} https: data:;
+        script-src 'nonce-${nonce}' ${webview.cspSource} 'self' 'unsafe-eval' https://cdn.jsdelivr.net;
+        style-src ${webview.cspSource} 'unsafe-inline' https://use.typekit.net;
+        font-src ${webview.cspSource} https: data:;
+        connect-src ${webview.cspSource} https: data:;
+        worker-src 'self' blob:;
         ">
       `
     );

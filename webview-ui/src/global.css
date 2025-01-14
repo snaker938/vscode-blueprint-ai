@@ -1,7 +1,8 @@
+/* @import url('https://use.typekit.net/mpa1wkh.css'); */
+
 @tailwind base;
 @tailwind components;
-
-@import url('https://use.typekit.net/mpa1wkh.css');
+@tailwind utilities;
 
 html,
 body {
@@ -27,8 +28,6 @@ body {
 body {
   padding: 0 !important;
 }
-
-@tailwind utilities;
 
 .component-selected {
   @apply relative;
