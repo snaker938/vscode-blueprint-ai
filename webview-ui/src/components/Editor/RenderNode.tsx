@@ -11,7 +11,7 @@ import ReactDOM from 'react-dom';
 import { useNode, useEditor } from '@craftjs/core';
 import styled from 'styled-components';
 
-// Material UI icons:
+// Material UI icons
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
@@ -72,76 +72,51 @@ const NameInput = styled.input`
   }
 `;
 
-/**
- * NOTE:
- * .component-hidden {
- *   display: none !important;
- * }
- * Make sure to define this somewhere in your global CSS.
- */
-
 interface RenderNodeProps {
   render: React.ReactElement;
 }
 
+/**
+ * RenderNode
+ * - Uses actions.setHidden(...) from the official Craft.js API to hide/unhide a node
+ * - Double-click rename via actions.setCustom(...)
+ * - Has MUI icons + tooltips
+ */
 export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
+  // Grab nodeId from useNode()
   const { id } = useNode();
-  const { actions, query, isActive } = useEditor((_, q) => ({
-    isActive: q.getEvent('selected').contains(id),
+
+  // From the editor, get the set of selected node IDs
+  const { selectedNodeIds, actions } = useEditor((state) => ({
+    selectedNodeIds: state.events.selected,
   }));
 
-  const {
-    isHover,
-    dom,
-    moveable,
-    deletable,
-    // Pull in the custom data (hidden + displayName) directly here
-    custom = {},
-    connectors,
-    // Fallback for displayName is node.data.displayName
-    displayName,
-  } = useNode((node) => ({
-    isHover: node.events.hovered,
-    dom: node.dom,
-    moveable: query.node(node.id).isDraggable(),
-    deletable: query.node(node.id).isDeletable(),
-    // Entire custom object, defaulting if not present:
-    custom: node.data.custom || {},
-    // If custom.displayName is not set, fallback to the node's internal displayName
-    displayName:
-      (node.data.custom && node.data.custom.displayName) ||
-      node.data.displayName,
-  }));
+  // Check if this node is currently "active" (selected)
+  const isActive = !!selectedNodeIds && selectedNodeIds.has(id);
 
-  const indicatorRef = useRef<HTMLDivElement>(null);
+  // Collect data from this node
+  const { connectors, dom, hidden, isHover, moveable, deletable, displayName } =
+    useNode((node) => ({
+      dom: node.dom,
+      hidden: node.data.hidden,
+      isHover: node.events.hovered,
+      // For simplicity, we just define these as always true
+      moveable: true,
+      deletable: true,
+      // Fallback if custom.displayName not set
+      displayName:
+        (node.data.custom && node.data.custom.displayName) ||
+        node.data.displayName,
+    }));
 
-  // Manage rename
+  // State for rename
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(displayName);
 
-  // We'll store hidden in local state, but the source of truth is node.data.custom.hidden
-  const [isHidden, setIsHidden] = useState<boolean>(!!custom.hidden);
+  // Ref for indicator div
+  const indicatorRef = useRef<HTMLDivElement>(null);
 
-  // If a node is hidden, add `.component-hidden`
-  useEffect(() => {
-    if (!dom) return;
-    if (isHidden) {
-      dom.classList.add('component-hidden');
-    } else {
-      dom.classList.remove('component-hidden');
-    }
-  }, [isHidden, dom]);
-
-  // Mark hovered/active with a highlight class
-  useEffect(() => {
-    if (!dom) return;
-    if (isHover || isActive) {
-      dom.classList.add('component-selected');
-    } else {
-      dom.classList.remove('component-selected');
-    }
-  }, [dom, isHover, isActive]);
-
+  // Positioning logic for the indicator
   const getPos = useCallback((el: HTMLElement) => {
     if (!el) return { top: '0px', left: '0px' };
     const { top, left, bottom } = el.getBoundingClientRect();
@@ -167,17 +142,13 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     };
   }, [handleScroll]);
 
-  // Toggle hidden => store in node.data.custom.hidden
+  // Toggle hidden/unhidden
   const toggleHidden = (e: MouseEvent) => {
     e.stopPropagation();
-    const newHidden = !isHidden;
-    actions.setCustom(id, (cust: any) => {
-      cust.hidden = newHidden;
-    });
-    setIsHidden(newHidden);
+    actions.setHidden(id, !hidden);
   };
 
-  // Double-click => rename
+  // Rename logic
   const handleNameDoubleClick = () => {
     setRenameValue(displayName);
     setIsRenaming(true);
@@ -203,13 +174,14 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     commitNameChange();
   };
 
-  const showIndicator = (isHover || isActive) && dom != null;
+  // Show indicator if node is not hidden and is either hovered or active
+  const showIndicator = !hidden && (isHover || isActive) && dom;
 
   return (
     <>
       {showIndicator
         ? ReactDOM.createPortal(
-            <IndicatorDiv ref={indicatorRef} style={getPos(dom!)}>
+            <IndicatorDiv ref={indicatorRef} style={getPos(dom)}>
               {isRenaming ? (
                 <NameInput
                   autoFocus
@@ -241,9 +213,9 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
                 </Tooltip>
               )}
 
-              <Tooltip title={isHidden ? 'Unhide Node' : 'Hide Node'} arrow>
+              <Tooltip title={hidden ? 'Unhide Node' : 'Hide Node'} arrow>
                 <IconBtn onMouseDown={toggleHidden}>
-                  {isHidden ? <Visibility /> : <VisibilityOff />}
+                  {hidden ? <Visibility /> : <VisibilityOff />}
                 </IconBtn>
               </Tooltip>
 
@@ -263,6 +235,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
             document.querySelector('.page-container') || document.body
           )
         : null}
+
       {render}
     </>
   );

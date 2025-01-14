@@ -5,7 +5,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Viewport, RenderNode } from '../../components/Editor';
 import { Container } from '../components/selectors';
 
-// Create a Material-UI theme (mimicking your MyApp example)
+// Create a Material-UI theme
 const theme = createTheme({
   typography: {
     fontFamily: [
