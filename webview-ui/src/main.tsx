@@ -1,10 +1,12 @@
+/* main.tsx (or index.tsx) */
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'; // 1) Use react-router-dom
 import App from './App';
 import './global.css';
 
 import CreateWithImaginationPage from './pages/CreateWithImagination/CreateWithImaginationPage';
-import EditingInterface from './pages/EditingInterface.tsx/EditingInterface';
+import EditingInterface from './pages/EditingInterface/EditingInterface';
+// 2) Correct path: no “.tsx/EditingInterface”
 
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('root');
