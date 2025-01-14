@@ -3,7 +3,7 @@ import { Editor, Frame, Element } from '@craftjs/core';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import { Viewport, RenderNode } from '../../components/Editor';
-import { Container } from '../components/selectors';
+import { Container } from '../../components/Editor/UserComponents/Container';
 
 // Create a Material-UI theme
 const theme = createTheme({
