@@ -13,8 +13,9 @@ export interface PropertyTextInputProps {
   label?: string;
   /**
    * The type of input. 'color' or 'bg' will show a color swatch and open ChromePicker.
+   * Added 'number' to allow numeric usage as well.
    */
-  type?: 'text' | 'color' | 'bg';
+  type?: 'text' | 'color' | 'bg' | 'number';
   /**
    * Fired when the user commits a new value (e.g., pressing Enter or picking a new color).
    */

@@ -39,6 +39,16 @@ export interface PropertyItemProps {
   children?: React.ReactNode;
 }
 
+/**
+ * A type guard to confirm if the current `type` is a valid text input type
+ * recognized by PropertyTextInput.
+ */
+function isTextInputType(
+  t: PropertyItemType
+): t is 'text' | 'color' | 'bg' | 'number' {
+  return ['text', 'color', 'bg', 'number'].includes(t);
+}
+
 /** A styled slider for consistent design across property controls. */
 const StyledSlider = styled((props: SliderProps) => <Slider {...props} />)(
   () => ({
@@ -112,16 +122,18 @@ export const PropertyItem: React.FC<PropertyItemProps> = ({
   return (
     <Grid item xs={full ? 12 : 6}>
       <div style={{ marginBottom: 8 }}>
-        {['text', 'color', 'bg', 'number'].includes(type) && (
+        {/* 1) If it's a text-like input: text, color, bg, or number */}
+        {isTextInputType(type) && (
           <PropertyTextInput
             label={label}
             prefix={prefix}
-            type={type}
+            type={type} // TS is happy now because of the type guard
             value={currentValue}
             onChange={(val) => updateProp(val, 500)}
           />
         )}
 
+        {/* 2) If it's a slider */}
         {type === 'slider' && (
           <>
             {label && <h4 style={{ margin: 0 }}>{label}</h4>}
@@ -132,6 +144,7 @@ export const PropertyItem: React.FC<PropertyItemProps> = ({
           </>
         )}
 
+        {/* 3) If it's a radio */}
         {type === 'radio' && (
           <>
             {label && <h4 style={{ margin: 0 }}>{label}</h4>}
@@ -144,20 +157,19 @@ export const PropertyItem: React.FC<PropertyItemProps> = ({
           </>
         )}
 
+        {/* 4) If it's a select */}
         {type === 'select' && (
           <PropertyDropdown
             label={label ?? ''}
-            value={currentValue ?? ''}
+            value={String(currentValue ?? '')} // cast to string for the dropdown
             onChange={(val) => updateProp(val)}
           >
             {children}
           </PropertyDropdown>
         )}
 
-        {type === 'number' && (
-          // If you want further numeric handling, add it here
-          <Divider style={{ marginTop: 4 }} />
-        )}
+        {/* 5) If it's 'number' specifically, you can add numeric logic here */}
+        {type === 'number' && <Divider style={{ marginTop: 4 }} />}
       </div>
     </Grid>
   );

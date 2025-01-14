@@ -1,125 +1,123 @@
 import React from 'react';
+import {
+  PropertySection,
+  PropertyItem,
+  PropertyRadio,
+} from '../../ComponentPropertiesBar';
 
-import { ToolbarSection, ToolbarItem } from '../../editor';
-import { ToolbarRadio } from '../../editor/Toolbar/ToolbarRadio';
-
-export const ContainerSettings = () => {
+/**
+ * ContainerSettings
+ * Demonstrates multiple PropertySection panels, each retrieving and summarizing
+ * certain prop keys (e.g., width, height, background, color, etc.).
+ * Renders PropertyItem controls within each section.
+ */
+export const ContainerSettings: React.FC = () => {
   return (
-    <React.Fragment>
-      <ToolbarSection
+    <>
+      <PropertySection
         title="Dimensions"
         props={['width', 'height']}
-        summary={({ width, height }: any) => {
-          return `${width || 0} x ${height || 0}`;
-        }}
+        summary={({ width, height }: any) => `${width || 0} x ${height || 0}`}
       >
-        <ToolbarItem propKey="width" type="text" label="Width" />
-        <ToolbarItem propKey="height" type="text" label="Height" />
-      </ToolbarSection>
-      <ToolbarSection
+        <PropertyItem propKey="width" type="text" label="Width" />
+        <PropertyItem propKey="height" type="text" label="Height" />
+      </PropertySection>
+
+      <PropertySection
         title="Colors"
         props={['background', 'color']}
-        summary={({ background, color }: any) => {
-          return (
-            <div className="flex flex-row-reverse">
-              <div
+        summary={({ background, color }: any) => (
+          <div className="flex flex-row-reverse">
+            <div
+              style={{
+                background: background && `rgba(${Object.values(background)})`,
+              }}
+              className="shadow-md flex-end w-6 h-6 text-center flex items-center rounded-full bg-black"
+            >
+              <p
                 style={{
-                  background:
-                    background && `rgba(${Object.values(background)})`,
+                  color: color && `rgba(${Object.values(color)})`,
                 }}
-                className="shadow-md flex-end w-6 h-6 text-center flex items-center rounded-full bg-black"
+                className="text-white w-full text-center"
               >
-                <p
-                  style={{
-                    color: color && `rgba(${Object.values(color)})`,
-                  }}
-                  className="text-white w-full text-center"
-                >
-                  T
-                </p>
-              </div>
+                T
+              </p>
             </div>
-          );
-        }}
+          </div>
+        )}
       >
-        <ToolbarItem
-          full={true}
-          propKey="background"
-          type="bg"
-          label="Background"
-        />
-        <ToolbarItem full={true} propKey="color" type="color" label="Text" />
-      </ToolbarSection>
-      <ToolbarSection
+        <PropertyItem full propKey="background" type="bg" label="Background" />
+        <PropertyItem full propKey="color" type="color" label="Text" />
+      </PropertySection>
+
+      <PropertySection
         title="Margin"
         props={['margin']}
-        summary={({ margin }: any) => {
-          return `${margin[0] || 0}px ${margin[1] || 0}px ${margin[2] || 0}px ${
+        summary={({ margin }: any) =>
+          `${margin[0] || 0}px ${margin[1] || 0}px ${margin[2] || 0}px ${
             margin[3] || 0
-          }px`;
-        }}
+          }px`
+        }
       >
-        <ToolbarItem propKey="margin" index={0} type="slider" label="Top" />
-        <ToolbarItem propKey="margin" index={1} type="slider" label="Right" />
-        <ToolbarItem propKey="margin" index={2} type="slider" label="Bottom" />
-        <ToolbarItem propKey="margin" index={3} type="slider" label="Left" />
-      </ToolbarSection>
-      <ToolbarSection
+        <PropertyItem propKey="margin" index={0} type="slider" label="Top" />
+        <PropertyItem propKey="margin" index={1} type="slider" label="Right" />
+        <PropertyItem propKey="margin" index={2} type="slider" label="Bottom" />
+        <PropertyItem propKey="margin" index={3} type="slider" label="Left" />
+      </PropertySection>
+
+      <PropertySection
         title="Padding"
         props={['padding']}
-        summary={({ padding }: any) => {
-          return `${padding[0] || 0}px ${padding[1] || 0}px ${
-            padding[2] || 0
-          }px ${padding[3] || 0}px`;
-        }}
+        summary={({ padding }: any) =>
+          `${padding[0] || 0}px ${padding[1] || 0}px ${padding[2] || 0}px ${
+            padding[3] || 0
+          }px`
+        }
       >
-        <ToolbarItem propKey="padding" index={0} type="slider" label="Top" />
-        <ToolbarItem propKey="padding" index={1} type="slider" label="Right" />
-        <ToolbarItem propKey="padding" index={2} type="slider" label="Bottom" />
-        <ToolbarItem propKey="padding" index={3} type="slider" label="Left" />
-      </ToolbarSection>
-      <ToolbarSection title="Decoration" props={['radius', 'shadow']}>
-        <ToolbarItem
-          full={true}
-          propKey="radius"
+        <PropertyItem propKey="padding" index={0} type="slider" label="Top" />
+        <PropertyItem propKey="padding" index={1} type="slider" label="Right" />
+        <PropertyItem
+          propKey="padding"
+          index={2}
           type="slider"
-          label="Radius"
+          label="Bottom"
         />
-        <ToolbarItem
-          full={true}
-          propKey="shadow"
-          type="slider"
-          label="Shadow"
-        />
-      </ToolbarSection>
-      <ToolbarSection title="Alignment">
-        <ToolbarItem
+        <PropertyItem propKey="padding" index={3} type="slider" label="Left" />
+      </PropertySection>
+
+      <PropertySection title="Decoration" props={['radius', 'shadow']}>
+        <PropertyItem full propKey="radius" type="slider" label="Radius" />
+        <PropertyItem full propKey="shadow" type="slider" label="Shadow" />
+      </PropertySection>
+
+      <PropertySection title="Alignment">
+        <PropertyItem
           propKey="flexDirection"
           type="radio"
           label="Flex Direction"
         >
-          <ToolbarRadio value="row" label="Row" />
-          <ToolbarRadio value="column" label="Column" />
-        </ToolbarItem>
-        <ToolbarItem propKey="fillSpace" type="radio" label="Fill space">
-          <ToolbarRadio value="yes" label="Yes" />
-          <ToolbarRadio value="no" label="No" />
-        </ToolbarItem>
-        <ToolbarItem propKey="alignItems" type="radio" label="Align Items">
-          <ToolbarRadio value="flex-start" label="Flex start" />
-          <ToolbarRadio value="center" label="Center" />
-          <ToolbarRadio value="flex-end" label="Flex end" />
-        </ToolbarItem>
-        <ToolbarItem
+          <PropertyRadio value="row" label="Row" />
+          <PropertyRadio value="column" label="Column" />
+        </PropertyItem>
+        <PropertyItem propKey="fillSpace" type="radio" label="Fill space">
+          <PropertyRadio value="yes" label="Yes" />
+          <PropertyRadio value="no" label="No" />
+        </PropertyItem>
+        <PropertyItem propKey="alignItems" type="radio" label="Align Items">
+          <PropertyRadio value="flex-start" label="Flex start" />
+          <PropertyRadio value="center" label="Center" />
+          <PropertyRadio value="flex-end" label="Flex end" />
+        </PropertyItem>
+        <PropertyItem
           propKey="justifyContent"
           type="radio"
           label="Justify Content"
         >
-          <ToolbarRadio value="flex-start" label="Flex start" />
-          <ToolbarRadio value="center" label="Center" />
-          <ToolbarRadio value="flex-end" label="Flex end" />
-        </ToolbarItem>
-      </ToolbarSection>
-    </React.Fragment>
+          <PropertyRadio value="flex-start" label="Flex start" />
+          <PropertyRadio value="center" label="Center" />
+          <PropertyRadio value="flex-end" label="Flex end" />
+        </PropertyItem>
+      </PropertySection>
+    </>
   );
 };
