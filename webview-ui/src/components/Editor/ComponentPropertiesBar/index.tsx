@@ -1,19 +1,26 @@
 import React from 'react';
 import { useEditor } from '@craftjs/core';
 
+export { PropertyDropdown } from './PropertyDropdown';
+export { PropertyItem } from './PropertyItem';
+export { PropertyRadio } from './PropertyRadio';
+export { PropertySection } from './PropertySection';
+export { PropertyTextInput } from './PropertyTextInput';
+
 /**
  * PropertyBar
- * - Shows a property editor for the currently selected node if exactly one node is selected.
- * - If multiple nodes are selected, shows a “multiple” message.
- * - If no node is selected, displays a helpful “no selection” message.
+ * Renders different UI based on the node selection state in the editor:
+ *   1. If zero nodes are selected, display a "no selection" message
+ *   2. If exactly one node is selected, display that node’s custom property bar (if defined)
+ *   3. If multiple nodes are selected, display a “multiple selection” message
  */
 export const PropertyBar: React.FC = () => {
-  const { selectedNodeIds, relatedFirstNode } = useEditor((state, query) => {
-    // 'selected' is typically a Set<NodeId> (or array) of selected node IDs
+  const { selectedNodeIds, relatedFirstNode } = useEditor((state) => {
+    // state.events.selected is usually a Set of NodeIds that are currently selected
     const selectedSet = state.events.selected || new Set<string>();
     const selectedArray = Array.from(selectedSet);
 
-    // We'll pick the first selected ID (if any) to read its 'related'
+    // For single selection, we only need the first selected node's related data
     const firstId = selectedArray[0] || null;
 
     return {
@@ -24,7 +31,7 @@ export const PropertyBar: React.FC = () => {
 
   const count = selectedNodeIds.length;
 
-  // 0) No selection
+  // No nodes selected
   if (count === 0) {
     return (
       <div className="py-1 h-full flex flex-col items-center justify-center text-center px-5">
@@ -41,13 +48,13 @@ export const PropertyBar: React.FC = () => {
     );
   }
 
-  // 1) Exactly one node selected
+  // Exactly one node selected
   if (count === 1) {
     if (relatedFirstNode?.propertyBar) {
       // Render the custom property bar for the single selected node
       return React.createElement(relatedFirstNode.propertyBar);
     }
-    // If no propertyBar is defined, show a fallback message
+    // Fallback if the node doesn't have a custom property bar
     return (
       <div className="py-1 px-2">
         <p style={{ fontSize: '11px', color: 'rgba(0,0,0,0.56)' }}>
@@ -57,7 +64,7 @@ export const PropertyBar: React.FC = () => {
     );
   }
 
-  // 2) More than one node selected
+  // Multiple nodes selected
   return (
     <div className="py-1 h-full flex flex-col items-center justify-center text-center px-5">
       <h2
