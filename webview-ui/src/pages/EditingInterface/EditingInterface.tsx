@@ -1,9 +1,10 @@
 import React from 'react';
-import { Editor, Frame, Element } from '@craftjs/core';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { Editor, Frame, Element } from '@craftjs/core';
 
-import { Viewport, RenderNode } from '../../components/Editor';
-import { Container } from '../../components/Editor/UserComponents/Container';
+import { Container } from '../../components/UserComponents';
+import { RenderNode } from '../../components/Editor/Utils';
+import { Viewport } from '../../components/Editor/Viewport';
 
 // Create a Material-UI theme
 const theme = createTheme({
@@ -25,15 +26,17 @@ const EditingInterface: React.FC = () => {
       <div style={{ height: '100vh', margin: 0, padding: 0 }}>
         <Editor
           resolver={{
-            Container,
             // Register all components here
+            Container,
           }}
-          enabled={true}
           onRender={RenderNode}
+          enabled={true}
         >
           <Viewport>
             <Frame>
-              <Element is={Container} canvas></Element>
+              <Element is="div" canvas>
+                <h2>Hello from Craft.js!</h2>
+              </Element>
             </Frame>
           </Viewport>
         </Editor>
