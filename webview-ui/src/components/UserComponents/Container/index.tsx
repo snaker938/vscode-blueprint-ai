@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNode } from '@craftjs/core';
 import { Paper } from '@mui/material';
-import { ContainerSettings } from './ContainerSettings';
+import { ContainerSettingsUI } from './ContainerSettingsUI';
 
 interface ContainerProps {
   background: string;
@@ -14,7 +14,7 @@ interface CustomContainer extends React.FC<ContainerProps> {
   craft: {
     props: typeof ContainerDefaultProps;
     related: {
-      settings: typeof ContainerSettings;
+      settings: typeof ContainerSettingsUI;
     };
   };
 }
@@ -28,6 +28,7 @@ export const Container: CustomContainer = ({
   const {
     connectors: { connect, drag },
   } = useNode();
+
   return (
     <Paper
       {...props}
@@ -47,6 +48,6 @@ const ContainerDefaultProps = {
 Container.craft = {
   props: ContainerDefaultProps,
   related: {
-    settings: ContainerSettings,
+    settings: ContainerSettingsUI,
   },
 };

@@ -121,39 +121,3 @@ export const ContainerSettings: React.FC = () => {
     </>
   );
 };
-
-// import { useNode } from '@craftjs/core';
-// import { Slider } from '@mui/material';
-// import { FormControl, FormLabel } from '@mui/material';
-
-// export const ContainerSettings = () => {
-//   const {
-//     padding,
-//     actions: { setProp },
-//   } = useNode((node) => ({
-//     background: node.data.props.background,
-//     padding: node.data.props.padding,
-//   }));
-
-//   return (
-//     <div>
-//       <FormControl fullWidth={true} margin="normal" component="fieldset">
-//         <FormLabel component="legend">Background</FormLabel>
-//         {/* ColorPicker removed as requested */}
-//       </FormControl>
-//       <FormControl fullWidth={true} margin="normal" component="fieldset">
-//         <FormLabel component="legend">Padding</FormLabel>
-//         <Slider
-//           defaultValue={padding}
-//           onChange={(_, value) =>
-//             setProp(
-//               (props: { padding: number }) =>
-//                 (props.padding = Array.isArray(value) ? value[0] : value),
-//               500
-//             )
-//           }
-//         />
-//       </FormControl>
-//     </div>
-//   );
-// };
