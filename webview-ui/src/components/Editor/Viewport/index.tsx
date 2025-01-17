@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import { useEditor } from '@craftjs/core';
 import cx from 'classnames';
 
-// import { LeftSidebar } from './LeftSidebar'; // (pseudo) your new left sidebar
-// import { RightSidebar } from './RightSidebar'; // (pseudo) your property bar sidebar
+import { Sidebar } from './Sidebar';
 
 export const Viewport: React.FC<{ children?: React.ReactNode }> = ({
   children,
@@ -35,11 +34,7 @@ export const Viewport: React.FC<{ children?: React.ReactNode }> = ({
 
   return (
     <div className="viewport w-full h-full relative">
-      {/* Main layout: left sidebar + center craftjs-renderer + right sidebar */}
       <div className={cx(['flex h-full w-full overflow-hidden flex-row'])}>
-        {/* LeftSidebar: showing Components, Layers, Pages, plus undo/redo/etc. */}
-        {/* <LeftSidebar /> */}
-
         {/* Main content area */}
         <div
           className={cx([
@@ -60,8 +55,7 @@ export const Viewport: React.FC<{ children?: React.ReactNode }> = ({
           </div>
         </div>
 
-        {/* RightSidebar: property panels / settings */}
-        {/* <RightSidebar /> */}
+        <Sidebar />
       </div>
     </div>
   );
