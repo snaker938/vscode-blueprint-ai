@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { useEditor } from '@craftjs/core';
 
-import { ComponentPropertiesBar } from '../../../../../path/to/ComponentPropertiesBar';
+import { ComponentPropertiesBar } from './ComponentPropertiesBar';
 // ^ Replace with your actual import path
 
 const PropertiesContainer = styled.div`

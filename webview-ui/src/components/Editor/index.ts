@@ -1,2 +1,2 @@
 export * from './Viewport';
-// export * from './ComponentPropertiesBar';
+export * from './Viewport/Sidebar/ComponentPropertiesBar';
