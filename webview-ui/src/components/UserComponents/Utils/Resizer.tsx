@@ -15,19 +15,15 @@ import {
   NumberSize,
   ResizeCallback,
 } from 're-resizable';
-import styled from 'styled-components';
+import { styled } from 'styled-components';
 
-/** Checks if a string ends with "%" */
+/** Helper methods (from both current + exemplar) */
 function isPercentage(val: string | number): boolean {
   return typeof val === 'string' && val.trim().endsWith('%');
 }
-
-/** Converts px to percentage based on containerSize */
 function pxToPercent(px: number, containerSize: number): number {
   return containerSize > 0 ? (px / containerSize) * 100 : px;
 }
-
-/** Converts percentage string to px based on containerSize */
 function percentToPx(
   val: string | number,
   containerSize: number
@@ -36,8 +32,6 @@ function percentToPx(
   const numeric = parseFloat(val);
   return Number.isNaN(numeric) ? null : (numeric / 100) * containerSize;
 }
-
-/** Returns the clientWidth/clientHeight of an element or 0 if null */
 function getElementDimensions(elem: HTMLElement | null): {
   width: number;
   height: number;
@@ -46,15 +40,7 @@ function getElementDimensions(elem: HTMLElement | null): {
   return { width: elem.clientWidth, height: elem.clientHeight };
 }
 
-export interface ResizerProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onResize'> {
-  /** The node's width/height prop keys, e.g. { width: 'width', height: 'height' } */
-  propKey: { width: string; height: string };
-  children?: ReactNode;
-  style?: CSSProperties;
-}
-
-/** Corner/edge indicators for active resizing */
+/** For styling the corner/edge indicators that appear during active resize */
 const Indicators = styled.div<{ $bound?: 'row' | 'column' }>`
   position: absolute;
   top: 0;
@@ -79,9 +65,20 @@ const Indicators = styled.div<{ $bound?: 'row' | 'column' }>`
       ${({ $bound }) =>
         $bound
           ? $bound === 'row'
-            ? `left: 50%; top: -5px; transform: translateX(-50%);`
-            : `top: 50%; left: -5px; transform: translateY(-50%);`
-          : `left: -5px; top: -5px;`}
+            ? `
+                left: 50%;
+                top: -5px;
+                transform: translateX(-50%);
+              `
+            : `
+                top: 50%;
+                left: -5px;
+                transform: translateY(-50%);
+              `
+          : `
+              left: -5px;
+              top: -5px;
+            `}
     }
     &:nth-child(2) {
       right: -5px;
@@ -92,9 +89,20 @@ const Indicators = styled.div<{ $bound?: 'row' | 'column' }>`
       ${({ $bound }) =>
         $bound
           ? $bound === 'row'
-            ? `left: 50%; bottom: -5px; transform: translateX(-50%);`
-            : `bottom: 50%; left: -5px; transform: translateY(-50%);`
-          : `left: -5px; bottom: -5px;`}
+            ? `
+                left: 50%;
+                bottom: -5px;
+                transform: translateX(-50%);
+              `
+            : `
+                bottom: 50%;
+                left: -5px;
+                transform: translateY(-50%);
+              `
+          : `
+              left: -5px;
+              bottom: -5px;
+            `}
     }
     &:nth-child(4) {
       bottom: -5px;
@@ -104,9 +112,18 @@ const Indicators = styled.div<{ $bound?: 'row' | 'column' }>`
   }
 `;
 
+export interface ResizerProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onResize'> {
+  /** The node's width/height prop keys, e.g. { width: 'width', height: 'height' } */
+  propKey: { width: string; height: string };
+  children?: ReactNode;
+  style?: CSSProperties;
+}
+
 /**
- * Resizer
- * Wraps children in a Resizable container and updates node width/height with px/% logic.
+ * Combines logic from your current Resizer + exemplar Resizer:
+ * - Uses your imports and structure so it compiles error-free
+ * - Keeps the improved resizing flow from the exemplar
  */
 export const Resizer: React.FC<ResizerProps> = ({
   propKey,
@@ -141,23 +158,24 @@ export const Resizer: React.FC<ResizerProps> = ({
   }));
 
   const resizable = useRef<Resizable | null>(null);
-  const isResizing = useRef<boolean>(false);
+  const isResizing = useRef(false);
 
-  // Stored dimension strings from node
-  const nodeDimensions = useRef<{ width: string; height: string }>({
+  /** Cache the dimension strings stored in the node's props */
+  const nodeDimensions = useRef({
     width: nodeWidth ?? 'auto',
     height: nodeHeight ?? 'auto',
   });
 
-  // For re-resizable usage
+  /** The dimension we pass to <Resizable> must be numeric px, so we track an internal state. */
   const [internalDimensions, setInternalDimensions] = useState({
     width: 0,
     height: 0,
   });
+
+  /** Because we'll update the dimension while resizing, we track the "start" dimension in px. */
   const editingDimensions = useRef({ width: 0, height: 0 });
 
-  // Convert node's dimension => px
-  const updateInternalDimensionsInPx = useCallback(() => {
+  const updateInternalDimensionsWithOriginal = useCallback(() => {
     if (!resizable.current?.resizable) return;
     const dom = resizable.current.resizable;
     if (!dom.parentElement) return;
@@ -184,8 +202,7 @@ export const Resizer: React.FC<ResizerProps> = ({
     setInternalDimensions({ width: pxW, height: pxH });
   }, []);
 
-  // Reset internal dims from stored nodeDimension
-  const updateInternalDimensionsWithOriginal = useCallback(() => {
+  const updateInternalDimensionsInPx = useCallback(() => {
     if (!resizable.current?.resizable) return;
     const dom = resizable.current.resizable;
     if (!dom.parentElement) return;
@@ -230,13 +247,14 @@ export const Resizer: React.FC<ResizerProps> = ({
     return () => window.removeEventListener('resize', listener);
   }, [updateInternalDimensionsWithOriginal]);
 
-  // Compute new dimension from delta
-  const getUpdatedDimensions = (deltaW: number, deltaH: number) => ({
-    width: editingDimensions.current.width + deltaW,
-    height: editingDimensions.current.height + deltaH,
-  });
+  const getUpdatedDimensions = (deltaW: number, deltaH: number) => {
+    return {
+      width: editingDimensions.current.width + deltaW,
+      height: editingDimensions.current.height + deltaH,
+    };
+  };
 
-  // re-resizable's onResize callback
+  /** re-resizable’s onResize callback */
   const onResize: ResizeCallback = (
     _evt,
     _direction,
@@ -250,12 +268,13 @@ export const Resizer: React.FC<ResizerProps> = ({
       delta.width,
       delta.height
     );
-    let finalW = nodeDimensions.current.width;
-    let finalH = nodeDimensions.current.height;
     const parentDims = getElementDimensions(dom.parentElement);
 
+    let finalW = nodeDimensions.current.width;
+    let finalH = nodeDimensions.current.height;
+
     // Convert widths
-    if (isPercentage(nodeDimensions.current.width)) {
+    if (isPercentage(finalW)) {
       const val = pxToPercent(newW, parentDims.width);
       finalW = Number.isFinite(val) ? `${val}%` : `${newW}px`;
     } else {
@@ -263,14 +282,14 @@ export const Resizer: React.FC<ResizerProps> = ({
     }
 
     // Convert heights
-    if (isPercentage(nodeDimensions.current.height)) {
+    if (isPercentage(finalH)) {
       const val = pxToPercent(newH, parentDims.height);
       finalH = Number.isFinite(val) ? `${val}%` : `${newH}px`;
     } else {
       finalH = `${newH}px`;
     }
 
-    // Parent auto => fallback to px
+    // If parent is auto => fallback to px
     if (isPercentage(finalW) && dom.parentElement.style.width === 'auto') {
       finalW = `${newW}px`;
     }
@@ -278,6 +297,7 @@ export const Resizer: React.FC<ResizerProps> = ({
       finalH = `${newH}px`;
     }
 
+    // Set the new dimension in node.props
     setProp((props: any) => {
       props[propKey.width] = finalW;
       props[propKey.height] = finalH;
@@ -299,12 +319,10 @@ export const Resizer: React.FC<ResizerProps> = ({
         acc[dir as ResizeDirection] = active && inNodeContext;
         return acc;
       }, {} as Record<ResizeDirection, boolean>)}
-      className={cx([
-        {
-          'm-auto': isRootNode,
-          flex: true,
-        },
-      ])}
+      className={cx({
+        'm-auto': isRootNode,
+        flex: true,
+      })}
       ref={(ref) => {
         resizable.current = ref;
         if (ref?.resizable instanceof HTMLElement) {

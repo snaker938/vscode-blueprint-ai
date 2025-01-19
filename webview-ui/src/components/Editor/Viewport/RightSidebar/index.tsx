@@ -31,7 +31,7 @@ const SwitchButton = styled.button`
   cursor: pointer;
 `;
 
-export const Sidebar: React.FC = () => {
+export const RightSidebar: React.FC = () => {
   const { enabled } = useEditor((state) => ({
     enabled: state.options.enabled,
   }));

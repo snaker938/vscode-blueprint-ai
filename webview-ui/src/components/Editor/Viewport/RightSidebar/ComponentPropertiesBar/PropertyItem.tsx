@@ -2,12 +2,15 @@ import React from 'react';
 import { useNode } from '@craftjs/core';
 import { Slider, TextField } from '@fluentui/react';
 
+type PropertyItemType = 'text' | 'number' | 'slider' | 'bg' | 'color';
+
 interface PropertyItemProps {
   propKey: string;
-  type: 'text' | 'number' | 'slider';
+  type: PropertyItemType;
   label?: string;
   index?: number;
   onChange?: (val: any) => any;
+  full?: boolean; // Make sure we actually use this
 }
 
 export const PropertyItem: React.FC<PropertyItemProps> = ({
@@ -16,6 +19,7 @@ export const PropertyItem: React.FC<PropertyItemProps> = ({
   label,
   index,
   onChange,
+  full,
 }) => {
   const {
     actions: { setProp },
@@ -37,8 +41,12 @@ export const PropertyItem: React.FC<PropertyItemProps> = ({
   };
 
   if (type === 'slider') {
+    const containerStyle: React.CSSProperties = {
+      marginBottom: '10px',
+      width: full ? '100%' : 'auto',
+    };
     return (
-      <div style={{ marginBottom: '10px' }}>
+      <div style={containerStyle}>
         {label && <div style={{ marginBottom: '5px' }}>{label}</div>}
         <Slider
           value={Number(value) || 0}
@@ -48,12 +56,23 @@ export const PropertyItem: React.FC<PropertyItemProps> = ({
         />
       </div>
     );
-  } else if (type === 'text' || type === 'number') {
+  }
+
+  if (
+    type === 'text' ||
+    type === 'number' ||
+    type === 'bg' ||
+    type === 'color'
+  ) {
+    const containerStyle: React.CSSProperties = {
+      marginBottom: '10px',
+      width: full ? '100%' : 'auto',
+    };
     return (
-      <div style={{ marginBottom: '10px' }}>
+      <div style={containerStyle}>
         {label && <div style={{ marginBottom: '5px' }}>{label}</div>}
         <TextField
-          type={type}
+          type={type === 'number' ? 'number' : 'text'}
           value={value || ''}
           onChange={(_, newVal) => handleValueChange(newVal)}
         />

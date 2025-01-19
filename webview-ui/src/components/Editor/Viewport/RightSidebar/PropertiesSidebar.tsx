@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { useEditor } from '@craftjs/core';
 
 import { ComponentPropertiesBar } from './ComponentPropertiesBar';
-// ^ Replace with your actual import path
 
 const PropertiesContainer = styled.div`
   width: 100%;

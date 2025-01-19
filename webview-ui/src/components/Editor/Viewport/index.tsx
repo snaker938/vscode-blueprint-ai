@@ -1,36 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useEditor } from '@craftjs/core';
 import cx from 'classnames';
 
-import { Sidebar } from './Sidebar';
+import { RightSidebar } from './RightSidebar';
+import { LeftSidebar } from './LeftSidebar';
 
 export const Viewport: React.FC<{ children?: React.ReactNode }> = ({
   children,
 }) => {
-  const {
-    enabled,
-    connectors,
-    actions: { setOptions },
-  } = useEditor((state) => ({
+  const { enabled, connectors } = useEditor((state) => ({
     enabled: state.options.enabled,
   }));
-
-  useEffect(() => {
-    // If running in an iframe or doc site:
-    if (typeof window === 'undefined') return;
-
-    window.requestAnimationFrame(() => {
-      // Let a parent window know the editor is loaded
-      window.parent.postMessage({ LANDING_PAGE_LOADED: true }, '*');
-
-      // Auto-enable editing after a short delay
-      setTimeout(() => {
-        setOptions((options) => {
-          options.enabled = true;
-        });
-      }, 200);
-    });
-  }, [setOptions]);
 
   return (
     <div className="viewport w-full h-full relative">
@@ -55,7 +35,8 @@ export const Viewport: React.FC<{ children?: React.ReactNode }> = ({
           </div>
         </div>
 
-        <Sidebar />
+        <RightSidebar />
+        <LeftSidebar />
       </div>
     </div>
   );
