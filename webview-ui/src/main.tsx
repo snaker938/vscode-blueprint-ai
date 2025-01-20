@@ -5,7 +5,7 @@ import App from './App';
 import './global.css';
 
 import CreateWithImaginationPage from './pages/CreateWithImagination/CreateWithImaginationPage';
-import EditingInterface from './pages/EditingInterface/EditingInterface';
+import EditingInterface from './pages/MainInterface/MainInterface';
 // 2) Correct path: no “.tsx/EditingInterface”
 
 document.addEventListener('DOMContentLoaded', () => {

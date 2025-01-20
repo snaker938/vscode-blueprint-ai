@@ -7,10 +7,10 @@ import {
   DirectionalHint,
 } from '@fluentui/react';
 
-interface SidebarProps {
+interface Props {
   activeTab: string;
-  onTabClick: (tabKey: string) => void;
-  onActionClick: (actionKey: string) => void;
+  onTabClick: (key: string) => void;
+  onActionClick: (key: string) => void;
 }
 
 const tabs = [
@@ -28,21 +28,13 @@ const actions = [
   { key: 'export', icon: 'OpenInNewWindow', title: 'Export' },
 ];
 
-const LeftSidebarUI: React.FC<SidebarProps> = ({
+export const SidebarIconsBar: React.FC<Props> = ({
   activeTab,
   onTabClick,
   onActionClick,
 }) => {
   return (
-    <div
-      className="sidebar"
-      style={{
-        width: 60,
-        borderRight: '1px solid #ccc',
-        height: '100%',
-        background: '#ffffff',
-      }}
-    >
+    <div className="w-[60px] h-full bg-white flex-none">
       <Stack
         verticalAlign="space-between"
         styles={{ root: { height: '100%' } }}
@@ -50,37 +42,38 @@ const LeftSidebarUI: React.FC<SidebarProps> = ({
         <Stack>
           {tabs.map((tab) => (
             <TooltipHost
-              content={tab.title}
               key={tab.key}
+              content={tab.title}
               directionalHint={DirectionalHint.rightCenter}
             >
               <IconButton
                 iconProps={{ iconName: tab.icon }}
                 title={tab.title}
                 ariaLabel={tab.title}
-                className={`sidebar-button ${
-                  activeTab === tab.key ? 'active-tab' : ''
-                }`}
+                className={
+                  activeTab === tab.key
+                    ? 'sidebar-button active-tab'
+                    : 'sidebar-button'
+                }
                 onClick={() => onTabClick(tab.key)}
               />
             </TooltipHost>
           ))}
         </Stack>
-
         <Stack>
           <Separator style={{ margin: '10px 0' }} />
-          {actions.map((action) => (
+          {actions.map((act) => (
             <TooltipHost
-              content={action.title}
-              key={action.key}
+              key={act.key}
+              content={act.title}
               directionalHint={DirectionalHint.rightCenter}
             >
               <IconButton
-                iconProps={{ iconName: action.icon }}
-                title={action.title}
-                ariaLabel={action.title}
+                iconProps={{ iconName: act.icon }}
+                title={act.title}
+                ariaLabel={act.title}
                 className="sidebar-button"
-                onClick={() => onActionClick(action.key)}
+                onClick={() => onActionClick(act.key)}
               />
             </TooltipHost>
           ))}
@@ -89,5 +82,3 @@ const LeftSidebarUI: React.FC<SidebarProps> = ({
     </div>
   );
 };
-
-export default LeftSidebarUI;
