@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* The icon bar is 60px wide total. */
+.icon-bar-container {
+  width: 60px !important;
+  height: 100% !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border-right: 1px solid #ccc;
+  position: relative;
+}
+
+/* The two-line separator, centered horizontally. */
+.double-separator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 16px 0;
+  width: 70%;
+}
+
+.double-separator .line1 {
+  width: 100%;
+  height: 2px;
+  background-color: #1d3f72;
+  border-radius: 2px;
+}
+
+.double-separator .line2 {
+  width: 70%;
+  height: 2px;
+  background-color: #3c65a5;
+  border-radius: 2px;
+  margin-top: 3px;
+}
+
+/* 
+   Each row (tab/action). 
+   We keep the left border highlight for active,
+   but add some left padding so the icon is
+   further from the highlight bar. 
+*/
+.sidebar-item {
+  position: relative;
+  width: 100%;
+  margin: 6px 0;
+  padding: 6px 0;
+  border-left: 4px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Extra left padding so the highlight is further from the icon: */
+  padding-left: 10px;
+}
+
+/* Active tab: highlight bar in brand color. */
+.sidebar-item-active {
+  border-left-color: #5c2d91;
+}
+
+/* 
+   On hover: subtle background, small shadow,
+   icon scales a bit. 
+*/
+.sidebar-item:hover {
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-item:hover .icon-container {
+  transform: scale(1.1);
+}
+
+/* The icon container is centered horizontally (within the item).
+   We removed margin-left so it doesn't shift. 
+*/
+.icon-container {
+  transition: transform 0.2s ease;
+}

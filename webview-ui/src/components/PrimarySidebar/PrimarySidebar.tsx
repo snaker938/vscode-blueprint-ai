@@ -2,31 +2,36 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { SidebarIconsBar } from './SidebarIconsBar';
 import { ElementsList } from './ElementsList';
+import './sidebarStyles.css';
 
-const SidebarContainer = styled.div`
-  min-width: 320px;
-  height: 100%;
-  border-right: 1px solid #e1e1e1;
+/*
+  Use a transient prop named "$isOpen" 
+  so it doesn't get passed to the DOM. 
+*/
+const OuterWrapper = styled.div<{ $isOpen: boolean }>`
   display: flex;
+  height: 100%;
+  overflow: hidden;
+  transition: width 0.3s ease;
+  width: ${(p) => (p.$isOpen ? '320px' : '60px')};
 `;
 
-const TabContentWrapper = styled.div`
+const ContentArea = styled.div`
   flex: 1;
   background: #f5f5f5;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 `;
 
-const EmptyTabView = styled.div`
+const EmptyTabPanel = styled.div`
   flex: 1;
   background-color: #f9f9f9;
   border-right: 1px solid #e1e1e1;
   padding: 15px;
-  overflow-y: auto;
 `;
 
-const Title = styled.h2`
+const TabTitle = styled.h2`
   margin: 0;
   font-size: 18px;
   font-weight: 700;
@@ -34,33 +39,49 @@ const Title = styled.h2`
 `;
 
 export const PrimarySidebar: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('components');
+  const [activeTab, setActiveTab] = useState<string | null>('components');
 
-  const onTabClick = (key: string) => setActiveTab(key);
-  const onActionClick = (key: string) => {
-    console.log('[PrimarySidebar] Action:', key);
+  const handleTabClick = (tabKey: string) => {
+    if (tabKey === activeTab) {
+      setActiveTab(null);
+    } else {
+      setActiveTab(tabKey);
+    }
   };
 
+  const handleActionClick = (actionKey: string) => {
+    console.log('[PrimarySidebar] action:', actionKey);
+  };
+
+  const $isOpen = activeTab !== null;
+
   return (
-    <SidebarContainer>
+    <OuterWrapper $isOpen={$isOpen}>
+      {/* The icons bar on the left, no forced width in CSS. 
+          It's just as wide as the OuterWrapper if closed, or part of it if open. 
+      */}
       <SidebarIconsBar
         activeTab={activeTab}
-        onTabClick={onTabClick}
-        onActionClick={onActionClick}
+        onTabClick={handleTabClick}
+        onActionClick={handleActionClick}
       />
-      <TabContentWrapper>
-        {activeTab === 'components' && <ElementsList />}
-        {activeTab === 'layout' && (
-          <EmptyTabView>
-            <Title>Layout</Title>
-          </EmptyTabView>
-        )}
-        {activeTab === 'pages' && (
-          <EmptyTabView>
-            <Title>Pages</Title>
-          </EmptyTabView>
-        )}
-      </TabContentWrapper>
-    </SidebarContainer>
+
+      {/* If there's an active tab, show the content. Otherwise, none. */}
+      {activeTab && (
+        <ContentArea>
+          {activeTab === 'components' && <ElementsList />}
+          {activeTab === 'layout' && (
+            <EmptyTabPanel>
+              <TabTitle>Layout</TabTitle>
+            </EmptyTabPanel>
+          )}
+          {activeTab === 'pages' && (
+            <EmptyTabPanel>
+              <TabTitle>Pages</TabTitle>
+            </EmptyTabPanel>
+          )}
+        </ContentArea>
+      )}
+    </OuterWrapper>
   );
 };

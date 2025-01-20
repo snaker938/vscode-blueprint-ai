@@ -1,9 +1,5 @@
 /* @import url('https://use.typekit.net/mpa1wkh.css'); */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 html,
 body {
   font-family: 'acumin-pro', -apple-system, BlinkMacSystemFont, 'Segoe UI',
@@ -11,6 +7,29 @@ body {
     'Helvetica Neue', sans-serif;
   color: rgb(75, 75, 75);
   background: #e0e0e0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Define custom .tw-* classes that forcibly override any .flex { display:block } rule. */
+@layer components {
+  .tw-flex {
+    @apply flex;
+    display: flex !important;
+  }
+  .tw-flex-none {
+    @apply flex-none;
+    flex: 0 0 auto !important;
+  }
+  .tw-flex-1 {
+    @apply flex-1;
+    flex: 1 1 0% !important;
+  }
 }
 
 * {
@@ -25,21 +44,7 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* global.css or similar */
-html,
-body,
-#root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-}
-
-body {
-  padding: 0 !important;
-}
-
-.component-selected {
+/* .component-selected {
   @apply relative;
 }
 .component-selected::after {
@@ -49,4 +54,4 @@ body {
 
 .transition {
   transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-}
+} */

@@ -1,14 +1,9 @@
 import React from 'react';
-import {
-  Stack,
-  IconButton,
-  TooltipHost,
-  Separator,
-  DirectionalHint,
-} from '@fluentui/react';
+import { IconButton, TooltipHost, DirectionalHint } from '@fluentui/react';
+import './sidebarStyles.css';
 
-interface Props {
-  activeTab: string;
+interface SidebarIconsBarProps {
+  activeTab: string | null;
   onTabClick: (key: string) => void;
   onActionClick: (key: string) => void;
 }
@@ -28,57 +23,72 @@ const actions = [
   { key: 'export', icon: 'OpenInNewWindow', title: 'Export' },
 ];
 
-export const SidebarIconsBar: React.FC<Props> = ({
+const biggerIconStyles = {
+  root: {
+    fontSize: 30, // bigger icons
+  },
+};
+
+export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
   activeTab,
   onTabClick,
   onActionClick,
 }) => {
   return (
-    <div className="w-[60px] h-full bg-white flex-none">
-      <Stack
-        verticalAlign="space-between"
-        styles={{ root: { height: '100%' } }}
-      >
-        <Stack>
-          {tabs.map((tab) => (
-            <TooltipHost
-              key={tab.key}
-              content={tab.title}
-              directionalHint={DirectionalHint.rightCenter}
+    <div className="icon-bar-container">
+      {/* Tab icons */}
+      {tabs.map((tab) => {
+        const isActive = tab.key === activeTab;
+        return (
+          <TooltipHost
+            key={tab.key}
+            content={tab.title}
+            directionalHint={DirectionalHint.rightCenter}
+          >
+            <div
+              className={`sidebar-item ${
+                isActive ? 'sidebar-item-active' : ''
+              }`}
             >
+              {/* We wrap the IconButton in .icon-container so only the icon scales on hover */}
+              <div className="icon-container">
+                <IconButton
+                  iconProps={{ iconName: tab.icon, styles: biggerIconStyles }}
+                  title={tab.title}
+                  ariaLabel={tab.title}
+                  onClick={() => onTabClick(tab.key)}
+                />
+              </div>
+            </div>
+          </TooltipHost>
+        );
+      })}
+
+      {/* Double-line separator */}
+      <div className="double-separator">
+        <div className="line1"></div>
+        <div className="line2"></div>
+      </div>
+
+      {/* Bottom actions */}
+      {actions.map((act) => (
+        <TooltipHost
+          key={act.key}
+          content={act.title}
+          directionalHint={DirectionalHint.rightCenter}
+        >
+          <div className="sidebar-item">
+            <div className="icon-container">
               <IconButton
-                iconProps={{ iconName: tab.icon }}
-                title={tab.title}
-                ariaLabel={tab.title}
-                className={
-                  activeTab === tab.key
-                    ? 'sidebar-button active-tab'
-                    : 'sidebar-button'
-                }
-                onClick={() => onTabClick(tab.key)}
-              />
-            </TooltipHost>
-          ))}
-        </Stack>
-        <Stack>
-          <Separator style={{ margin: '10px 0' }} />
-          {actions.map((act) => (
-            <TooltipHost
-              key={act.key}
-              content={act.title}
-              directionalHint={DirectionalHint.rightCenter}
-            >
-              <IconButton
-                iconProps={{ iconName: act.icon }}
+                iconProps={{ iconName: act.icon, styles: biggerIconStyles }}
                 title={act.title}
                 ariaLabel={act.title}
-                className="sidebar-button"
                 onClick={() => onActionClick(act.key)}
               />
-            </TooltipHost>
-          ))}
-        </Stack>
-      </Stack>
+            </div>
+          </div>
+        </TooltipHost>
+      ))}
     </div>
   );
 };

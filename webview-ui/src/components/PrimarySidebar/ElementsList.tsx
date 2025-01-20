@@ -1,16 +1,17 @@
+// webview-ui/src/components/PrimarySidebar/ElementsList.tsx
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { TextField, Text, Icon, Separator } from '@fluentui/react';
+import './sidebarStyles.css';
 
 const Wrapper = styled.div`
-  width: 100%;
-  max-width: 320px;
+  /* Remains a normal flex column container inside the tab area */
+  flex: 1;
   background-color: #f9f9f9;
   border-right: 1px solid #e1e1e1;
   padding: 15px;
   overflow-y: auto;
   overflow-x: hidden;
-  flex: 1;
   display: flex;
   flex-direction: column;
 `;
