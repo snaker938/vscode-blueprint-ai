@@ -1,3 +1,5 @@
+// webview-ui/src/components/RenderNode/index.tsx
+
 import React, {
   useState,
   useEffect,
@@ -11,19 +13,20 @@ import ReactDOM from 'react-dom';
 import { useNode, useEditor } from '@craftjs/core';
 import styled from 'styled-components';
 
-// Material UI icons
 import DeleteOutline from '@mui/icons-material/DeleteOutline';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
 import OpenWith from '@mui/icons-material/OpenWith';
 import { Tooltip } from '@mui/material';
 
-const IndicatorDiv = styled.div`
+const INDICATOR_HEIGHT = 32;
+const OFFSET_ABOVE = 8;
+
+const IndicatorWrapper = styled.div`
   position: fixed;
-  height: 32px;
-  margin-top: -31px;
+  height: ${INDICATOR_HEIGHT}px;
   font-size: 12px;
-  line-height: 12px;
+  line-height: 1;
   background-color: #0072ee;
   color: #fff;
   display: flex;
@@ -31,29 +34,13 @@ const IndicatorDiv = styled.div`
   border-radius: 4px;
   padding: 0 6px;
   z-index: 9999;
-
-  /* Avoid text selection highlight on double-click rename */
   user-select: none;
-
-  /* A small drop shadow for clarity */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 
   svg {
     fill: #fff;
     width: 18px;
     height: 18px;
-  }
-`;
-
-const IconBtn = styled.span`
-  padding: 0 6px;
-  opacity: 0.9;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-
-  & + & {
-    margin-left: 8px;
   }
 `;
 
@@ -66,9 +53,23 @@ const NameInput = styled.input`
   font-size: 12px;
   margin-right: 4px;
   outline: none;
-
   &:focus {
     border-color: #fff;
+  }
+`;
+
+const IconButtonWrapper = styled.span`
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  cursor: pointer;
+
+  & + & {
+    margin-left: 8px;
+  }
+
+  svg {
+    opacity: 0.9;
   }
 `;
 
@@ -78,164 +79,180 @@ interface RenderNodeProps {
 
 /**
  * RenderNode
- * - Uses actions.setHidden(...) from the official Craft.js API to hide/unhide a node
- * - Double-click rename via actions.setCustom(...)
- * - Has MUI icons + tooltips
+ * Displays a small indicator above each Node if hovered or selected.
+ * Hides the indicator if:
+ *  - The user’s mouse leaves every component (hoveredNodeIds is empty).
+ *  - And there’s no node selected (selectedNodeIds is empty).
+ * Otherwise, if exactly one node is selected, hide the indicator on all others.
  */
 export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
-  // Grab nodeId from useNode()
   const { id } = useNode();
-
-  // From the editor, get the set of selected node IDs
-  const { selectedNodeIds, actions } = useEditor((state) => ({
+  const { selectedNodeIds, hoveredNodeIds, actions } = useEditor((state) => ({
     selectedNodeIds: state.events.selected,
+    hoveredNodeIds: state.events.hovered,
   }));
 
-  // Check if this node is currently "active" (selected)
-  const isActive = !!selectedNodeIds && selectedNodeIds.has(id);
+  const isActive = !!selectedNodeIds?.has(id);
+  const isHovered = !!hoveredNodeIds?.has(id);
 
-  // Collect data from this node
-  const { connectors, dom, hidden, isHover, moveable, deletable, displayName } =
-    useNode((node) => ({
+  const { connectors, dom, hidden, moveable, deletable, displayName } = useNode(
+    (node) => ({
       dom: node.dom,
       hidden: node.data.hidden,
-      isHover: node.events.hovered,
-      // For simplicity, we just define these as always true
       moveable: true,
       deletable: true,
-      // Fallback if custom.displayName not set
       displayName:
         (node.data.custom && node.data.custom.displayName) ||
         node.data.displayName,
-    }));
+    })
+  );
 
-  // State for rename
-  const [isRenaming, setIsRenaming] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(displayName);
+  const [forceHide, setForceHide] = useState(false);
 
-  // Ref for indicator div
   const indicatorRef = useRef<HTMLDivElement>(null);
 
-  // Positioning logic for the indicator
-  const getPos = useCallback((el: HTMLElement) => {
-    if (!el) return { top: '0px', left: '0px' };
-    const { top, left, bottom } = el.getBoundingClientRect();
+  const getIndicatorPos = useCallback((el: HTMLElement) => {
+    if (!el) return { top: 0, left: 0 };
+    const rect = el.getBoundingClientRect();
     return {
-      top: `${top > 0 ? top : bottom}px`,
-      left: `${left}px`,
+      top: rect.top - INDICATOR_HEIGHT - OFFSET_ABOVE,
+      left: rect.left,
     };
   }, []);
 
-  const handleScroll = useCallback(() => {
+  const positionIndicator = useCallback(() => {
     if (!indicatorRef.current || !dom) return;
-    const { top, left } = getPos(dom);
-    indicatorRef.current.style.top = top;
-    indicatorRef.current.style.left = left;
-  }, [dom, getPos]);
+    const { top, left } = getIndicatorPos(dom);
+    indicatorRef.current.style.top = `${top}px`;
+    indicatorRef.current.style.left = `${left}px`;
+  }, [dom, getIndicatorPos]);
 
+  // Reposition on scroll/resize
   useEffect(() => {
     const container = document.querySelector('.craftjs-renderer');
     if (!container) return;
-    container.addEventListener('scroll', handleScroll);
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-    };
-  }, [handleScroll]);
 
-  // Toggle hidden/unhidden
+    const handleUpdate = () => positionIndicator();
+    container.addEventListener('scroll', handleUpdate);
+    window.addEventListener('resize', handleUpdate);
+    return () => {
+      container.removeEventListener('scroll', handleUpdate);
+      window.removeEventListener('resize', handleUpdate);
+    };
+  }, [positionIndicator]);
+
+  // Mouse tracking for hiding all indicators if no hover + no selection
+  useEffect(() => {
+    const handleMouseMove = () => {
+      // If no hovered nodes and no selected nodes => hide indicator forcibly
+      if (hoveredNodeIds?.size === 0 && selectedNodeIds?.size === 0) {
+        setForceHide(true);
+      } else {
+        // If exactly one node is selected, hide all but that node
+        if (selectedNodeIds?.size === 1 && !selectedNodeIds.has(id)) {
+          setForceHide(true);
+        } else {
+          setForceHide(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [hoveredNodeIds, selectedNodeIds, id]);
+
   const toggleHidden = (e: MouseEvent) => {
     e.stopPropagation();
     actions.setHidden(id, !hidden);
   };
 
-  // Rename logic
-  const handleNameDoubleClick = () => {
+  const handleRenameDblClick = () => {
     setRenameValue(displayName);
-    setIsRenaming(true);
+    setRenaming(true);
   };
 
-  const commitNameChange = () => {
-    actions.setCustom(id, (cust: any) => {
-      cust.displayName = renameValue || 'Untitled Node';
+  const finalizeRename = () => {
+    actions.setCustom(id, (custom: any) => {
+      custom.displayName = renameValue || 'Untitled Node';
     });
-    setIsRenaming(false);
+    setRenaming(false);
   };
 
-  const handleNameKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      commitNameChange();
+      finalizeRename();
     } else if (e.key === 'Escape') {
-      setIsRenaming(false);
+      setRenaming(false);
     }
   };
 
-  const handleNameBlur = () => {
-    commitNameChange();
-  };
-
-  // Show indicator if node is not hidden and is either hovered or active
-  const showIndicator = !hidden && (isHover || isActive) && dom;
+  const showIndicator = !hidden && (isActive || isHovered) && dom && !forceHide;
 
   return (
     <>
-      {showIndicator
-        ? ReactDOM.createPortal(
-            <IndicatorDiv ref={indicatorRef} style={getPos(dom)}>
-              {isRenaming ? (
-                <NameInput
-                  autoFocus
-                  value={renameValue}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setRenameValue(e.target.value)
-                  }
-                  onBlur={handleNameBlur}
-                  onKeyDown={handleNameKeyDown}
-                />
-              ) : (
-                <h2
-                  style={{ marginRight: '6px', cursor: 'pointer' }}
-                  onDoubleClick={handleNameDoubleClick}
+      {showIndicator &&
+        ReactDOM.createPortal(
+          <IndicatorWrapper ref={indicatorRef} style={getIndicatorPos(dom)}>
+            {renaming ? (
+              <NameInput
+                autoFocus
+                value={renameValue}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setRenameValue(e.target.value)
+                }
+                onBlur={finalizeRename}
+                onKeyDown={handleKeyDown}
+              />
+            ) : (
+              <h2
+                style={{ marginRight: '6px', cursor: 'pointer', fontSize: 12 }}
+                onDoubleClick={handleRenameDblClick}
+              >
+                {displayName}
+              </h2>
+            )}
+
+            {moveable && (
+              <Tooltip title="Drag to move node" placement="top" arrow>
+                <IconButtonWrapper
+                  ref={(el) => el && connectors.drag(el)}
+                  onMouseDown={(ev) => ev.stopPropagation()}
                 >
-                  {displayName}
-                </h2>
-              )}
-
-              {moveable && (
-                <Tooltip title="Drag to move node" arrow>
-                  <IconBtn
-                    ref={(refEl) => {
-                      if (refEl) connectors.drag(refEl);
-                    }}
-                  >
-                    <OpenWith />
-                  </IconBtn>
-                </Tooltip>
-              )}
-
-              <Tooltip title={hidden ? 'Unhide Node' : 'Hide Node'} arrow>
-                <IconBtn onMouseDown={toggleHidden}>
-                  {hidden ? <Visibility /> : <VisibilityOff />}
-                </IconBtn>
+                  <OpenWith />
+                </IconButtonWrapper>
               </Tooltip>
+            )}
 
-              {deletable && (
-                <Tooltip title="Delete node" arrow>
-                  <IconBtn
-                    onMouseDown={(e: MouseEvent) => {
-                      e.stopPropagation();
-                      actions.delete(id);
-                    }}
-                  >
-                    <DeleteOutline />
-                  </IconBtn>
-                </Tooltip>
-              )}
-            </IndicatorDiv>,
-            document.querySelector('.page-container') || document.body
-          )
-        : null}
+            <Tooltip
+              title={hidden ? 'Unhide Node' : 'Hide Node'}
+              placement="top"
+              arrow
+            >
+              <IconButtonWrapper onMouseDown={toggleHidden}>
+                {hidden ? <Visibility /> : <VisibilityOff />}
+              </IconButtonWrapper>
+            </Tooltip>
 
+            {deletable && (
+              <Tooltip title="Delete node" placement="top" arrow>
+                <IconButtonWrapper
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    actions.delete(id);
+                  }}
+                >
+                  <DeleteOutline />
+                </IconButtonWrapper>
+              </Tooltip>
+            )}
+          </IndicatorWrapper>,
+          document.querySelector('.page-container') || document.body
+        )}
       {render}
     </>
   );

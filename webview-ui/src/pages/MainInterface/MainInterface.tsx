@@ -8,6 +8,7 @@ import { Text as CraftText } from '../../components/UserComponents/Text';
 import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
 import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
 import './MainInterface.css';
+import { RenderNode } from '../../components/UserComponents/Utils';
 
 const theme = createTheme();
 
@@ -21,6 +22,7 @@ const MainInterface: React.FC = () => {
           Text: CraftText,
         }}
         enabled
+        onRender={RenderNode}
       >
         <div className="layout-root">
           <PrimarySidebar />
