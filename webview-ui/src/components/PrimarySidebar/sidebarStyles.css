@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* The icon bar is 60px wide total. */
+/* The icon bar is 60px wide. We center the column. */
 .icon-bar-container {
   width: 60px !important;
   height: 100% !important;
@@ -16,7 +16,7 @@
   position: relative;
 }
 
-/* The two-line separator, centered horizontally. */
+/* The double-separator, centered. */
 .double-separator {
   display: flex;
   flex-direction: column;
@@ -24,14 +24,12 @@
   margin: 16px 0;
   width: 70%;
 }
-
 .double-separator .line1 {
   width: 100%;
   height: 2px;
   background-color: #1d3f72;
   border-radius: 2px;
 }
-
 .double-separator .line2 {
   width: 70%;
   height: 2px;
@@ -40,51 +38,54 @@
   margin-top: 3px;
 }
 
-/* 
-   Each row (tab/action). 
-   We keep the left border highlight for active,
-   but add some left padding so the icon is
-   further from the highlight bar. 
+/* Each sidebar item is 60px wide, icon is centered.
+   We do NOT use border-left. Instead, we use a pseudo-element for the highlight.
 */
 .sidebar-item {
   position: relative;
-  width: 100%;
+  width: 60px;
   margin: 6px 0;
   padding: 6px 0;
-  border-left: 4px solid transparent;
-  border-radius: 6px;
+  border-radius: 6px; /* for a nice corner round on hover background */
   cursor: pointer;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 
   display: flex;
   align-items: center;
-  justify-content: center;
-  /* Extra left padding so the highlight is further from the icon: */
-  padding-left: 10px;
+  justify-content: center; /* icon sits in the horizontal center */
 }
 
-/* Active tab: highlight bar in brand color. */
-.sidebar-item-active {
-  border-left-color: #5c2d91;
+/* Highlight bar via ::before pseudo-element */
+.sidebar-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background-color: transparent;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
 }
 
-/* 
-   On hover: subtle background, small shadow,
-   icon scales a bit. 
-*/
+/* If active, color that left bar. */
+.sidebar-item-active::before {
+  background-color: #5c2d91;
+}
+
+/* On hover, subtle background + small shadow. */
 .sidebar-item:hover {
   background-color: #f5f5f5;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Only the icon scales (slightly), so it stays centered. */
 .sidebar-item:hover .icon-container {
   transform: scale(1.1);
 }
 
-/* The icon container is centered horizontally (within the item).
-   We removed margin-left so it doesn't shift. 
-*/
+/* The icon container: no extra left margin so icon truly stays in the center. */
 .icon-container {
   transition: transform 0.2s ease;
 }
