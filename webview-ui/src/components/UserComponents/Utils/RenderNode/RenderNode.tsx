@@ -9,7 +9,7 @@ interface RenderNodeProps {
 }
 
 /**
- * Main RenderNode that merges the manager logic + overlay
+ * Renders the node with an IndicatorManager + IndicatorOverlay
  */
 export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
   return (

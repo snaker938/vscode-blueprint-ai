@@ -9,66 +9,23 @@ import React, {
   useMemo,
 } from 'react';
 import ReactDOM from 'react-dom';
-import styled from 'styled-components';
 import { Tooltip } from '@mui/material';
+import {
+  VisibilityOff,
+  Visibility,
+  DeleteOutline,
+  OpenWith,
+} from '@mui/icons-material';
 
-import DeleteOutline from '@mui/icons-material/DeleteOutline';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Visibility from '@mui/icons-material/Visibility';
-import OpenWith from '@mui/icons-material/OpenWith';
+import './renderNodeStyles.css';
 
-const INDICATOR_HEIGHT = 32;
-
-const IndicatorWrapper = styled.div`
-  position: fixed;
-  height: ${INDICATOR_HEIGHT}px;
-  font-size: 12px;
-  line-height: 1;
-  background-color: #0072ee;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  border-radius: 4px;
-  padding: 0 6px;
-  z-index: 9999;
-  user-select: none;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-
-  svg {
-    fill: #fff;
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const NameInput = styled.input`
-  width: 110px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #ccc;
-  color: #fff;
-  font-size: 12px;
-  margin-right: 4px;
-  outline: none;
-  &:focus {
-    border-color: #fff;
-  }
-`;
-
-const IconButtonWrapper = styled.span`
-  display: flex;
-  align-items: center;
-  padding: 0 6px;
-  cursor: pointer;
-  & + & {
-    margin-left: 8px;
-  }
-  svg {
-    opacity: 0.9;
-  }
-`;
+interface OverlayPos {
+  top: number;
+  left: number;
+}
 
 interface IndicatorOverlayProps {
+  containerEl: HTMLElement | null;
   dom: HTMLElement | null;
   displayName: string;
   isHidden: boolean;
@@ -76,7 +33,7 @@ interface IndicatorOverlayProps {
   canDelete: boolean;
   isRenaming: boolean;
   renameValue: string;
-  indicatorPos: { top: number; left: number };
+  indicatorPos: OverlayPos;
   onRenameValueChange(e: ChangeEvent<HTMLInputElement>): void;
   onRenameBlur(): void;
   onRenameKeyDown(e: KeyboardEvent<HTMLInputElement>): void;
@@ -88,6 +45,7 @@ interface IndicatorOverlayProps {
 }
 
 export const IndicatorOverlay: React.FC<IndicatorOverlayProps> = ({
+  containerEl,
   dom,
   displayName,
   isHidden,
@@ -105,28 +63,37 @@ export const IndicatorOverlay: React.FC<IndicatorOverlayProps> = ({
   onDelete,
   show,
 }) => {
-  const indicatorRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
+  // Compute style for overlay
   const stylePos = useMemo(
     () => ({
       top: `${indicatorPos.top}px`,
       left: `${indicatorPos.left}px`,
     }),
-    [indicatorPos.top, indicatorPos.left]
+    [indicatorPos]
   );
 
+  // Update overlayRef position if style changes
   useEffect(() => {
-    if (!indicatorRef.current) return;
-    indicatorRef.current.style.top = stylePos.top;
-    indicatorRef.current.style.left = stylePos.left;
+    if (overlayRef.current) {
+      overlayRef.current.style.top = stylePos.top;
+      overlayRef.current.style.left = stylePos.left;
+    }
   }, [stylePos]);
 
-  if (!show || !dom) return null;
+  // If we can't show or have no container => skip
+  if (!show || !containerEl || !dom) return null;
 
-  return ReactDOM.createPortal(
-    <IndicatorWrapper ref={indicatorRef} style={stylePos}>
+  const overlayElem = (
+    <div
+      ref={overlayRef}
+      className="node-indicator"
+      style={{ position: 'absolute', top: 0, left: 0 }}
+    >
       {isRenaming ? (
-        <NameInput
+        <input
+          className="rename-input"
           autoFocus
           value={renameValue}
           onChange={onRenameValueChange}
@@ -134,22 +101,18 @@ export const IndicatorOverlay: React.FC<IndicatorOverlayProps> = ({
           onKeyDown={onRenameKeyDown}
         />
       ) : (
-        <h2
-          style={{ marginRight: '6px', cursor: 'pointer', fontSize: 12 }}
-          onDoubleClick={onRenameDblClick}
-        >
-          {displayName}
-        </h2>
+        <h2 onDoubleClick={onRenameDblClick}>{displayName}</h2>
       )}
 
       {canMove && (
         <Tooltip title="Drag to move node" placement="top" arrow>
-          <IconButtonWrapper
-            ref={onDragRef}
-            onMouseDown={(ev) => ev.stopPropagation()}
+          <span
+            className="icon-button"
+            ref={(dragEl) => onDragRef(dragEl)}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <OpenWith />
-          </IconButtonWrapper>
+          </span>
         </Tooltip>
       )}
 
@@ -158,19 +121,21 @@ export const IndicatorOverlay: React.FC<IndicatorOverlayProps> = ({
         placement="top"
         arrow
       >
-        <IconButtonWrapper onMouseDown={onToggleHidden}>
+        <span className="icon-button" onMouseDown={onToggleHidden}>
           {isHidden ? <Visibility /> : <VisibilityOff />}
-        </IconButtonWrapper>
+        </span>
       </Tooltip>
 
       {canDelete && (
         <Tooltip title="Delete node" placement="top" arrow>
-          <IconButtonWrapper onMouseDown={onDelete}>
+          <span className="icon-button" onMouseDown={onDelete}>
             <DeleteOutline />
-          </IconButtonWrapper>
+          </span>
         </Tooltip>
       )}
-    </IndicatorWrapper>,
-    document.querySelector('.page-container') || document.body
+    </div>
   );
+
+  // Portal into .craftjs-renderer or fallback to body
+  return ReactDOM.createPortal(overlayElem, containerEl);
 };

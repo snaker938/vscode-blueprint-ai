@@ -8,7 +8,7 @@ import { Text as CraftText } from '../../components/UserComponents/Text';
 import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
 import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
 import './MainInterface.css';
-import { RenderNode } from '../../components/UserComponents/Utils';
+import { RenderNode } from '../../components/UserComponents/Utils/RenderNode/RenderNode';
 
 const theme = createTheme();
 

@@ -15,13 +15,6 @@ interface IndicatorManagerProps {
   IndicatorOverlay: React.ComponentType<any>;
 }
 
-/**
- * Handles all logic for when to show/hide the overlay tooltip indicator.
- * Fixes issues:
- *  - If user selects a component, other tooltips may still appear when hovered.
- *  - If user’s mouse leaves the last hovered component and now hovers doc body,
- *    the tooltip for that component disappears properly.
- */
 export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
   render,
   IndicatorOverlay,
@@ -32,7 +25,7 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
     hoveredNodeIds: state.events.hovered,
   }));
 
-  const isActive = !!selectedNodeIds?.has(id);
+  const isSelected = !!selectedNodeIds?.has(id);
   const isHover = !!hoveredNodeIds?.has(id);
 
   const { connectors, dom, hidden, moveable, deletable, displayName } = useNode(
@@ -49,72 +42,54 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
 
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(displayName);
-  const [forceHide, setForceHide] = useState(false);
+
   const [indicatorPos, setIndicatorPos] = useState({ top: 0, left: 0 });
 
-  const getPos = useCallback((el: HTMLElement) => {
+  // We'll position the overlay inside .craftjs-renderer
+  const containerEl =
+    (document.querySelector('.craftjs-renderer') as HTMLElement) ||
+    document.body;
+
+  const updatePosition = useCallback(() => {
+    if (!dom) return;
+    const rect = dom.getBoundingClientRect();
+    const containerRect = containerEl.getBoundingClientRect();
+
     const INDICATOR_HEIGHT = 32;
     const OFFSET_ABOVE = 8;
-    if (!el) return { top: 0, left: 0 };
-    const rect = el.getBoundingClientRect();
-    return {
-      top: rect.top - INDICATOR_HEIGHT - OFFSET_ABOVE,
-      left: rect.left,
-    };
-  }, []);
 
-  const positionIndicator = useCallback(() => {
-    if (!dom) return;
-    setIndicatorPos(getPos(dom));
-  }, [dom, getPos]);
+    const top =
+      rect.top -
+      containerRect.top -
+      INDICATOR_HEIGHT -
+      OFFSET_ABOVE +
+      containerEl.scrollTop;
+    const left = rect.left - containerRect.left + containerEl.scrollLeft;
 
-  // Reposition on scroll/resize
+    setIndicatorPos({ top, left });
+  }, [dom, containerEl]);
+
   useEffect(() => {
-    const container = document.querySelector('.craftjs-renderer');
-    if (!container) return;
+    updatePosition();
+  }, [isHover, isSelected, updatePosition]);
 
-    const handleUpdate = () => positionIndicator();
-    container.addEventListener('scroll', handleUpdate);
-    window.addEventListener('resize', handleUpdate);
+  // Reposition on container scroll / resize
+  useEffect(() => {
+    const handleReposition = () => updatePosition();
+    containerEl.addEventListener('scroll', handleReposition);
+    window.addEventListener('resize', handleReposition);
 
     return () => {
-      container.removeEventListener('scroll', handleUpdate);
-      window.removeEventListener('resize', handleUpdate);
+      containerEl.removeEventListener('scroll', handleReposition);
+      window.removeEventListener('resize', handleReposition);
     };
-  }, [positionIndicator]);
+  }, [containerEl, updatePosition]);
 
-  // Track mouse movement to hide if hoveredNodeIds empty + selectedNodeIds empty
-  // but do NOT hide if user is selecting any node or hovering a node.
-  useEffect(() => {
-    const handleMouseMove = () => {
-      if (hoveredNodeIds?.size === 0 && selectedNodeIds?.size === 0) {
-        setForceHide(true);
-      } else {
-        setForceHide(false);
-      }
-    };
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [hoveredNodeIds, selectedNodeIds]);
+  // Show overlay if not hidden, node is hovered or selected, and we have DOM
+  const showOverlay = !hidden && (isSelected || isHover) && dom;
 
-  // If user leaves doc entirely, also hide
-  useEffect(() => {
-    const leaveDoc = () => setForceHide(true);
-    const enterDoc = () => setForceHide(false);
-
-    document.addEventListener('mouseleave', leaveDoc);
-    document.addEventListener('mouseenter', enterDoc);
-
-    return () => {
-      document.removeEventListener('mouseleave', leaveDoc);
-      document.removeEventListener('mouseenter', enterDoc);
-    };
-  }, []);
-
-  // Rename logic
-  const handleRenameDblClick = () => {
+  // rename logic
+  const onRenameDblClick = () => {
     setRenameValue(displayName);
     setRenaming(true);
   };
@@ -124,7 +99,10 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
     });
     setRenaming(false);
   };
-  const handleNameKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const onRenameValueChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setRenameValue(e.target.value);
+  const onRenameBlur = finalizeRename;
+  const onRenameKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       finalizeRename();
@@ -133,42 +111,36 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
     }
   };
 
-  // Show the indicator if node is not hidden, the user is either hovering or has selected it,
-  // there's a valid dom, and we are not forcing hide.
-  const showIndicator = !hidden && (isHover || isActive) && dom && !forceHide;
-
-  const handleToggleHidden = (e: MouseEvent) => {
+  const onToggleHidden = (e: MouseEvent) => {
     e.stopPropagation();
     actions.setHidden(id, !hidden);
   };
-
-  const handleDelete = (e: MouseEvent) => {
+  const onDelete = (e: MouseEvent) => {
     e.stopPropagation();
     actions.delete(id);
   };
 
   return (
     <>
-      {showIndicator && (
+      {showOverlay && (
         <IndicatorOverlay
-          dom={dom as HTMLElement}
-          displayName={displayName as string}
-          isHidden={hidden as boolean}
-          canMove={moveable as boolean}
-          canDelete={deletable as boolean}
-          isRenaming={renaming as boolean}
-          renameValue={renameValue as string}
-          indicatorPos={indicatorPos as { top: number; left: number }}
-          onRenameValueChange={(ev: ChangeEvent<HTMLInputElement>) =>
-            setRenameValue(ev.target.value)
-          }
-          onRenameBlur={finalizeRename}
-          onRenameKeyDown={handleNameKeyDown}
-          onRenameDblClick={handleRenameDblClick}
+          containerEl={containerEl}
+          dom={dom}
+          displayName={displayName}
+          isHidden={hidden}
+          canMove={moveable}
+          canDelete={deletable}
+          isRenaming={renaming}
+          renameValue={renameValue}
+          indicatorPos={indicatorPos}
+          onRenameValueChange={onRenameValueChange}
+          onRenameBlur={onRenameBlur}
+          onRenameKeyDown={onRenameKeyDown}
+          onRenameDblClick={onRenameDblClick}
           onDragRef={(el: HTMLElement | null) => el && connectors.drag(el)}
-          onToggleHidden={handleToggleHidden}
-          onDelete={handleDelete}
-          show={showIndicator as boolean}
+          onToggleHidden={onToggleHidden}
+          onDelete={onDelete}
+          show={showOverlay}
         />
       )}
       {render}
