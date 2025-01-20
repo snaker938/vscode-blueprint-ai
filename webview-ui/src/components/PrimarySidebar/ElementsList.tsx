@@ -1,11 +1,13 @@
 // webview-ui/src/components/PrimarySidebar/ElementsList.tsx
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useEditor, Element } from '@craftjs/core';
 import { TextField, Text, Icon, Separator } from '@fluentui/react';
+import { Container } from '../UserComponents/Container';
+import { Text as CraftText } from '../UserComponents/Text';
 import './sidebarStyles.css';
 
 const Wrapper = styled.div`
-  /* Remains a normal flex column container inside the tab area */
   flex: 1;
   background-color: #f9f9f9;
   border-right: 1px solid #e1e1e1;
@@ -60,12 +62,15 @@ const ElementName = styled(Text)`
 
 export const ElementsList: React.FC = () => {
   const [searchText, setSearchText] = useState('');
+  const { connectors } = useEditor();
+
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
+    { key: 'text', icon: 'Edit', name: 'Text' },
   ];
 
-  const filtered = basicItems.filter((it) =>
-    it.name.toLowerCase().includes(searchText.toLowerCase())
+  const filtered = basicItems.filter((item) =>
+    item.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
   return (
@@ -88,17 +93,42 @@ export const ElementsList: React.FC = () => {
       >
         Basic Elements
       </Text>
+
       <GridArea>
-        {filtered.map((it) => (
-          <ElementCard key={it.key} draggable>
-            <ElementIcon iconName={it.icon} />
-            <ElementName>{it.name}</ElementName>
+        {filtered.map((item) => (
+          <ElementCard
+            key={item.key}
+            ref={(ref) => {
+              if (!ref) return;
+              if (item.key === 'container') {
+                connectors.create(
+                  ref,
+                  <Element
+                    is={Container}
+                    padding={20}
+                    background="#ffffff"
+                    canvas
+                    children={null}
+                  />
+                );
+              } else if (item.key === 'text') {
+                connectors.create(
+                  ref,
+                  <CraftText text="Hello Craft" fontSize={16} />
+                );
+              }
+            }}
+          >
+            <ElementIcon iconName={item.icon} />
+            <ElementName>{item.name}</ElementName>
           </ElementCard>
         ))}
       </GridArea>
 
       <Separator
-        styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
+        styles={{
+          root: { margin: '15px 0', borderTop: '2px solid #5c2d91' },
+        }}
       />
       <Text
         variant="xLarge"
@@ -111,7 +141,9 @@ export const ElementsList: React.FC = () => {
       </div>
 
       <Separator
-        styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
+        styles={{
+          root: { margin: '15px 0', borderTop: '2px solid #5c2d91' },
+        }}
       />
       <Text
         variant="xLarge"
