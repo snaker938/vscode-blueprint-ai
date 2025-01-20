@@ -9,12 +9,21 @@ import React, {
   MouseEvent,
 } from 'react';
 import { useNode, useEditor } from '@craftjs/core';
+import { ROOT_NODE } from '@craftjs/utils';
 
 interface IndicatorManagerProps {
   render: React.ReactElement;
   IndicatorOverlay: React.ComponentType<any>;
 }
 
+/**
+ * Extremely "inefficient" fix to forcibly hide root node's tooltip:
+ * 1) Listen to mousemove globally.
+ * 2) If this node is root and it's hovered by CraftJS, but the mouse coords
+ *    are not inside root's bounding box => set `forceHideRoot = true`.
+ * 3) Then `showOverlay = false` if `forceHideRoot` is true.
+ * 4) We do not rely on craftjs' actions.hover(null) or setNodeEvent; we do a local override.
+ */
 export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
   render,
   IndicatorOverlay,
@@ -25,9 +34,7 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
     hoveredNodeIds: state.events.hovered,
   }));
 
-  const isSelected = !!selectedNodeIds?.has(id);
-  const isHover = !!hoveredNodeIds?.has(id);
-
+  // Node data
   const { connectors, dom, hidden, moveable, deletable, displayName } = useNode(
     (node) => ({
       dom: node.dom,
@@ -40,18 +47,27 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
     })
   );
 
+  // Basic states
+  const isSelected = !!selectedNodeIds?.has(id);
+  const isHover = !!hoveredNodeIds?.has(id);
+
+  // We'll locally override the "hover" overlay for the root if the user is physically outside
+  const [forceHideRoot, setForceHideRoot] = useState(false);
+
+  // Rename states
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(displayName);
 
   const [indicatorPos, setIndicatorPos] = useState({ top: 0, left: 0 });
 
-  // We'll position the overlay inside .craftjs-renderer
+  // The container for absolute positioning
   const containerEl =
     (document.querySelector('.craftjs-renderer') as HTMLElement) ||
     document.body;
 
+  // Recompute overlay position
   const updatePosition = useCallback(() => {
-    if (!dom) return;
+    if (!dom || !containerEl) return;
     const rect = dom.getBoundingClientRect();
     const containerRect = containerEl.getBoundingClientRect();
 
@@ -69,24 +85,64 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
     setIndicatorPos({ top, left });
   }, [dom, containerEl]);
 
+  // Show if not hidden, node has a dom, and is either hovered or selected,
+  // plus we do not forcibly hide root:
+  const isRoot = id === ROOT_NODE;
+  const showOverlay =
+    !hidden && dom && (isHover || isSelected) && !(isRoot && forceHideRoot);
+
+  // Poll if root hovered => bounding check => if user outside => forceHide
+  useEffect(() => {
+    if (!isRoot) return;
+
+    const onMouseMove = (e: globalThis.MouseEvent) => {
+      if (!dom) return;
+      const rootIsHovered = hoveredNodeIds?.has(ROOT_NODE);
+      if (!rootIsHovered) {
+        // If craftjs says root not hovered, remove local override
+        setForceHideRoot(false);
+        return;
+      }
+      // If root is hovered, check bounding box
+      const rect = dom.getBoundingClientRect();
+      const inside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+      if (!inside) {
+        // Force local hide
+        setForceHideRoot(true);
+      } else {
+        // If user is inside => show
+        setForceHideRoot(false);
+      }
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+    };
+  }, [isRoot, dom, hoveredNodeIds]);
+
+  // Recompute position if hovered/selected changes
   useEffect(() => {
     updatePosition();
   }, [isHover, isSelected, updatePosition]);
 
-  // Reposition on container scroll / resize
+  // Reposition on container scroll / window resize
   useEffect(() => {
-    const handleReposition = () => updatePosition();
-    containerEl.addEventListener('scroll', handleReposition);
-    window.addEventListener('resize', handleReposition);
-
-    return () => {
-      containerEl.removeEventListener('scroll', handleReposition);
-      window.removeEventListener('resize', handleReposition);
+    if (!containerEl) return;
+    const doPos = () => {
+      if (showOverlay) updatePosition();
     };
-  }, [containerEl, updatePosition]);
-
-  // Show overlay if not hidden, node is hovered or selected, and we have DOM
-  const showOverlay = !hidden && (isSelected || isHover) && dom;
+    containerEl.addEventListener('scroll', doPos);
+    window.addEventListener('resize', doPos);
+    return () => {
+      containerEl.removeEventListener('scroll', doPos);
+      window.removeEventListener('resize', doPos);
+    };
+  }, [containerEl, showOverlay, updatePosition]);
 
   // rename logic
   const onRenameDblClick = () => {
@@ -111,10 +167,12 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
     }
   };
 
+  // hide/unhide
   const onToggleHidden = (e: MouseEvent) => {
     e.stopPropagation();
     actions.setHidden(id, !hidden);
   };
+  // delete
   const onDelete = (e: MouseEvent) => {
     e.stopPropagation();
     actions.delete(id);
@@ -125,7 +183,7 @@ export const IndicatorManager: React.FC<IndicatorManagerProps> = ({
       {showOverlay && (
         <IndicatorOverlay
           containerEl={containerEl}
-          dom={dom}
+          dom={dom as HTMLElement}
           displayName={displayName}
           isHidden={hidden}
           canMove={moveable}
