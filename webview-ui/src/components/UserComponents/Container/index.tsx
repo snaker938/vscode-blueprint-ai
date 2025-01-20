@@ -1,100 +1,93 @@
-import { useNode } from '@craftjs/core';
-import {
-  Slider,
-  Paper,
-  FormControl,
-  FormLabel,
-  TextField,
-} from '@mui/material';
+import React from 'react';
 
-interface ContainerProps {
-  background: string;
-  padding: number;
+import { ContainerSettings } from './ContainerSettings';
+
+import { Resizer } from '../Utils/Resizer';
+
+export type ContainerProps = {
+  background: Record<'r' | 'g' | 'b' | 'a', number>;
+  color: Record<'r' | 'g' | 'b' | 'a', number>;
+  flexDirection: string;
+  alignItems: string;
+  justifyContent: string;
+  fillSpace: string;
+  width: string;
+  height: string;
+  padding: string[];
+  margin: string[];
+  marginTop: number;
+  marginLeft: number;
+  marginBottom: number;
+  marginRight: number;
+  shadow: number;
   children: React.ReactNode;
-  [key: string]: any;
-}
+  radius: number;
+};
 
-interface CustomContainer extends React.FC<ContainerProps> {
-  craft: {
-    props: typeof ContainerDefaultProps;
-    related: {
-      settings: typeof ContainerSettings;
-    };
+const defaultProps = {
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  justifyContent: 'flex-start',
+  fillSpace: 'no',
+  padding: ['0', '0', '0', '0'],
+  margin: ['0', '0', '0', '0'],
+  background: { r: 255, g: 255, b: 255, a: 1 },
+  color: { r: 0, g: 0, b: 0, a: 1 },
+  shadow: 0,
+  radius: 0,
+  width: '100%',
+  height: 'auto',
+};
+
+export const Container = (props: Partial<ContainerProps>) => {
+  props = {
+    ...defaultProps,
+    ...props,
   };
-}
-
-export const Container: CustomContainer = ({
-  background,
-  padding,
-  children,
-  ...props
-}) => {
   const {
-    connectors: { connect, drag },
-  } = useNode();
+    flexDirection,
+    alignItems,
+    justifyContent,
+    fillSpace,
+    background = { r: 255, g: 255, b: 255, a: 1 },
+    color = { r: 0, g: 0, b: 0, a: 1 },
+    padding = ['0', '0', '0', '0'],
+    margin = ['0', '0', '0', '0'],
+    shadow,
+    radius,
+    children,
+  } = props;
   return (
-    <Paper
-      {...props}
-      ref={(ref) => ref && connect(drag(ref))}
-      style={{ margin: '5px 0', background, padding: `${padding}px` }}
+    <Resizer
+      propKey={{ width: 'width', height: 'height' }}
+      style={{
+        justifyContent,
+        flexDirection,
+        alignItems,
+        background: `rgba(${Object.values(background)})`,
+        color: `rgba(${Object.values(color)})`,
+        padding: `${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px`,
+        margin: `${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px`,
+        boxShadow:
+          shadow === 0
+            ? 'none'
+            : `0px 3px 100px ${shadow}px rgba(0, 0, 0, 0.13)`,
+        borderRadius: `${radius}px`,
+        flex: fillSpace === 'yes' ? 1 : 'unset',
+      }}
     >
       {children}
-    </Paper>
+    </Resizer>
   );
-};
-
-export const ContainerSettings = () => {
-  const {
-    background,
-    padding,
-    actions: { setProp },
-  } = useNode((node) => ({
-    background: node.data.props.background,
-    padding: node.data.props.padding,
-  }));
-
-  return (
-    <div>
-      <FormControl fullWidth margin="normal" component="fieldset">
-        <FormLabel component="legend">Background</FormLabel>
-        <TextField
-          type="color"
-          value={background || '#ffffff'}
-          onChange={(e) =>
-            setProp(
-              (props: ContainerProps) => (props.background = e.target.value),
-              500
-            )
-          }
-        />
-      </FormControl>
-      <FormControl fullWidth margin="normal" component="fieldset">
-        <FormLabel component="legend">Padding</FormLabel>
-        <Slider
-          value={padding}
-          onChange={(_, value) =>
-            setProp(
-              (props: ContainerProps) =>
-                (props.padding = Array.isArray(value) ? value[0] : value),
-              500
-            )
-          }
-          min={0}
-          max={50}
-        />
-      </FormControl>
-    </div>
-  );
-};
-
-const ContainerDefaultProps = {
-  background: '#ffffff',
-  padding: 3,
 };
 
 Container.craft = {
-  props: ContainerDefaultProps,
+  displayName: 'Container',
+  props: defaultProps,
+  rules: {
+    canDrag: () => true,
+  },
   related: {
-    settings: ContainerSettings,
+    toolbar: ContainerSettings,
   },
 };

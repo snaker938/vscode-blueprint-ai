@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import { useEditor, Element } from '@craftjs/core';
 import { TextField, Text, Icon, Separator } from '@fluentui/react';
 import { Container } from '../UserComponents/Container';
-import { Text as CraftText } from '../UserComponents/Text';
 import './sidebarStyles.css';
 
 const Wrapper = styled.div`
@@ -66,7 +65,6 @@ export const ElementsList: React.FC = () => {
 
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
-    { key: 'text', icon: 'Edit', name: 'Text' },
   ];
 
   const filtered = basicItems.filter((item) =>
@@ -104,17 +102,16 @@ export const ElementsList: React.FC = () => {
                 connectors.create(
                   ref,
                   <Element
-                    is={Container}
-                    padding={20}
-                    background="#ffffff"
                     canvas
-                    children={null}
-                  />
-                );
-              } else if (item.key === 'text') {
-                connectors.create(
-                  ref,
-                  <CraftText text="Hello Craft" fontSize={16} />
+                    is={Container}
+                    width="800px"
+                    height="auto"
+                    background={{ r: 255, g: 255, b: 255, a: 1 }}
+                    padding={['40', '40', '40', '40']}
+                    custom={{ displayName: 'App' }}
+                  >
+                    {' '}
+                  </Element>
                 );
               }
             }}
