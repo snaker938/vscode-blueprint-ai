@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* The overall container: sticky on the right, same design idea as PrimarySidebar. */
+.properties-bar-container {
+  position: fixed; /* so it’s always pinned to the right edge */
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 320px; /* or any width you like */
+  background-color: #fff;
+  border-left: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  /* A small shadow or different effect if you want. */
+  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 9999; /* ensure it’s on top */
+}
+
+/* The header (title) for the bar. */
+.properties-bar-header {
+  @apply bg-gray-100 text-gray-800 font-semibold p-4 border-b border-gray-300;
+  /* or custom styling as you see fit */
+  font-size: 16px;
+}
+
+/* The main content area of the bar (currently empty). */
+.properties-bar-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto; /* if content grows */
+}
