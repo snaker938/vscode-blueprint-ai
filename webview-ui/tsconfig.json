@@ -1,5 +1,21 @@
 {
+  // Tell TS that we have no direct input files here
   "files": [],
+
+  // Add a top-level "compilerOptions" block to override or adjust some settings
+  "compilerOptions": {
+    // If you want to skip all library .d.ts checking,
+    // especially if node_modules cause errors:
+    "skipLibCheck": true
+  },
+
+  "exclude": [
+    // Exclude node_modules from being compiled or type-checked
+    "**/node_modules",
+    "**/node_modules/**"
+  ],
+
+  // Project references for separate builds
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }

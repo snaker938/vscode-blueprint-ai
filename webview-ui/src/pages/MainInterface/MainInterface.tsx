@@ -4,7 +4,8 @@ import React from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Editor, Frame, Element } from '@craftjs/core';
 import { Container } from '../../components/UserComponents/Container';
-// import { Text as CraftText } from '../../components/UserComponents/Text';
+import { Text } from '../../components/UserComponents/Text';
+import { Button } from '../../components/UserComponents/Button';
 import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
 import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
 import './MainInterface.css';
@@ -19,7 +20,8 @@ const MainInterface: React.FC = () => {
       <Editor
         resolver={{
           Container,
-          // Text: CraftText,
+          Text,
+          Button,
         }}
         enabled
         onRender={RenderNode}
@@ -29,17 +31,17 @@ const MainInterface: React.FC = () => {
 
           <div className="main-content">
             <Frame>
+              {/* Root container with a background */}
               <Element
                 canvas
                 is={Container}
                 width="800px"
                 height="auto"
-                background={{ r: 255, g: 255, b: 255, a: 1 }}
+                background={{ r: 250, g: 250, b: 250, a: 1 }}
                 padding={['40', '40', '40', '40']}
-                custom={{ displayName: 'App' }}
-              >
-                {/* <CraftText text="Hello Craft" fontSize={16} /> */}
-              </Element>
+                margin={['0', 'auto', '0', 'auto']}
+                custom={{ displayName: 'RootContainer' }}
+              ></Element>
             </Frame>
           </div>
 

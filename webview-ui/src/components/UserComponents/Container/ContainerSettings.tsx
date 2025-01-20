@@ -2,35 +2,12 @@
 
 import React, { useState } from 'react';
 import { useNode } from '@craftjs/core';
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  TextField,
-  Slider,
-  FormControl,
-  FormLabel,
-  Select,
-  MenuItem,
-  InputLabel,
-  Box,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { ChromePicker } from 'react-color';
+import { Box, Slider } from '@mui/material';
 
+import { Section, Dropdown, TextInput, Item } from '../../PropertiesSidebar/UI';
 import type { ContainerProps } from './index';
 
-/**
- * A modern, user-friendly settings panel for the Container.
- * Sections for:
- *  - Dimensions (width, height)
- *  - Colors (background, color)
- *  - Margin
- *  - Padding
- *  - Decoration (shadow, radius)
- *  - Alignment (flexDirection, fillSpace, alignItems, justifyContent)
- */
 export const ContainerSettings: React.FC = () => {
   const {
     width,
@@ -80,267 +57,217 @@ export const ContainerSettings: React.FC = () => {
     };
   };
 
-  // Local states for background + color pickers
   const [bgColor, setBgColor] = useState(background);
   const [txtColor, setTxtColor] = useState(color);
 
-  // Convert color object => "rgba()"
-  // const rgbaString = (c: typeof background) =>
-  // `rgba(${c.r},${c.g},${c.b},${c.a})`;
+  const marginText = margin.join(', ');
+  const paddingText = padding.join(', ');
 
   const updateBgColor = (newColor: any) => {
     setBgColor(newColor.rgb);
-    setProp((props: Partial<ContainerProps>) => {
+    setProp((props) => {
       props.background = newColor.rgb;
     }, 500);
   };
 
   const updateTxtColor = (newColor: any) => {
     setTxtColor(newColor.rgb);
-    setProp((props: Partial<ContainerProps>) => {
+    setProp((props) => {
       props.color = newColor.rgb;
     }, 500);
   };
 
-  // Helpers for margin/padding text
-  const marginText = margin.join(', ');
-  const paddingText = padding.join(', ');
-
   return (
-    <Box sx={{ width: '100%', maxWidth: 360, fontSize: 14 }}>
+    <Box sx={{ width: 300, fontSize: 14 }}>
       {/* DIMENSIONS */}
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Dimensions</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <FormLabel>Width</FormLabel>
-          <TextField
-            size="small"
-            fullWidth
-            variant="outlined"
+      <Section title="Dimensions" defaultExpanded>
+        <Item>
+          <TextInput
+            label="Width"
             value={width || ''}
-            onChange={(e) => {
-              const val = e.target.value;
+            onChangeValue={(val) =>
               setProp((props) => {
                 props.width = val;
-              }, 500);
-            }}
-            sx={{ mb: 1 }}
+              }, 500)
+            }
           />
-          <FormLabel>Height</FormLabel>
-          <TextField
-            size="small"
-            fullWidth
-            variant="outlined"
+        </Item>
+        <Item>
+          <TextInput
+            label="Height"
             value={height || ''}
-            onChange={(e) => {
-              const val = e.target.value;
+            onChangeValue={(val) =>
               setProp((props) => {
                 props.height = val;
-              }, 500);
-            }}
+              }, 500)
+            }
           />
-        </AccordionDetails>
-      </Accordion>
+        </Item>
+      </Section>
 
       {/* COLORS */}
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Colors</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <FormLabel sx={{ mb: 1 }}>Background</FormLabel>
+      <Section title="Colors">
+        <Item>
+          <p style={{ marginBottom: 4, fontWeight: 500 }}>Background</p>
           <ChromePicker
             color={bgColor}
             onChange={updateBgColor}
             disableAlpha={false}
           />
-
-          <FormLabel sx={{ mt: 2 }}>Text Color</FormLabel>
+        </Item>
+        <Item>
+          <p style={{ marginBottom: 4, fontWeight: 500 }}>Text Color</p>
           <ChromePicker
             color={txtColor}
             onChange={updateTxtColor}
             disableAlpha={false}
           />
-        </AccordionDetails>
-      </Accordion>
+        </Item>
+      </Section>
 
       {/* MARGIN */}
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Margin</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <FormLabel>Margin (top,right,bottom,left)</FormLabel>
-          <TextField
-            size="small"
-            fullWidth
-            variant="outlined"
-            sx={{ mt: 1 }}
+      <Section title="Margin">
+        <Item>
+          <p style={{ marginBottom: 4, fontWeight: 500 }}>
+            Margin (top, right, bottom, left)
+          </p>
+          <TextInput
+            label="Margin"
             value={marginText}
-            onChange={(e) => {
-              const arr = e.target.value.split(',').map((s) => s.trim());
+            onChangeValue={(val) => {
+              const arr = val.split(',').map((s) => s.trim());
               setProp((props) => {
                 props.margin = arr;
               }, 500);
             }}
-            helperText="Comma-separated. E.g. 10,0,10,0"
           />
-        </AccordionDetails>
-      </Accordion>
+        </Item>
+      </Section>
 
       {/* PADDING */}
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Padding</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <FormLabel>Padding (top,right,bottom,left)</FormLabel>
-          <TextField
-            size="small"
-            fullWidth
-            variant="outlined"
-            sx={{ mt: 1 }}
+      <Section title="Padding">
+        <Item>
+          <p style={{ marginBottom: 4, fontWeight: 500 }}>
+            Padding (top, right, bottom, left)
+          </p>
+          <TextInput
+            label="Padding"
             value={paddingText}
-            onChange={(e) => {
-              const arr = e.target.value.split(',').map((s) => s.trim());
+            onChangeValue={(val) => {
+              const arr = val.split(',').map((s) => s.trim());
               setProp((props) => {
                 props.padding = arr;
               }, 500);
             }}
-            helperText="Comma-separated. E.g. 10,10,10,10"
           />
-        </AccordionDetails>
-      </Accordion>
+        </Item>
+      </Section>
 
       {/* DECORATION */}
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Decoration</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <FormLabel>Shadow</FormLabel>
-            <Slider
-              min={0}
-              max={10}
-              step={1}
-              value={shadow}
-              onChange={(_, value) => {
-                const val = Array.isArray(value) ? value[0] : value;
-                setProp((props) => {
-                  props.shadow = val;
-                }, 300);
-              }}
-            />
-          </FormControl>
-
-          <FormControl fullWidth>
-            <FormLabel>Border Radius</FormLabel>
-            <Slider
-              min={0}
-              max={100}
-              step={1}
-              value={radius}
-              onChange={(_, value) => {
-                const val = Array.isArray(value) ? value[0] : value;
-                setProp((props) => {
-                  props.radius = val;
-                }, 300);
-              }}
-            />
-          </FormControl>
-        </AccordionDetails>
-      </Accordion>
+      <Section title="Decoration">
+        <Item>
+          <p style={{ marginBottom: 4, fontWeight: 500 }}>Shadow</p>
+          <Slider
+            min={0}
+            max={10}
+            step={1}
+            value={shadow}
+            onChange={(_, sliderVal) => {
+              const val = Array.isArray(sliderVal) ? sliderVal[0] : sliderVal;
+              setProp((props) => {
+                props.shadow = val;
+              }, 300);
+            }}
+          />
+        </Item>
+        <Item>
+          <p style={{ marginBottom: 4, fontWeight: 500 }}>Border Radius</p>
+          <Slider
+            min={0}
+            max={100}
+            step={1}
+            value={radius}
+            onChange={(_, sliderVal) => {
+              const val = Array.isArray(sliderVal) ? sliderVal[0] : sliderVal;
+              setProp((props) => {
+                props.radius = val;
+              }, 300);
+            }}
+          />
+        </Item>
+      </Section>
 
       {/* ALIGNMENT */}
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Alignment</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Flex Direction</InputLabel>
-            <Select
-              size="small"
-              value={flexDirection}
-              label="Flex Direction"
-              onChange={(e) => {
-                const val = e.target.value as string;
-                setProp((props) => {
-                  props.flexDirection = val;
-                }, 300);
-              }}
-            >
-              <MenuItem value="row">row</MenuItem>
-              <MenuItem value="column">column</MenuItem>
-              <MenuItem value="row-reverse">row-reverse</MenuItem>
-              <MenuItem value="column-reverse">column-reverse</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Fill Space?</InputLabel>
-            <Select
-              size="small"
-              value={fillSpace}
-              label="Fill Space?"
-              onChange={(e) => {
-                const val = e.target.value as string;
-                setProp((props) => {
-                  props.fillSpace = val;
-                }, 300);
-              }}
-            >
-              <MenuItem value="no">No</MenuItem>
-              <MenuItem value="yes">Yes</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Align Items</InputLabel>
-            <Select
-              size="small"
-              value={alignItems}
-              label="Align Items"
-              onChange={(e) => {
-                const val = e.target.value as string;
-                setProp((props) => {
-                  props.alignItems = val;
-                }, 300);
-              }}
-            >
-              <MenuItem value="flex-start">flex-start</MenuItem>
-              <MenuItem value="center">center</MenuItem>
-              <MenuItem value="flex-end">flex-end</MenuItem>
-              <MenuItem value="stretch">stretch</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth>
-            <InputLabel>Justify Content</InputLabel>
-            <Select
-              size="small"
-              value={justifyContent}
-              label="Justify Content"
-              onChange={(e) => {
-                const val = e.target.value as string;
-                setProp((props) => {
-                  props.justifyContent = val;
-                }, 300);
-              }}
-            >
-              <MenuItem value="flex-start">flex-start</MenuItem>
-              <MenuItem value="center">center</MenuItem>
-              <MenuItem value="flex-end">flex-end</MenuItem>
-              <MenuItem value="space-between">space-between</MenuItem>
-              <MenuItem value="space-around">space-around</MenuItem>
-              <MenuItem value="space-evenly">space-evenly</MenuItem>
-            </Select>
-          </FormControl>
-        </AccordionDetails>
-      </Accordion>
+      <Section title="Alignment">
+        <Item>
+          <Dropdown
+            label="Flex Direction"
+            value={flexDirection}
+            onChangeValue={(newVal) =>
+              setProp((props) => {
+                props.flexDirection = newVal;
+              }, 300)
+            }
+            options={[
+              { value: 'row', label: 'Row' },
+              { value: 'column', label: 'Column' },
+              { value: 'row-reverse', label: 'Row Reverse' },
+              { value: 'column-reverse', label: 'Column Reverse' },
+            ]}
+          />
+        </Item>
+        <Item>
+          <Dropdown
+            label="Fill Space?"
+            value={fillSpace}
+            onChangeValue={(newVal) =>
+              setProp((props) => {
+                props.fillSpace = newVal;
+              }, 300)
+            }
+            options={[
+              { value: 'no', label: 'No' },
+              { value: 'yes', label: 'Yes' },
+            ]}
+          />
+        </Item>
+        <Item>
+          <Dropdown
+            label="Align Items"
+            value={alignItems}
+            onChangeValue={(newVal) =>
+              setProp((props) => {
+                props.alignItems = newVal;
+              }, 300)
+            }
+            options={[
+              { value: 'flex-start', label: 'flex-start' },
+              { value: 'center', label: 'center' },
+              { value: 'flex-end', label: 'flex-end' },
+              { value: 'stretch', label: 'stretch' },
+            ]}
+          />
+        </Item>
+        <Item>
+          <Dropdown
+            label="Justify Content"
+            value={justifyContent}
+            onChangeValue={(newVal) =>
+              setProp((props) => {
+                props.justifyContent = newVal;
+              }, 300)
+            }
+            options={[
+              { value: 'flex-start', label: 'flex-start' },
+              { value: 'center', label: 'center' },
+              { value: 'flex-end', label: 'flex-end' },
+              { value: 'space-between', label: 'space-between' },
+              { value: 'space-around', label: 'space-around' },
+              { value: 'space-evenly', label: 'space-evenly' },
+            ]}
+          />
+        </Item>
+      </Section>
     </Box>
   );
 };

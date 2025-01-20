@@ -3,13 +3,7 @@
 import React, { useState } from 'react';
 import { useEditor } from '@craftjs/core';
 import { IconButton, IIconProps } from '@fluentui/react';
-import {
-  Box,
-  Grid,
-  Typography,
-  Chip,
-  Button as MatButton,
-} from '@mui/material';
+import { Box, Typography, Button as MatButton } from '@mui/material';
 import styled from 'styled-components';
 import './propertiesSidebarStyles.css';
 
@@ -23,13 +17,9 @@ const SidebarContainer = styled.div<{ $collapsed: boolean }>`
   min-width: 0;
   border-left: 1px solid #ccc;
   background-color: #fff;
-  overflow: visible; /* Let the handle float outside when collapsed */
+  overflow: visible;
 `;
 
-/**
- * Actual sidebar content area (header + content).
- * Only visible when not collapsed.
- */
 const SidebarContent = styled.div`
   flex: 1;
   display: flex;
@@ -37,11 +27,6 @@ const SidebarContent = styled.div`
   overflow: auto;
 `;
 
-/**
- * This overlay handle is always present, but only visible if collapsed.
- * We position it relative to the top: 100px on the entire screen by using a new wrapper
- * that is not clipped by the 0-width container.
- */
 const OverlayHandle = styled.div<{ $show: boolean }>`
   position: fixed;
   top: 100px;
@@ -52,7 +37,7 @@ const OverlayHandle = styled.div<{ $show: boolean }>`
   border: 1px solid #ccc;
   border-radius: 8px 0 0 8px;
   box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.1);
-  z-index: 9999; /* visible above everything */
+  z-index: 9999;
   display: ${(p) => (p.$show ? 'flex' : 'none')};
   align-items: center;
   justify-content: center;
@@ -100,15 +85,18 @@ export const PropertiesSidebar: React.FC = () => {
     return { selected: selectedData };
   });
 
+  // If nothing is selected, display a fallback; otherwise show the selected node's settings
+  const sidebarHeader = selected
+    ? `${selected.name} Properties`
+    : 'No element selected';
+
   return (
     <>
-      {/* The main sidebar in the flex layout */}
       <SidebarContainer $collapsed={collapsed}>
-        {/* If not collapsed => show the entire sidebar UI */}
         {!collapsed && (
           <SidebarContent>
             <Header>
-              <span style={{ fontWeight: 600 }}>Component Properties</span>
+              <span style={{ fontWeight: 600 }}>{sidebarHeader}</span>
               <IconButton
                 iconProps={collapseIcon}
                 onClick={toggleCollapse}
@@ -118,26 +106,13 @@ export const PropertiesSidebar: React.FC = () => {
 
             <ContentArea>
               {!selected ? (
-                <p>No element selected.</p>
+                <Typography variant="body2">
+                  Please select an element to configure its properties.
+                </Typography>
               ) : (
                 <Box>
-                  <Grid
-                    container
-                    alignItems="center"
-                    style={{ marginBottom: 16 }}
-                  >
-                    <Grid item xs>
-                      <Typography variant="subtitle1">Selected</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Chip
-                        size="small"
-                        color="primary"
-                        label={selected.name || 'Component'}
-                      />
-                    </Grid>
-                  </Grid>
                   {selected.settings && React.createElement(selected.settings)}
+
                   {selected.isDeletable && (
                     <MatButton
                       variant="contained"
@@ -155,7 +130,7 @@ export const PropertiesSidebar: React.FC = () => {
         )}
       </SidebarContainer>
 
-      {/* Show a small floating handle if collapsed => user can expand */}
+      {/* Handle for expanding when collapsed */}
       <OverlayHandle $show={collapsed} onClick={toggleCollapse}>
         <IconButton iconProps={expandIcon} ariaLabel="Expand Sidebar" />
       </OverlayHandle>
