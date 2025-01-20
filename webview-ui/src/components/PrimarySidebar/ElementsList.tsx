@@ -19,7 +19,8 @@ const Wrapper = styled.div`
 
 const GridArea = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  /* exactly 3 columns per row */
+  grid-template-columns: repeat(3, 1fr);
   gap: 15px;
   padding: 10px 0;
 `;
@@ -63,13 +64,42 @@ export const ElementsList: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const { connectors } = useEditor();
 
+  // Basic elements
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
+    { key: 'button', icon: 'ButtonControl', name: 'Button' },
+    { key: 'heading', icon: 'Header1', name: 'Heading' },
+    { key: 'textbox', icon: 'TextField', name: 'Textbox' },
+    { key: 'icon', icon: 'Emoji2', name: 'Icon' },
+    { key: 'link', icon: 'Link', name: 'Link' },
   ];
 
-  const filtered = basicItems.filter((item) =>
-    item.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // Smart elements
+  const smartItems = [
+    { key: 'buttonGroup', icon: 'GroupedList', name: 'Button Group' },
+    { key: 'inputBox', icon: 'TextField', name: 'Input Box' },
+    { key: 'dropdown', icon: 'Dropdown', name: 'Dropdown' },
+    { key: 'checkbox', icon: 'CheckboxComposite', name: 'Checkbox' },
+    { key: 'radioButtons', icon: 'RadioBtnOn', name: 'Radio Buttons' },
+    { key: 'slider', icon: 'Slider', name: 'Slider' },
+    { key: 'starRating', icon: 'FavoriteStar', name: 'Star Rating' },
+    { key: 'searchBox', icon: 'Search', name: 'Search Box' },
+  ];
+
+  // Graph elements
+  const graphItems = [
+    { key: 'barChart', icon: 'BarChart4', name: 'Bar Chart' },
+    { key: 'pieChart', icon: 'DonutChart', name: 'Pie Chart' },
+    { key: 'lineChart', icon: 'LineChart', name: 'Line Chart' },
+  ];
+
+  // Filter logic
+  const filterBySearch = (item: { name: string }) =>
+    item.name.toLowerCase().includes(searchText.toLowerCase());
+
+  const filteredBasic = basicItems.filter(filterBySearch);
+  const filteredSmart = smartItems.filter(filterBySearch);
+  const filteredGraph = graphItems.filter(filterBySearch);
 
   return (
     <Wrapper>
@@ -85,19 +115,20 @@ export const ElementsList: React.FC = () => {
         />
       </div>
 
+      {/* BASIC ELEMENTS */}
       <Text
         variant="xLarge"
         styles={{ root: { color: '#4b3f72', fontWeight: 700 } }}
       >
         Basic Elements
       </Text>
-
       <GridArea>
-        {filtered.map((item) => (
+        {filteredBasic.map((item) => (
           <ElementCard
             key={item.key}
             ref={(ref) => {
               if (!ref) return;
+              // Container is the only one that has craftJS
               if (item.key === 'container') {
                 connectors.create(
                   ref,
@@ -109,9 +140,7 @@ export const ElementsList: React.FC = () => {
                     background={{ r: 255, g: 255, b: 255, a: 1 }}
                     padding={['40', '40', '40', '40']}
                     custom={{ displayName: 'App' }}
-                  >
-                    {' '}
-                  </Element>
+                  />
                 );
               }
             }}
@@ -127,30 +156,44 @@ export const ElementsList: React.FC = () => {
           root: { margin: '15px 0', borderTop: '2px solid #5c2d91' },
         }}
       />
+
+      {/* SMART ELEMENTS */}
       <Text
         variant="xLarge"
         styles={{ root: { color: '#4b3f72', fontWeight: 700 } }}
       >
         Smart Elements
       </Text>
-      <div style={{ padding: '10px 0', color: '#999' }}>
-        (No smart elements yet)
-      </div>
+      <GridArea>
+        {filteredSmart.map((item) => (
+          <ElementCard key={item.key}>
+            <ElementIcon iconName={item.icon} />
+            <ElementName>{item.name}</ElementName>
+          </ElementCard>
+        ))}
+      </GridArea>
 
       <Separator
         styles={{
           root: { margin: '15px 0', borderTop: '2px solid #5c2d91' },
         }}
       />
+
+      {/* GRAPH ELEMENTS */}
       <Text
         variant="xLarge"
         styles={{ root: { color: '#4b3f72', fontWeight: 700 } }}
       >
         Graph Elements
       </Text>
-      <div style={{ padding: '10px 0', color: '#999' }}>
-        (No graph elements yet)
-      </div>
+      <GridArea>
+        {filteredGraph.map((item) => (
+          <ElementCard key={item.key}>
+            <ElementIcon iconName={item.icon} />
+            <ElementName>{item.name}</ElementName>
+          </ElementCard>
+        ))}
+      </GridArea>
     </Wrapper>
   );
 };

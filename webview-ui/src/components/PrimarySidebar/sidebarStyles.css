@@ -38,9 +38,9 @@
   margin-top: 3px;
 }
 
-/* 
-   Each "row." 
-   We rely on a ::before pseudo-element for the active highlight bar, 
+/*
+   Each "row."
+   We rely on a ::before pseudo-element for the active highlight bar,
    so the icon can remain centered, and the bar is slightly inset from the screen edge.
 */
 .sidebar-item {
@@ -58,10 +58,7 @@
   justify-content: center; /* icon in the exact horizontal center */
 }
 
-/* A pseudo-element for the left highlight bar. 
-   'left: 4px' means there's a 4px gap from the screen edge, 
-   then a 4px-wide bar => total ~8px from the icon center zone.
-*/
+/* A pseudo-element for the left highlight bar. */
 .sidebar-item::before {
   content: '';
   position: absolute;
@@ -85,9 +82,9 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* 
+/*
    The icon container in the horizontal center.
-   Slight scale on hover. 
+   Slight scale on hover.
 */
 .icon-container {
   transition: transform 0.2s ease;
