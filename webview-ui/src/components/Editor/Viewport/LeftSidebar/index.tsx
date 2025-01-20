@@ -17,11 +17,11 @@ export const LeftSidebar: React.FC = () => {
     } else if (actionKey === 'redo') {
       actions.history.redo();
     }
-    // Other actions do nothing
+    // Add other action handlers as needed
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex' }}>
       <LeftSidebarUI
         activeTab={activeTab}
         onTabClick={handleTabClick}

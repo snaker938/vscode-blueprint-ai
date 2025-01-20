@@ -1,21 +1,18 @@
+// webview-ui/src/components/Editor/Viewport/RightSidebar/PropertiesSidebar.tsx
 import React from 'react';
 import styled from 'styled-components';
 import { useEditor } from '@craftjs/core';
-
 import { ComponentPropertiesBar } from './ComponentPropertiesBar';
 
-const PropertiesContainer = styled.div`
-  width: 100%;
-  height: 100%;
-  background-color: #ffffff;
+const Wrapper = styled.div`
   padding: 16px;
-  overflow: auto;
+  font-size: 14px;
+  color: #333;
 `;
 
 const Title = styled.h2`
   margin: 0 0 10px;
   font-size: 16px;
-  color: #333;
 `;
 
 const DeleteButton = styled.button`
@@ -44,18 +41,17 @@ export const PropertiesSidebar: React.FC = () => {
     }
   );
 
-  if (!selectedNodeId) return null;
+  if (!selectedNodeId) return <Wrapper>No element selected.</Wrapper>;
 
   const handleDelete = () => {
     actions.delete(selectedNodeId);
   };
 
   return (
-    <PropertiesContainer>
+    <Wrapper>
       <Title>{componentName} Properties</Title>
-      {/* The actual property controls: */}
       <ComponentPropertiesBar nodeId={selectedNodeId} />
       <DeleteButton onClick={handleDelete}>Delete</DeleteButton>
-    </PropertiesContainer>
+    </Wrapper>
   );
 };

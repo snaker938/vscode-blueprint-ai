@@ -63,7 +63,7 @@ const ComponentName = styled(Text)`
   text-align: center;
 `;
 
-// Define a local interface for the items
+// Local interface for each component item
 interface ComponentItem {
   key: string;
   icon: string;
@@ -71,50 +71,39 @@ interface ComponentItem {
   component: React.ElementType;
 }
 
-console.log('[ComponentTab] Defining basicElements with Container only.');
-const basicElements: ComponentItem[] = [
-  {
-    key: 'container',
-    icon: 'CubeShape',
-    name: 'Container',
-    component: Container,
-  },
-];
-
 const ComponentTab: React.FC = () => {
   console.log('[ComponentTab] Entering main ComponentTab function.');
 
   // Craft.js Editor
   const { connectors } = useEditor((state) => {
-    console.log('[ComponentTab] useEditor callback -> state:', state);
+    console.log('[ComponentTab] useEditor -> state:', state);
     return {};
   });
-  console.log('[ComponentTab] Extracted { connectors } from useEditor.');
 
   // Search query state
   const [searchQuery, setSearchQuery] = useState('');
-  console.log('[ComponentTab] Initialized searchQuery = ""');
 
   // Filter function
   const filterComponents = (items: ComponentItem[]): ComponentItem[] => {
-    console.log('[ComponentTab] filterComponents -> items:', items);
-    console.log('[ComponentTab] filterComponents -> searchQuery:', searchQuery);
-    const result = items.filter((item) =>
+    return items.filter((item) =>
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    console.log('[ComponentTab] filterComponents -> result:', result);
-    return result;
   };
 
-  // Filter the basicElements
-  console.log(
-    '[ComponentTab] Filtering basicElements with current searchQuery...'
-  );
-  const filteredBasic = filterComponents(basicElements);
-  console.log('[ComponentTab] filteredBasic =', filteredBasic);
+  // ───────────────────────────────────────────
+  // KEY CHANGE: Move `basicElements` INSIDE the component
+  // ───────────────────────────────────────────
+  const basicElements: ComponentItem[] = [
+    {
+      key: 'container',
+      icon: 'CubeShape',
+      name: 'Container',
+      component: Container,
+    },
+  ];
 
-  // Logging final readiness to return
-  console.log('[ComponentTab] Ready to render JSX.');
+  // Filter the basicElements
+  const filteredBasic = filterComponents(basicElements);
 
   // Return the main tab JSX
   return (
@@ -125,13 +114,7 @@ const ComponentTab: React.FC = () => {
           placeholder="Search components..."
           iconProps={{ iconName: 'Search' }}
           value={searchQuery}
-          onChange={(_ev, newValue) => {
-            console.log(
-              '[ComponentTab] TextField onChange -> newValue:',
-              newValue
-            );
-            setSearchQuery(newValue || '');
-          }}
+          onChange={(_ev, newValue) => setSearchQuery(newValue || '')}
           styles={{
             fieldGroup: {
               borderRadius: 8,
@@ -149,49 +132,25 @@ const ComponentTab: React.FC = () => {
       </Text>
 
       <ComponentsGrid>
-        {filteredBasic.map((item) => {
-          console.log('[ComponentTab] Rendering item:', item);
-
-          // Return the card for each item
-          return (
-            <ComponentCard
-              key={item.key}
-              draggable
-              ref={(domRef) => {
-                console.log(
-                  '[ComponentTab] ref callback for item:',
-                  item.name,
-                  'domRef =',
-                  domRef
-                );
-
-                // React may call this with null during unmount in strict mode
-                if (!domRef) {
-                  console.log(
-                    '[ComponentTab] domRef is null, ignoring attach for item:',
-                    item.name
-                  );
-                  return;
-                }
-
-                console.log(
-                  '[ComponentTab] Attaching create connector for item:',
-                  item.name
-                );
-                connectors.create(domRef, React.createElement(item.component));
-              }}
-              onDragStart={() => {
-                console.log('[ComponentTab] onDragStart -> item:', item.name);
-              }}
-              onDragEnd={() => {
-                console.log('[ComponentTab] onDragEnd -> item:', item.name);
-              }}
-            >
-              <ComponentIcon iconName={item.icon} />
-              <ComponentName>{item.name}</ComponentName>
-            </ComponentCard>
-          );
-        })}
+        {filteredBasic.map((item) => (
+          <ComponentCard
+            key={item.key}
+            draggable
+            ref={(domRef) => {
+              if (!domRef) return; // null in unmount
+              connectors.create(domRef, React.createElement(item.component));
+            }}
+            onDragStart={() => {
+              console.log('[ComponentTab] onDragStart -> item:', item.name);
+            }}
+            onDragEnd={() => {
+              console.log('[ComponentTab] onDragEnd -> item:', item.name);
+            }}
+          >
+            <ComponentIcon iconName={item.icon} />
+            <ComponentName>{item.name}</ComponentName>
+          </ComponentCard>
+        ))}
       </ComponentsGrid>
 
       <Separator
@@ -229,5 +188,4 @@ const ComponentTab: React.FC = () => {
   );
 };
 
-console.log('[ComponentTab] About to export default ComponentTab.');
 export default ComponentTab;

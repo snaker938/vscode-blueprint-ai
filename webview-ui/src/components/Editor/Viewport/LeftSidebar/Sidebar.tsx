@@ -36,7 +36,12 @@ const LeftSidebarUI: React.FC<SidebarProps> = ({
   return (
     <div
       className="sidebar"
-      style={{ width: 60, borderRight: '1px solid #ccc' }}
+      style={{
+        width: 60,
+        borderRight: '1px solid #ccc',
+        height: '100%',
+        background: '#ffffff',
+      }}
     >
       <Stack
         verticalAlign="space-between"
