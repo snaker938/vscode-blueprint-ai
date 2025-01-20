@@ -2,33 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
-/* The overall container: sticky on the right, same design idea as PrimarySidebar. */
-.properties-bar-container {
-  position: fixed; /* so it’s always pinned to the right edge */
+/* The main sidebar styles remain the same. */
+.properties-sidebar-wrapper {
+  position: fixed;
   top: 0;
   right: 0;
   height: 100vh;
-  width: 320px; /* or any width you like */
+  width: 320px;
   background-color: #fff;
   border-left: 1px solid #ccc;
+  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
-  /* A small shadow or different effect if you want. */
-  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  z-index: 9999; /* ensure it’s on top */
 }
 
-/* The header (title) for the bar. */
-.properties-bar-header {
-  @apply bg-gray-100 text-gray-800 font-semibold p-4 border-b border-gray-300;
-  /* or custom styling as you see fit */
+.properties-sidebar-collapsed {
+  transform: translateX(100%);
+}
+
+.properties-header {
+  @apply bg-gray-100 text-gray-800 p-4 border-b border-gray-300;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 16px;
+  font-weight: 600;
 }
 
-/* The main content area of the bar (currently empty). */
-.properties-bar-content {
+.properties-content {
   flex: 1;
   padding: 16px;
-  overflow-y: auto; /* if content grows */
+  overflow-y: auto;
+}
+
+/* The small floating rectangle if collapsed. */
+.properties-expander-button {
+  position: fixed;
+  top: 100px;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.properties-expander-button:hover {
+  background-color: #f5f5f5;
+}
+
+/* --- CUSTOM TOOLTIP, SHIFTED TO THE LEFT OF THE ICON --- */
+
+/* Wrapper that shows the tooltip on hover. */
+.custom-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Hide the tooltip by default. */
+.custom-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  /* 
+    Place the tooltip to the LEFT of the icon by 
+    offsetting "right: calc(100% + 8px)" so 
+    the tooltip doesn't go off screen on the right side. 
+  */
+  right: calc(100% + 8px);
+  background: #333;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 100000;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* A small arrow pointing right from the tooltip. */
+.custom-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%; /* arrow at the right edge of the tooltip */
+  transform: translateY(-50%);
+  border-width: 6px;
+  border-style: solid;
+  /* arrow pointing right => left side is color, rest transparent */
+  border-color: transparent transparent transparent #333;
+}
+
+/* On hover, show it. */
+.custom-tooltip-wrapper:hover .custom-tooltip {
+  visibility: visible;
+  opacity: 1;
 }
