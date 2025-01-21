@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { SidebarIconsBar } from './SidebarIconsBar';
 import { ElementsList } from './ElementsList';
+import PagesTab from './PagesTab/PagesTab';
 import './sidebarStyles.css';
 
 /*
@@ -78,6 +79,7 @@ export const PrimarySidebar: React.FC = () => {
           {activeTab === 'pages' && (
             <EmptyTabPanel>
               <TabTitle>Pages</TabTitle>
+              <PagesTab />
             </EmptyTabPanel>
           )}
         </ContentArea>

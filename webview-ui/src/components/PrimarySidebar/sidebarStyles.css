@@ -6,17 +6,33 @@
 .icon-bar-container {
   width: 60px !important;
   height: 100% !important;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   background-color: #ffffff;
   border-right: 1px solid #ccc;
   position: relative;
 }
 
-/* The double-line separator, still centered. */
+/* The top section (tabs) is placed at the start (top). */
+.top-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Padding if you want some spacing at the top. */
+  padding-top: 10px;
+}
+
+/* The bottom section (actions) is forced to the bottom. */
+.bottom-section {
+  margin-top: auto; /* push this section down */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Padding if you want some spacing at the bottom. */
+  padding-bottom: 10px;
+}
+
+/* The double-line separator, centered above actions. */
 .double-separator {
   display: flex;
   flex-direction: column;
@@ -55,10 +71,10 @@
 
   display: flex;
   align-items: center;
-  justify-content: center; /* icon in the exact horizontal center */
+  justify-content: center; /* icon is horizontally centered */
 }
 
-/* A pseudo-element for the left highlight bar. */
+/* A pseudo-element for the left highlight bar if active. */
 .sidebar-item::before {
   content: '';
   position: absolute;
@@ -73,7 +89,7 @@
 
 /* If active, color that left bar. */
 .sidebar-item-active::before {
-  background-color: #5c2d91;
+  background-color: #5c2d91; /* Purple highlight */
 }
 
 /* Hover: subtle background + small shadow. */
@@ -82,8 +98,7 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-/*
-   The icon container in the horizontal center.
+/* The icon container in the horizontal center.
    Slight scale on hover.
 */
 .icon-container {

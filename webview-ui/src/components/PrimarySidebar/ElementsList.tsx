@@ -1,4 +1,5 @@
 // webview-ui/src/components/PrimarySidebar/ElementsList.tsx
+
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useEditor, Element } from '@craftjs/core';
@@ -7,7 +8,8 @@ import { Container } from '../UserComponents/Container';
 import './sidebarStyles.css';
 
 const Wrapper = styled.div`
-  flex: 1;
+  /* Increase the sidebar content width here: */
+  width: 300px;
   background-color: #f9f9f9;
   border-right: 1px solid #e1e1e1;
   padding: 15px;
@@ -128,7 +130,7 @@ export const ElementsList: React.FC = () => {
             key={item.key}
             ref={(ref) => {
               if (!ref) return;
-              // Container is the only one that has craftJS
+              // Container is the only one that has CraftJS
               if (item.key === 'container') {
                 connectors.create(
                   ref,

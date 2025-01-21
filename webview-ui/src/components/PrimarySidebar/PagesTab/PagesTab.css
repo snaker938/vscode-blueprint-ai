@@ -1,0 +1,113 @@
+.pages-tab {
+  width: 100%;
+  max-width: 320px;
+  background-color: #f9f9f9;
+  border-right: 1px solid #e1e1e1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header: "Pages" title + icon buttons row */
+.pages-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pages-tab-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+/* Pages grid layout */
+.pages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* Each card for a page */
+.page-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* If the card is "selected", highlight it */
+.page-card.selected {
+  border-color: #4b3f72;
+  box-shadow: 0px 4px 8px rgba(75, 63, 114, 0.2);
+}
+
+/* Hover effect on page card */
+.page-card:hover {
+  border-color: #4b3f72;
+  box-shadow: 0px 4px 8px rgba(75, 63, 114, 0.2);
+}
+
+/* Thumbnail area */
+.page-thumbnail {
+  width: 100%;
+  height: 80px;
+  background-color: #eaeaea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.page-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* If there's no thumbnail, show a placeholder text */
+.empty-thumbnail {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Name text under the thumbnail */
+.page-name {
+  padding: 5px;
+  font-size: 14px;
+  text-align: center;
+  color: #333333;
+  font-weight: 500;
+}
+
+/* Modal content layout */
+.modal-content {
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+}
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #4b3f72;
+}
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+.modal-buttons > * {
+  margin-left: 10px;
+}
+
+/* Optional: styled scrollbar for pages-tab */
+.pages-tab::-webkit-scrollbar {
+  width: 8px;
+}
+.pages-tab::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+.pages-tab::-webkit-scrollbar-thumb {
+  background-color: #4b3f72;
+  border-radius: 10px;
+}
