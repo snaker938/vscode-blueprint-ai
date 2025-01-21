@@ -1,13 +1,9 @@
-/* webview-ui/src/components/RenderNode/renderNodeStyles.css */
-
-/* Ensure the .craftjs-renderer is relative so absolute overlays can be positioned */
 .craftjs-renderer {
   position: relative;
 }
 
-/* Base overlay styling */
 .node-indicator {
-  position: absolute; /* placed within .craftjs-renderer */
+  position: absolute;
   top: 0;
   left: 0;
   height: 32px;
@@ -24,7 +20,6 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Rename input */
 .rename-input {
   width: 110px;
   background: transparent;
@@ -39,14 +34,12 @@
   border-color: #fff;
 }
 
-/* Node name label */
 .node-indicator h2 {
   margin-right: 8px;
   font-size: 12px;
   cursor: pointer;
 }
 
-/* The icons */
 .node-indicator svg {
   fill: #fff;
   width: 18px;
@@ -54,7 +47,6 @@
   opacity: 0.9;
 }
 
-/* Icon button container */
 .icon-button {
   display: flex;
   align-items: center;

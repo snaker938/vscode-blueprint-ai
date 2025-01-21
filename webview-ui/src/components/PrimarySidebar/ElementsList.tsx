@@ -8,7 +8,6 @@ import { Container } from '../UserComponents/Container';
 import './sidebarStyles.css';
 
 const Wrapper = styled.div`
-  /* Increase the sidebar content width here: */
   width: 300px;
   background-color: #f9f9f9;
   padding: 15px;
@@ -16,17 +15,17 @@ const Wrapper = styled.div`
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 `;
 
 const GridArea = styled.div`
   display: grid;
-  /* exactly 3 columns per row */
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
   padding: 10px 0;
 `;
 
-const ElementCard = styled.div`
+const ElementCard = styled.div<{ $draggable?: boolean }>`
   width: 100%;
   height: 80px;
   background-color: #ffffff;
@@ -36,7 +35,7 @@ const ElementCard = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: ${(props) => (props.$draggable ? 'move' : 'pointer')};
   transition: all 0.3s ease;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 
@@ -63,9 +62,9 @@ const ElementName = styled(Text)`
 
 export const ElementsList: React.FC = () => {
   const [searchText, setSearchText] = useState('');
+
   const { connectors } = useEditor();
 
-  // Basic elements
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
     { key: 'button', icon: 'ButtonControl', name: 'Button' },
@@ -75,7 +74,6 @@ export const ElementsList: React.FC = () => {
     { key: 'link', icon: 'Link', name: 'Link' },
   ];
 
-  // Smart elements
   const smartItems = [
     { key: 'buttonGroup', icon: 'GroupedList', name: 'Button Group' },
     { key: 'inputBox', icon: 'TextField', name: 'Input Box' },
@@ -87,14 +85,12 @@ export const ElementsList: React.FC = () => {
     { key: 'searchBox', icon: 'Search', name: 'Search Box' },
   ];
 
-  // Graph elements
   const graphItems = [
     { key: 'barChart', icon: 'BarChart4', name: 'Bar Chart' },
     { key: 'pieChart', icon: 'DonutChart', name: 'Pie Chart' },
     { key: 'lineChart', icon: 'LineChart', name: 'Line Chart' },
   ];
 
-  // Filter logic
   const filterBySearch = (item: { name: string }) =>
     item.name.toLowerCase().includes(searchText.toLowerCase());
 
@@ -116,7 +112,6 @@ export const ElementsList: React.FC = () => {
         />
       </div>
 
-      {/* BASIC ELEMENTS */}
       <Text
         variant="xLarge"
         styles={{ root: { color: '#4b3f72', fontWeight: 700 } }}
@@ -124,32 +119,34 @@ export const ElementsList: React.FC = () => {
         Basic Elements
       </Text>
       <GridArea>
-        {filteredBasic.map((item) => (
-          <ElementCard
-            key={item.key}
-            ref={(ref) => {
-              if (!ref) return;
-              // Container is the only one that has CraftJS
-              if (item.key === 'container') {
-                connectors.create(
-                  ref,
-                  <Element
-                    canvas
-                    is={Container}
-                    width="800px"
-                    height="auto"
-                    background={{ r: 255, g: 255, b: 255, a: 1 }}
-                    padding={['40', '40', '40', '40']}
-                    custom={{ displayName: 'App' }}
-                  />
-                );
-              }
-            }}
-          >
-            <ElementIcon iconName={item.icon} />
-            <ElementName>{item.name}</ElementName>
-          </ElementCard>
-        ))}
+        {filteredBasic.map((item) => {
+          const isContainer = item.key === 'container';
+          return (
+            <ElementCard
+              key={item.key}
+              $draggable={isContainer}
+              ref={(ref) => {
+                if (ref && isContainer) {
+                  connectors.create(
+                    ref,
+                    <Element
+                      canvas
+                      is={Container}
+                      width="800px"
+                      height="auto"
+                      background={{ r: 255, g: 255, b: 255, a: 1 }}
+                      padding={['40', '40', '40', '40']}
+                      custom={{ displayName: 'App' }}
+                    />
+                  );
+                }
+              }}
+            >
+              <ElementIcon iconName={item.icon} />
+              <ElementName>{item.name}</ElementName>
+            </ElementCard>
+          );
+        })}
       </GridArea>
 
       <Separator
@@ -158,7 +155,6 @@ export const ElementsList: React.FC = () => {
         }}
       />
 
-      {/* SMART ELEMENTS */}
       <Text
         variant="xLarge"
         styles={{ root: { color: '#4b3f72', fontWeight: 700 } }}
@@ -180,7 +176,6 @@ export const ElementsList: React.FC = () => {
         }}
       />
 
-      {/* GRAPH ELEMENTS */}
       <Text
         variant="xLarge"
         styles={{ root: { color: '#4b3f72', fontWeight: 700 } }}

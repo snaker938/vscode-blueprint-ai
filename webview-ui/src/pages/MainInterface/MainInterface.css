@@ -1,6 +1,6 @@
 /* mainInterface.css */
 
-/* Ensure HTML/body fill the viewport */
+/* HTML/body fill the viewport */
 html,
 body {
   margin: 0;
@@ -14,36 +14,110 @@ body {
   height: 100%;
 }
 
-/* 
-   The top-level container. 
-   We force display:flex with !important 
-   to override any global .flex { display:block } rules.
-*/
+/* The top-level container for everything */
 .layout-root {
   display: flex !important;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #f3f3f3; /* or #gray-100, adjust as needed */
+  background-color: #f3f3f3;
 }
 
 /*
-  The sidebar + tabs column, 320px wide.
+  The main content area.
+  We also treat it as the "craftjs-renderer" so RenderNode can attach a scroll listener.
 */
-.sidebar-container {
-  display: flex !important; /* So the icon column & tab area can be side-by-side */
-  flex: 0 0 320px !important; /* fixed width of 320px */
-  border-right: 1px solid #ccc;
-  height: 100%;
-}
-
-/*
-  The main content area grows to fill leftover space.
-*/
-.main-content {
+.main-content.craftjs-renderer {
   flex: 1 1 auto !important;
   overflow-y: auto;
   padding: 20px;
   background: #fff;
-  height: 100%; /* ensures full vertical space if needed */
+  height: 100%;
+}
+
+/* 
+  The container that RenderNode will portal into 
+  for the floating toolbars, e.g. .page-container.
+  It's helpful to have position:relative to place overlays properly.
+*/
+.page-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 
+  The sidebars remain the same if you have .sidebar-container 
+  in your side nav code, or you can adjust as needed. 
+*/
+.sidebar-container {
+  flex: 0 0 320px !important;
+  border-right: 1px solid #ccc;
+  height: 100%;
+  display: flex !important;
+}
+
+/* mainInterface.css */
+
+/* Fill the viewport */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#root,
+#__next {
+  height: 100%;
+}
+
+/* Root container for the layout */
+.layout-root {
+  display: flex !important;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #f3f3f3;
+  position: relative; /* So the overlay can be absolutely positioned */
+}
+
+/* The main content area with craftJS editor */
+.main-content.craftjs-renderer {
+  flex: 1 1 auto !important;
+  overflow-y: auto;
+  padding: 20px;
+  background: #fff;
+  height: 100%;
+  position: relative;
+}
+
+.page-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: absolute;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* A translucent background + blur effect */
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The progress bar container, centering the bar */
+.progress-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
