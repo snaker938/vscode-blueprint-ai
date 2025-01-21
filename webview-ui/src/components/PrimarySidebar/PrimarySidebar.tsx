@@ -20,7 +20,7 @@ const OuterWrapper = styled.div<{ $isOpen: boolean }>`
 
 const ContentArea = styled.div`
   flex: 1;
-  background: #f5f5f5;
+  background: #f9f9f9;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

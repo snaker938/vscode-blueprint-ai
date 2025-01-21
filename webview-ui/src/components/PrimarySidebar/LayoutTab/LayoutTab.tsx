@@ -14,7 +14,7 @@ import {
 const Wrapper = styled.div`
   width: 300px;
   background-color: #f9f9f9;
-  border-right: 1px solid #e1e1e1;
+  // border-right: 1px solid #e1e1e1;
   padding: 15px;
   overflow-y: auto;
   overflow-x: hidden;
