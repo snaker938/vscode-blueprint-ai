@@ -4,6 +4,7 @@ import { SidebarIconsBar } from './SidebarIconsBar';
 import { ElementsList } from './ElementsList';
 import PagesTab from './PagesTab/PagesTab';
 import './sidebarStyles.css';
+import LayoutTab from './LayoutTab/LayoutTab';
 
 /*
   Use a transient prop named "$isOpen" 
@@ -14,7 +15,7 @@ const OuterWrapper = styled.div<{ $isOpen: boolean }>`
   height: 100%;
   overflow: hidden;
   transition: width 0.3s ease;
-  width: ${(p) => (p.$isOpen ? '320px' : '60px')};
+  width: ${(p) => (p.$isOpen ? '360px' : '60px')};
 `;
 
 const ContentArea = styled.div`
@@ -23,20 +24,6 @@ const ContentArea = styled.div`
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-`;
-
-const EmptyTabPanel = styled.div`
-  flex: 1;
-  background-color: #f9f9f9;
-  border-right: 1px solid #e1e1e1;
-  padding: 15px;
-`;
-
-const TabTitle = styled.h2`
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #4b3f72;
 `;
 
 export const PrimarySidebar: React.FC = () => {
@@ -71,17 +58,8 @@ export const PrimarySidebar: React.FC = () => {
       {activeTab && (
         <ContentArea>
           {activeTab === 'components' && <ElementsList />}
-          {activeTab === 'layout' && (
-            <EmptyTabPanel>
-              <TabTitle>Layout</TabTitle>
-            </EmptyTabPanel>
-          )}
-          {activeTab === 'pages' && (
-            <EmptyTabPanel>
-              <TabTitle>Pages</TabTitle>
-              <PagesTab />
-            </EmptyTabPanel>
-          )}
+          {activeTab === 'layout' && <LayoutTab />}
+          {activeTab === 'pages' && <PagesTab />}
         </ContentArea>
       )}
     </OuterWrapper>

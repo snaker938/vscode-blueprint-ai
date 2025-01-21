@@ -1,0 +1,132 @@
+/* LayoutTab.css */
+
+/* Overall sections styling */
+.layout-tab-section {
+  background-color: #d9cdc9; /* Light gray box from your sketches */
+  margin-bottom: 15px;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+/* Top section containing rows/columns, alignment, toggle, gap, and add button */
+.layout-tab-top-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Rows & columns in a single row */
+.layout-grid-row {
+  display: flex;
+  gap: 10px;
+}
+.grid-input-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.grid-input-pair label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* alignment + toggle in the same row */
+.layout-alignment-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+}
+.grid-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toggle-label {
+  font-size: 12px;
+  color: #333;
+}
+
+/* Gap slider row */
+.layout-gap-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.gap-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* The Add Grid Cell button */
+.add-grid-cell-btn {
+  align-self: flex-start;
+  background: #0078d4 !important;
+  color: #fff !important;
+  border: none !important;
+  margin-top: 5px;
+}
+.add-grid-cell-btn:hover {
+  background: #095c9f !important;
+}
+
+/* Padding and margin sections share styling */
+.padding-section,
+.margin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.padding-section h3,
+.margin-section h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b3f72;
+}
+
+.padding-row {
+  display: flex;
+  gap: 10px;
+}
+
+.input-small {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.input-small label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Layers section */
+.layers-section h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b3f72;
+}
+
+/* Make layers content take up any leftover space if needed */
+.layers-section {
+  display: flex;
+  flex-direction: column;
+  /* If you want it to expand: flex: 1; */
+}
+
+/* Example scrollbar styling if needed */
+.layout-tab-section::-webkit-scrollbar {
+  width: 8px;
+}
+.layout-tab-section::-webkit-scrollbar-track {
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+.layout-tab-section::-webkit-scrollbar-thumb {
+  background-color: #4b3f72;
+  border-radius: 4px;
+}
