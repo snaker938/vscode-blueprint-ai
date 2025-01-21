@@ -1,21 +1,26 @@
 /* LayoutTab.css */
 
-/* Overall sections styling */
+/* 
+  White-ish background, 
+  Purple/blue highlights (#4b3f72 or #5c2d91).
+*/
+
 .layout-tab-section {
-  background-color: #d9cdc9; /* Light gray box from your sketches */
+  background-color: #f5f5f5;
   margin-bottom: 15px;
   padding: 12px;
   border-radius: 6px;
+  border: 1px solid #e8e8e8;
 }
 
-/* Top section containing rows/columns, alignment, toggle, gap, and add button */
+/* Spacing for the top section */
 .layout-tab-top-section {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* Rows & columns in a single row */
+/* Row for 'Rows' & 'Columns' side by side */
 .layout-grid-row {
   display: flex;
   gap: 10px;
@@ -23,15 +28,15 @@
 .grid-input-pair {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 .grid-input-pair label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
 }
 
-/* alignment + toggle in the same row */
+/* Alignment & Toggle in same row */
 .layout-alignment-row {
   display: flex;
   align-items: flex-end;
@@ -40,57 +45,51 @@
 .grid-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .toggle-label {
   font-size: 12px;
+  font-weight: 600;
   color: #333;
 }
 
-/* Gap slider row */
+/* Gap row with slider */
 .layout-gap-row {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
 }
 .gap-label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
 }
 
-/* The Add Grid Cell button */
+/* The Add Grid Cell button in top section */
 .add-grid-cell-btn {
   align-self: flex-start;
-  background: #0078d4 !important;
+  background: #4b3f72 !important;
   color: #fff !important;
   border: none !important;
-  margin-top: 5px;
 }
 .add-grid-cell-btn:hover {
-  background: #095c9f !important;
+  background: #5c2d91 !important;
 }
 
-/* Padding and margin sections share styling */
-.padding-section,
-.margin-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* PADDING & MARGIN sections */
 .padding-section h3,
 .margin-section h3 {
-  margin: 0 0 4px;
+  margin: 0 0 6px 0;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: #4b3f72;
 }
 
-.padding-row {
+.padding-row,
+.margin-row {
   display: flex;
   gap: 10px;
 }
-
 .input-small {
   display: flex;
   flex-direction: column;
@@ -99,34 +98,23 @@
 }
 .input-small label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
 }
 
-/* Layers section */
-.layers-section h3 {
-  margin: 0 0 4px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #4b3f72;
+/* A bigger separator above the layers section */
+.big-separator {
+  margin: 30px 0;
+  height: 1px;
+  background-color: #cccccc;
+  border: none;
 }
 
-/* Make layers content take up any leftover space if needed */
+/* LAYERS SECTION */
 .layers-section {
+  margin-top: 20px;
+  /* or any spacing you want */
   display: flex;
   flex-direction: column;
-  /* If you want it to expand: flex: 1; */
-}
-
-/* Example scrollbar styling if needed */
-.layout-tab-section::-webkit-scrollbar {
-  width: 8px;
-}
-.layout-tab-section::-webkit-scrollbar-track {
-  background: #e0e0e0;
-  border-radius: 4px;
-}
-.layout-tab-section::-webkit-scrollbar-thumb {
-  background-color: #4b3f72;
-  border-radius: 4px;
+  gap: 8px;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import './LayoutTab.css';
 import styled from 'styled-components';
+import './LayoutTab.css';
 import { Layers } from '@craftjs/layers';
 import {
   Toggle,
@@ -8,9 +8,9 @@ import {
   TextField,
   Slider,
   PrimaryButton,
+  Text,
 } from '@fluentui/react';
 
-// Optional: If you want to override default width, or use your own styling approach
 const Wrapper = styled.div`
   width: 300px;
   background-color: #f9f9f9;
@@ -33,23 +33,33 @@ const LayoutTab: React.FC = () => {
   const [columns, setColumns] = useState('1');
   const [alignment, setAlignment] = useState('start');
   const [gridVisible, setGridVisible] = useState(true);
-  const [gapSize, setGapSize] = useState(5);
+  const [gapSize, setGapSize] = useState(3);
+
   const [paddingTop, setPaddingTop] = useState('1');
   const [paddingRight, setPaddingRight] = useState('1');
   const [paddingBottom, setPaddingBottom] = useState('1');
   const [paddingLeft, setPaddingLeft] = useState('1');
+
   const [marginTop, setMarginTop] = useState('1');
   const [marginRight, setMarginRight] = useState('1');
   const [marginBottom, setMarginBottom] = useState('1');
   const [marginLeft, setMarginLeft] = useState('1');
 
   const handleAddGridCell = () => {
-    // No real action for now
     alert('Add Grid Cell clicked!');
   };
 
   return (
     <Wrapper>
+      <Text
+        variant="xLarge"
+        styles={{
+          root: { color: '#4b3f72', fontWeight: 700, marginBottom: 15 },
+        }}
+      >
+        Layout
+      </Text>
+
       <div className="layout-tab-section layout-tab-top-section">
         <div className="layout-grid-row">
           <div className="grid-input-pair">
@@ -92,7 +102,7 @@ const LayoutTab: React.FC = () => {
           <label className="gap-label">Gap Size</label>
           <Slider
             min={0}
-            max={50}
+            max={10}
             step={1}
             value={gapSize}
             showValue
@@ -187,8 +197,21 @@ const LayoutTab: React.FC = () => {
         </div>
       </div>
 
+      <div className="big-separator" />
+
+      <Text
+        variant="xLarge"
+        styles={{
+          root: {
+            color: '#4b3f72',
+            fontWeight: 700,
+            marginBottom: 10,
+          },
+        }}
+      >
+        Layers
+      </Text>
       <div className="layout-tab-section layers-section">
-        <h3>Layers</h3>
         <Layers expandRootOnLoad={true} />
       </div>
     </Wrapper>
