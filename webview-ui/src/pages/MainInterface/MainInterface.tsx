@@ -3,12 +3,10 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { LinearProgress } from '@mui/material';
 import { Editor, Frame, Element } from '@craftjs/core';
 import { Container } from '../../components/UserComponents/Container';
-import { Text } from '../../components/UserComponents/Text';
-import { Button } from '../../components/UserComponents/Button';
 import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
 import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
-import { RenderNode } from '../../components/UserComponents/Utils/RenderNode/RenderNode';
-import { AmazonPage } from '../../components/AmazonDemoPage/AmazonDemoPage';
+// import { RenderNode } from '../../components/UserComponents/Utils/RenderNode/RenderNode';
+// import { AmazonPage } from '../../components/AmazonDemoPage/AmazonDemoPage';
 import './MainInterface.css';
 
 const theme = createTheme();
@@ -20,7 +18,7 @@ const MainInterface: React.FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 4000);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -29,11 +27,9 @@ const MainInterface: React.FC = () => {
       <Editor
         resolver={{
           Container,
-          Text,
-          Button,
         }}
         enabled
-        onRender={(node) => <RenderNode {...node} />}
+        // onRender={(node) => <RenderNode {...node} />}
       >
         <div className="layout-root">
           {loading && (
@@ -52,7 +48,7 @@ const MainInterface: React.FC = () => {
                   {/* CraftJS Frame, containing a Container and a Text component */}
 
                   {/* The static Amazon page below the CraftJS Frame */}
-                  <AmazonPage />
+                  {/* <AmazonPage /> */}
                   <Frame>
                     <Element
                       is={Container}

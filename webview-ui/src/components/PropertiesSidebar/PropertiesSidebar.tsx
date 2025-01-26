@@ -60,7 +60,7 @@ const ContentArea = styled.div`
 `;
 
 export const PropertiesSidebar: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const collapseIcon: IIconProps = { iconName: 'ChevronRight' };
   const expandIcon: IIconProps = { iconName: 'ChevronLeft' };

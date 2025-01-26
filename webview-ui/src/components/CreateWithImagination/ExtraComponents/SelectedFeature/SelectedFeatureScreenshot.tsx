@@ -63,7 +63,7 @@ const SelectedFeatureScreenshot: React.FC = () => {
       setLoading(false);
       // 3) Navigate to "/editing" when loading completes
       navigate('/editing');
-    }, 3000);
+    }, 1000);
   };
 
   const handleRemoveFile = () => {
