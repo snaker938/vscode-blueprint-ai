@@ -8,6 +8,7 @@ import { PropertiesSidebar } from '../../components/PropertiesSidebar/Properties
 // import { RenderNode } from '../../components/UserComponents/Utils/RenderNode/RenderNode';
 // import { AmazonPage } from '../../components/AmazonDemoPage/AmazonDemoPage';
 import './MainInterface.css';
+// import { RenderNode } from '../../components/UserComponents/Utils/RenderNode/RenderNode';
 
 const theme = createTheme();
 

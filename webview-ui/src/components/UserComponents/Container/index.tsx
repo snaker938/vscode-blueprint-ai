@@ -1,7 +1,7 @@
 import React from 'react';
+import { useNode } from '@craftjs/core';
 
 import { ContainerSettings } from './ContainerSettings';
-
 import { Resizer } from '../Utils/Resizer';
 
 export type ContainerProps = {
@@ -24,7 +24,7 @@ export type ContainerProps = {
   radius: number;
 };
 
-const defaultProps = {
+const defaultProps: Partial<ContainerProps> = {
   flexDirection: 'column',
   alignItems: 'flex-start',
   justifyContent: 'flex-start',
@@ -40,10 +40,10 @@ const defaultProps = {
 };
 
 export const Container = (props: Partial<ContainerProps>) => {
-  props = {
-    ...defaultProps,
-    ...props,
-  };
+  const {
+    connectors: { connect, drag },
+  } = useNode();
+
   const {
     flexDirection,
     alignItems,
@@ -56,10 +56,16 @@ export const Container = (props: Partial<ContainerProps>) => {
     shadow,
     radius,
     children,
-  } = props;
+  } = {
+    ...defaultProps,
+    ...props,
+  };
+
   return (
     <Resizer
+      // Let Resizer manage width/height
       propKey={{ width: 'width', height: 'height' }}
+      ref={(ref: HTMLDivElement) => connect(drag(ref))}
       style={{
         justifyContent,
         flexDirection,
