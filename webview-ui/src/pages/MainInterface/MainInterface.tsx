@@ -58,7 +58,17 @@ const MainInterface: React.FC = () => {
                       background={{ r: 255, g: 255, b: 255, a: 1 }}
                       padding={['20', '20', '20', '20']}
                       custom={{ displayName: 'RootCanvasContainer' }}
-                    ></Element>
+                    >
+                      <Element
+                        is={Container}
+                        canvas
+                        width="80%"
+                        height="auto"
+                        background={{ r: 240, g: 240, b: 240, a: 1 }}
+                        padding={['10', '10', '10', '10']}
+                        custom={{ displayName: 'InnerContainer' }}
+                      ></Element>
+                    </Element>
                   </Frame>
                 </div>
               </div>

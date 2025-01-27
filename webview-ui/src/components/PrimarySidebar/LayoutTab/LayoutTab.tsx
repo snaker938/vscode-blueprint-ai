@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import './LayoutTab.css';
-import { Layers } from '@craftjs/layers';
+import { CustomLayers } from './LayersComponent/CustomLayers';
+
 import {
   Toggle,
   Dropdown,
@@ -98,8 +99,16 @@ const LayoutTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="layout-gap-row">
-          <label className="gap-label">Gap Size</label>
+        <div
+          className="layout-gap-row"
+          style={{ display: 'flex', alignItems: 'center', width: '100%' }}
+        >
+          <label
+            className="gap-label"
+            style={{ whiteSpace: 'nowrap', marginRight: 10 }}
+          >
+            Gap Size
+          </label>
           <Slider
             min={0}
             max={10}
@@ -107,6 +116,7 @@ const LayoutTab: React.FC = () => {
             value={gapSize}
             showValue
             onChange={(val) => setGapSize(val)}
+            styles={{ root: { flexGrow: 1 } }}
           />
         </div>
 
@@ -212,7 +222,7 @@ const LayoutTab: React.FC = () => {
         Layers
       </Text>
       <div className="layout-tab-section layers-section">
-        <Layers expandRootOnLoad={true} />
+        <CustomLayers />
       </div>
     </Wrapper>
   );
