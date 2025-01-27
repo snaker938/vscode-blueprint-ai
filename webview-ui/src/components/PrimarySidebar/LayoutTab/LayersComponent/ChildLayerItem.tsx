@@ -1,51 +1,41 @@
 import React, { useState } from 'react';
-import { useLayer } from '@craftjs/layers';
 import { useEditor, NodeId } from '@craftjs/core';
 import { ROOT_NODE } from '@craftjs/utils';
 import { useSelectedIds } from './useSelectedIds';
-import { ChildLayerItem } from './ChildLayerItem';
 
-export const Layer: React.FC = () => {
-  const {
-    id,
-    depth,
-    expanded,
-    actions: layerActions,
-    connectors: { layer },
-  } = useLayer((lyr: any) => ({
-    id: lyr.id,
-    depth: lyr.depth,
-    expanded: lyr.expanded,
-  }));
+interface ChildLayerItemProps {
+  nodeId: NodeId;
+  depth: number;
+}
 
+export const ChildLayerItem: React.FC<ChildLayerItemProps> = ({
+  nodeId,
+  depth,
+}) => {
   const { actions, query } = useEditor();
-  const node = query.node(id).get();
-  const isRoot = id === ROOT_NODE;
-  const customName = (node?.data?.custom?.displayName as string) || id;
+  const node = query.node(nodeId).get();
+  const isRoot = nodeId === ROOT_NODE;
+  const displayName = (node?.data?.custom?.displayName as string) || nodeId;
 
   const [editingName, setEditingName] = useState(false);
-  const [tempName, setTempName] = useState<string>(customName);
+  const [tempName, setTempName] = useState(displayName);
 
-  const childIds: NodeId[] = node?.data?.nodes || [];
-  const linkedNodeIds: NodeId[] = Object.values(node?.data?.linkedNodes || {});
+  const childIds = node?.data?.nodes || [];
+  const linkedNodeIds = Object.values(node?.data?.linkedNodes || {});
   const allChildren: NodeId[] = [...childIds, ...linkedNodeIds];
   const hasChildren = allChildren.length > 0;
 
-  // Use our forced selection array
+  const [localExpanded, setLocalExpanded] = useState<boolean>(false);
+
   const selectedIds = useSelectedIds();
+  const isSelected = selectedIds.includes(nodeId);
 
-  // Also check node.events.selected for when user selected from the canvas
-  const nodeEventSel = node?.events?.selected;
-  const isSelected = selectedIds.includes(id) || nodeEventSel;
-
-  function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
-    // Prevent drag or other default events from stealing the selection
-    e.preventDefault();
+  function handleSelect(e: React.MouseEvent<HTMLDivElement>) {
     e.stopPropagation();
     if (isSelected) {
       actions.selectNode([]);
     } else {
-      actions.selectNode([id]);
+      actions.selectNode([nodeId]);
     }
   }
 
@@ -55,46 +45,46 @@ export const Layer: React.FC = () => {
   }
 
   function handleNameSave() {
-    actions.setCustom(id, (custom: Record<string, any>) => {
+    actions.setCustom(nodeId, (custom) => {
       custom.displayName = tempName;
     });
     setEditingName(false);
   }
 
+  function handleDelete(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    if (!isRoot) actions.delete(nodeId);
+  }
+
   return (
     <div
-      ref={(elem) => {
-        if (elem) layer(elem);
-      }}
       style={{
         background: isSelected ? '#fff' : '#f8f8f5',
         border: isSelected ? '2px solid #615dfa' : '1px solid #e0e0df',
         borderRadius: 8,
+        marginLeft: depth * 16,
         marginBottom: 8,
-        marginLeft: (depth ?? 0) * 16,
         padding: 12,
         boxShadow: isSelected ? '0 2px 10px rgba(0,0,0,0.15)' : 'none',
         transition: 'all 0.2s ease',
         cursor: 'pointer',
-        userSelect: 'none', // further ensure no accidental text selection
       }}
-      // Switch from onClick to onMouseDown so we hold selection after mouse release
-      onMouseDown={handleMouseDown}
+      onClick={handleSelect}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         {!editingName ? (
           <span
             style={{
-              flex: 1,
               fontWeight: 500,
               fontSize: '0.95rem',
+              flex: 1,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}
             onDoubleClick={handleDoubleClick}
           >
-            {tempName}
+            {displayName}
           </span>
         ) : (
           <input
@@ -110,9 +100,7 @@ export const Layer: React.FC = () => {
             value={tempName}
             onChange={(e) => setTempName(e.target.value)}
             onBlur={handleNameSave}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleNameSave();
-            }}
+            onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
           />
         )}
 
@@ -126,15 +114,12 @@ export const Layer: React.FC = () => {
                 padding: '2px 6px',
                 cursor: 'pointer',
               }}
-              onMouseDown={(evt) => {
-                evt.stopPropagation();
-              }}
-              onClick={(evt) => {
-                evt.stopPropagation();
-                layerActions.toggleLayer();
+              onClick={(e) => {
+                e.stopPropagation();
+                setLocalExpanded(!localExpanded);
               }}
             >
-              {expanded ? '−' : '+'}
+              {localExpanded ? '−' : '+'}
             </button>
           )}
           {!isRoot && (
@@ -146,13 +131,7 @@ export const Layer: React.FC = () => {
                 padding: '2px 6px',
                 cursor: 'pointer',
               }}
-              onMouseDown={(evt) => {
-                evt.stopPropagation();
-              }}
-              onClick={(evt) => {
-                evt.stopPropagation();
-                actions.delete(id);
-              }}
+              onClick={handleDelete}
             >
               🗑
             </button>
@@ -160,9 +139,9 @@ export const Layer: React.FC = () => {
         </div>
       </div>
 
-      {expanded &&
+      {localExpanded &&
         allChildren.map((cid) => (
-          <ChildLayerItem key={cid} nodeId={cid} depth={(depth ?? 0) + 1} />
+          <ChildLayerItem key={cid} nodeId={cid} depth={depth + 1} />
         ))}
     </div>
   );
