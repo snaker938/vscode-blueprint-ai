@@ -1,0 +1,32 @@
+.craft-node-hovered {
+  outline: 2px dotted red;
+  outline-offset: -2px;
+}
+
+.craft-node-selected {
+  outline: 2px solid blue;
+  outline-offset: -2px;
+}
+
+/* 
+.component-selected {
+  outline: 2px dotted red;
+  outline-offset: -2px; 
+}
+
+
+.floating-node-label {
+  position: absolute;
+  z-index: 9999;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border: 1px solid red;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #333;
+}
+
+.node-label-text {
+  font-weight: bold;
+} */

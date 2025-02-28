@@ -1,84 +1,138 @@
-import React, { useState, useEffect } from 'react';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { LinearProgress } from '@mui/material';
-import { Editor, Frame, Element } from '@craftjs/core';
+import React from 'react';
+import {
+  Editor,
+  Frame,
+  Element,
+  DefaultEventHandlers,
+  DefaultEventHandlersOptions,
+  NodeId,
+  EditorStore,
+  useEditor,
+} from '@craftjs/core';
 import { Container } from '../../components/UserComponents/Container';
-import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
-import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
-// import { RenderNode } from '../../components/UserComponents/Utils/RenderNode/RenderNode';
-// import { AmazonPage } from '../../components/AmazonDemoPage/AmazonDemoPage';
+import { Text as CraftText } from '../../components/UserComponents/Text';
+import { Toolbox } from '../../components/CraftEditor/Toolbox';
+import { PropertiesPanel } from '../../components/CraftEditor/PropertiesPanel';
+import { RenderNode } from '../../components/UserComponents/Utils/RenderNode';
+
 import './MainInterface.css';
-// import { RenderNode } from '../../components/UserComponents/Utils/RenderNode/RenderNode';
 
-const theme = createTheme();
+type MyEventHandlersOptions = DefaultEventHandlersOptions & {
+  store: EditorStore;
+  removeHoverOnMouseleave: boolean;
+  isMultiSelectEnabled?: () => boolean;
+};
 
-const MainInterface: React.FC = () => {
-  const [loading, setLoading] = useState(true);
+/**
+ * Custom event handlers to ensure that hover is
+ * removed properly on mouse leave.
+ */
+class CustomEventHandlers extends DefaultEventHandlers {
+  constructor(public options: MyEventHandlersOptions) {
+    super(options);
+  }
 
-  // Hide the loading overlay after 4 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  handlers() {
+    const defaultHandlers = super.handlers();
+    return {
+      ...defaultHandlers,
+      hover: (el: HTMLElement, id: NodeId) => {
+        const unbindDefaultHoverHandler = defaultHandlers.hover(el, id);
+        const unbindMouseleave = this.addCraftEventListener(
+          el,
+          'mouseleave',
+          (e) => {
+            e.craft.stopPropagation();
+            this.options.store.actions.setNodeEvent('hovered', '');
+          }
+        );
+        return () => {
+          unbindDefaultHoverHandler();
+          unbindMouseleave();
+        };
+      },
+    };
+  }
+}
+
+const DroppableCanvas: React.FC = () => {
+  return (
+    <div className="droppable-canvas">
+      <Frame>
+        <Element
+          is={Container}
+          canvas
+          background="#ffffff"
+          padding={20}
+          width="1200px"
+          height="1800px"
+          isRootContainer
+        >
+          <CraftText
+            text="Welcome! Drag components from the left!"
+            fontSize={22}
+          />
+        </Element>
+      </Frame>
+    </div>
+  );
+};
+
+const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
+  children,
+}) => {
+  const { actions } = useEditor();
+
+  /**
+   * Clicking on the wrapper (and not a child) deselects everything.
+   */
+  const handleClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      // Pass an empty array to unselect all nodes
+      actions.selectNode([]);
+    }
+  };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Editor
-        resolver={{
-          Container,
-        }}
-        enabled
-        // onRender={(node) => <RenderNode {...node} />}
-      >
-        <div className="layout-root">
-          {loading && (
-            <div className="loading-overlay">
-              <div className="progress-container">
-                <LinearProgress style={{ width: '200px' }} />
-              </div>
-            </div>
-          )}
+    <div
+      id="droppable-canvas-border"
+      className="canvas-border-wrapper"
+      onClick={handleClick}
+    >
+      {children}
+    </div>
+  );
+};
 
-          {!loading && (
-            <>
-              <PrimarySidebar />
-              <div className="main-content craftjs-renderer">
-                <div className="page-container">
-                  {/* CraftJS Frame, containing a Container and a Text component */}
+const MainInterface: React.FC = () => {
+  return (
+    <Editor
+      resolver={{ Container, Text: CraftText }}
+      onRender={(nodeProps) => <RenderNode {...nodeProps} />}
+      handlers={(store: EditorStore) =>
+        new CustomEventHandlers({
+          store,
+          removeHoverOnMouseleave: false,
+          isMultiSelectEnabled: () => false,
+        })
+      }
+    >
+      <div className="main-interface-container">
+        <aside className="sidebar left-sidebar">
+          <Toolbox />
+        </aside>
 
-                  {/* The static Amazon page below the CraftJS Frame */}
-                  {/* <AmazonPage /> */}
-                  <Frame>
-                    <Element
-                      is={Container}
-                      canvas
-                      width="100%"
-                      height="auto"
-                      background={{ r: 255, g: 255, b: 255, a: 1 }}
-                      padding={['20', '20', '20', '20']}
-                      custom={{ displayName: 'RootCanvasContainer' }}
-                    >
-                      <Element
-                        is={Container}
-                        canvas
-                        width="80%"
-                        height="auto"
-                        background={{ r: 240, g: 240, b: 240, a: 1 }}
-                        padding={['10', '10', '10', '10']}
-                        custom={{ displayName: 'InnerContainer' }}
-                      ></Element>
-                    </Element>
-                  </Frame>
-                </div>
-              </div>
-              <PropertiesSidebar />
-            </>
-          )}
-        </div>
-      </Editor>
-    </ThemeProvider>
+        <main className="editor-canvas-area">
+          <CanvasBorderWrapper>
+            <DroppableCanvas />
+          </CanvasBorderWrapper>
+        </main>
+
+        <aside className="sidebar right-sidebar">
+          <PropertiesPanel />
+        </aside>
+      </div>
+    </Editor>
   );
 };
 

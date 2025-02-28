@@ -1,99 +1,82 @@
 import React from 'react';
-import { useNode } from '@craftjs/core';
+import { useNode, Node } from '@craftjs/core';
 
-import { ContainerSettings } from './ContainerSettings';
-import { Resizer } from '../Utils/Resizer';
+/**
+ * A helper type so we can attach the `craft` property
+ * to our functional component without TypeScript errors.
+ */
+type CraftFC<P = object> = React.FC<P> & { craft?: any };
 
-export type ContainerProps = {
-  background: Record<'r' | 'g' | 'b' | 'a', number>;
-  color: Record<'r' | 'g' | 'b' | 'a', number>;
-  flexDirection: string;
-  alignItems: string;
-  justifyContent: string;
-  fillSpace: string;
-  width: string;
-  height: string;
-  padding: string[];
-  margin: string[];
-  marginTop: number;
-  marginLeft: number;
-  marginBottom: number;
-  marginRight: number;
-  shadow: number;
-  children: React.ReactNode;
-  radius: number;
-};
+interface ContainerProps {
+  background?: string;
+  padding?: number;
+  width?: string | number;
+  height?: string | number;
+  children?: React.ReactNode;
+  /**
+   * If true, node cannot be deleted.
+   */
+  isRootContainer?: boolean;
+}
 
-const defaultProps: Partial<ContainerProps> = {
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  justifyContent: 'flex-start',
-  fillSpace: 'no',
-  padding: ['0', '0', '0', '0'],
-  margin: ['0', '0', '0', '0'],
-  background: { r: 255, g: 255, b: 255, a: 1 },
-  color: { r: 0, g: 0, b: 0, a: 1 },
-  shadow: 0,
-  radius: 0,
-  width: '100%',
-  height: 'auto',
-};
-
-export const Container = (props: Partial<ContainerProps>) => {
+const Container: CraftFC<ContainerProps> = ({
+  background,
+  padding,
+  width,
+  height,
+  children,
+  // We don't need to use isRootContainer in the component,
+  // Used to apply special styling to root containers
+  isRootContainer = false,
+}) => {
   const {
     connectors: { connect, drag },
   } = useNode();
 
-  const {
-    flexDirection,
-    alignItems,
-    justifyContent,
-    fillSpace,
-    background = { r: 255, g: 255, b: 255, a: 1 },
-    color = { r: 0, g: 0, b: 0, a: 1 },
-    padding = ['0', '0', '0', '0'],
-    margin = ['0', '0', '0', '0'],
-    shadow,
-    radius,
-    children,
-  } = {
-    ...defaultProps,
-    ...props,
-  };
-
   return (
-    <Resizer
-      // Let Resizer manage width/height
-      propKey={{ width: 'width', height: 'height' }}
-      ref={(ref: HTMLDivElement) => connect(drag(ref))}
+    <div
+      ref={(ref) => ref && connect(drag(ref))}
       style={{
-        justifyContent,
-        flexDirection,
-        alignItems,
-        background: `rgba(${Object.values(background)})`,
-        color: `rgba(${Object.values(color)})`,
-        padding: `${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px`,
-        margin: `${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px`,
-        boxShadow:
-          shadow === 0
-            ? 'none'
-            : `0px 3px 100px ${shadow}px rgba(0, 0, 0, 0.13)`,
-        borderRadius: `${radius}px`,
-        flex: fillSpace === 'yes' ? 1 : 'unset',
+        background: background || '#fff',
+        padding: padding || 0,
+        border: isRootContainer ? '2px solid #3a85ff' : '1px solid #ccc',
+        width: width || '800px',
+        height: height || '600px',
+        boxSizing: 'border-box',
+        position: 'relative',
+        ...(isRootContainer && {
+          boxShadow: '0 0 10px rgba(0, 0, 0, 0.15)',
+        }),
       }}
     >
+      {isRootContainer && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '-20px',
+            left: '5px',
+            fontSize: '12px',
+            color: '#3a85ff',
+          }}
+        >
+          Root Container
+        </div>
+      )}
       {children}
-    </Resizer>
+    </div>
   );
 };
 
 Container.craft = {
   displayName: 'Container',
-  props: defaultProps,
   rules: {
-    canDrag: () => true,
-  },
-  related: {
-    settings: ContainerSettings,
+    canDelete: (node: Node) => {
+      if (node.data.props.isRootContainer) {
+        return false;
+      }
+      return true;
+    },
   },
 };
+
+export { Container };
