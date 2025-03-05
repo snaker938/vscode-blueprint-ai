@@ -1,0 +1,120 @@
+/* LayoutTab.css */
+
+/* 
+  White-ish background, 
+  Purple/blue highlights (#4b3f72 or #5c2d91).
+*/
+
+.layout-tab-section {
+  background-color: #f5f5f5;
+  margin-bottom: 15px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+}
+
+/* Spacing for the top section */
+.layout-tab-top-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Row for 'Rows' & 'Columns' side by side */
+.layout-grid-row {
+  display: flex;
+  gap: 10px;
+}
+.grid-input-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.grid-input-pair label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Alignment & Toggle in same row */
+.layout-alignment-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+}
+.grid-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.toggle-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Gap row with slider */
+.layout-gap-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gap-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* The Add Grid Cell button in top section */
+.add-grid-cell-btn {
+  align-self: flex-start;
+  background: #4b3f72 !important;
+  color: #fff !important;
+  border: none !important;
+}
+.add-grid-cell-btn:hover {
+  background: #5c2d91 !important;
+}
+
+/* PADDING & MARGIN sections */
+.padding-section h3,
+.margin-section h3 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4b3f72;
+}
+
+.padding-row,
+.margin-row {
+  display: flex;
+  gap: 10px;
+}
+.input-small {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.input-small label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* A bigger separator above the layers section */
+.big-separator {
+  margin: 30px 0;
+  height: 1px;
+  background-color: #cccccc;
+  border: none;
+}
+
+/* LAYERS SECTION */
+.layers-section {
+  margin-top: 20px;
+  /* or any spacing you want */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

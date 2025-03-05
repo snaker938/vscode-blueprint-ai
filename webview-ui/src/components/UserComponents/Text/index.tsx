@@ -8,10 +8,24 @@ export interface TextProps {
   text: string;
   fontSize: number;
   color?: string;
+
+  /* margins in px */
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
 }
 
 /** The actual Text user component */
-export const Text: React.FC<TextProps> = ({ text, fontSize, color }) => {
+export const Text: React.FC<TextProps> = ({
+  text,
+  fontSize,
+  color,
+  marginTop,
+  marginRight,
+  marginBottom,
+  marginLeft,
+}) => {
   const {
     connectors: { connect, drag },
     selected,
@@ -22,7 +36,7 @@ export const Text: React.FC<TextProps> = ({ text, fontSize, color }) => {
     dragged: node.events.dragged,
   }));
 
-  // We'll manage an "editing" state, so that if it's selected, we let user type into a TextField
+  // We'll manage an "editing" state so that if it's selected, we let the user type into a TextField
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
@@ -41,9 +55,13 @@ export const Text: React.FC<TextProps> = ({ text, fontSize, color }) => {
         }
       }}
       style={{
+        display: 'inline-block',
         fontSize: `${fontSize}px`,
         color: color || '#000',
         cursor: dragged ? 'grabbing' : 'pointer',
+        margin: `${marginTop || 0}px ${marginRight || 0}px ${
+          marginBottom || 0
+        }px ${marginLeft || 0}px`,
       }}
     >
       {editing ? (
@@ -73,14 +91,23 @@ const TextSettings: React.FC = () => {
     fontSize,
     color,
     text,
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
   } = useNode((node) => ({
     text: node.data.props.text,
     fontSize: node.data.props.fontSize,
     color: node.data.props.color,
+    marginTop: node.data.props.marginTop,
+    marginRight: node.data.props.marginRight,
+    marginBottom: node.data.props.marginBottom,
+    marginLeft: node.data.props.marginLeft,
   }));
 
   return (
     <div style={{ padding: '8px' }}>
+      {/* Text */}
       <div style={{ marginBottom: '12px' }}>
         <label style={{ marginBottom: '4px', display: 'block' }}>Text:</label>
         <TextField
@@ -93,6 +120,7 @@ const TextSettings: React.FC = () => {
         />
       </div>
 
+      {/* Font Size */}
       <div style={{ marginBottom: '12px' }}>
         <label style={{ marginBottom: '4px', display: 'block' }}>
           Font Size:
@@ -110,6 +138,7 @@ const TextSettings: React.FC = () => {
         />
       </div>
 
+      {/* Color */}
       <div style={{ marginBottom: '12px' }}>
         <label style={{ marginBottom: '4px', display: 'block' }}>Color:</label>
         <TextField
@@ -123,6 +152,66 @@ const TextSettings: React.FC = () => {
           }}
         />
       </div>
+
+      {/* Margin T/R/B/L */}
+      <div style={{ marginBottom: '12px' }}>
+        <label style={{ marginBottom: '4px', display: 'block' }}>
+          Margin (Top):
+        </label>
+        <Slider
+          min={0}
+          max={100}
+          value={marginTop || 0}
+          showValue
+          onChange={(val) =>
+            setProp((props: TextProps) => {
+              props.marginTop = val;
+            })
+          }
+        />
+        <label style={{ marginBottom: '4px', display: 'block' }}>
+          Margin (Right):
+        </label>
+        <Slider
+          min={0}
+          max={100}
+          value={marginRight || 0}
+          showValue
+          onChange={(val) =>
+            setProp((props: TextProps) => {
+              props.marginRight = val;
+            })
+          }
+        />
+        <label style={{ marginBottom: '4px', display: 'block' }}>
+          Margin (Bottom):
+        </label>
+        <Slider
+          min={0}
+          max={100}
+          value={marginBottom || 0}
+          showValue
+          onChange={(val) =>
+            setProp((props: TextProps) => {
+              props.marginBottom = val;
+            })
+          }
+        />
+        <label style={{ marginBottom: '4px', display: 'block' }}>
+          Margin (Left):
+        </label>
+        <Slider
+          min={0}
+          max={100}
+          value={marginLeft || 0}
+          showValue
+          onChange={(val) =>
+            setProp((props: TextProps) => {
+              props.marginLeft = val;
+            })
+          }
+        />
+      </div>
     </div>
   );
 };
@@ -134,6 +223,10 @@ const TextSettings: React.FC = () => {
     text: 'Hello World',
     fontSize: 20,
     color: '#000000',
+    marginTop: 0,
+    marginRight: 0,
+    marginBottom: 0,
+    marginLeft: 0,
   },
   related: {
     settings: TextSettings,
