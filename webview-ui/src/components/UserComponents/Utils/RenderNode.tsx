@@ -6,14 +6,9 @@ interface RenderNodeProps {
   render: React.ReactNode;
 }
 
+// RenderNode.tsx
 export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
-  const {
-    connectors: { connect },
-    isHovered,
-    isSelected,
-    dom,
-  } = useNode((node) => ({
-    connectors: (node as any).connectors,
+  const { isHovered, isSelected, dom } = useNode((node) => ({
     isHovered: node.events.hovered,
     isSelected: node.events.selected,
     dom: node.dom,
@@ -37,7 +32,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, isHovered]);
 
-  return <div ref={(ref) => ref && connect(ref)}>{render}</div>;
+  return <>{render}</>; // no extra div wrapping
 };
 
 // ------------------------------------------------------------

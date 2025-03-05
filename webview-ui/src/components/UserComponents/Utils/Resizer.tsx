@@ -85,8 +85,8 @@ export const Resizer = forwardRef<HTMLDivElement, any>(
   ({ propKey, children, ...props }, forwardedRef) => {
     const {
       id,
+      connectors: { connect },
       actions: { setProp },
-      // connectors: { connect },
       fillSpace,
       nodeWidth,
       nodeHeight,
@@ -94,6 +94,7 @@ export const Resizer = forwardRef<HTMLDivElement, any>(
       active,
       inNodeContext,
     } = useNode((node) => ({
+      connectors: (node as any).connectors,
       parent: node.data.parent,
       active: node.events.selected,
       nodeWidth: node.data.props[propKey.width],
@@ -111,7 +112,9 @@ export const Resizer = forwardRef<HTMLDivElement, any>(
       };
     });
 
-    const resizable = useRef<Resizable>(null);
+    const resizable = useRef<Resizable | null>(
+      null
+    ) as React.MutableRefObject<Resizable | null>;
     const isResizing = useRef<boolean>(false);
     const editingDimensions = useRef<any>(null);
     const nodeDimensions = useRef<{ width: any; height: any } | null>(null);
@@ -125,6 +128,26 @@ export const Resizer = forwardRef<HTMLDivElement, any>(
       width: nodeWidth,
       height: nodeHeight,
     });
+
+    const handleResizableRef = useCallback(
+      (ref: Resizable | null) => {
+        if (ref) {
+          resizable.current = ref;
+          const dom = ref.resizable; // re-resizable’s actual <div>
+          // Forward the DOM up if we got a forwardedRef
+          if (forwardedRef) {
+            if (typeof forwardedRef === 'function') {
+              forwardedRef(dom as HTMLDivElement | null);
+            } else {
+              forwardedRef.current = dom as HTMLDivElement | null;
+            }
+          }
+          // Here is the important part: wire up Craft’s connect
+          connect(dom as HTMLDivElement);
+        }
+      },
+      [connect, forwardedRef]
+    );
 
     const updateInternalDimensionsInPx = useCallback(() => {
       const { width: nodeWidth, height: nodeHeight } =
@@ -225,27 +248,7 @@ export const Resizer = forwardRef<HTMLDivElement, any>(
             flex: true,
           },
         ])}
-        ref={useCallback(
-          (ref: Resizable | null) => {
-            if (ref) {
-              (resizable as React.MutableRefObject<Resizable>).current = ref;
-              if (forwardedRef) {
-                const dom = ref?.resizable || null; // The actual <div> from re-resizable
-                if (typeof forwardedRef === 'function') {
-                  forwardedRef(dom as HTMLDivElement | null);
-                } else {
-                  (
-                    forwardedRef as React.MutableRefObject<HTMLDivElement | null>
-                  ).current = dom as HTMLDivElement | null;
-                }
-              }
-              // if (resizable.current && resizable.current.resizable) {
-              //   connect(resizable.current.resizable);
-              // }
-            }
-          },
-          [forwardedRef]
-        )}
+        ref={handleResizableRef}
         size={internalDimensions}
         onResizeStart={(e: React.SyntheticEvent) => {
           updateInternalDimensionsInPx();
