@@ -28,7 +28,7 @@ interface MyEventHandlersOptions extends DefaultEventHandlersOptions {
 
 /**
  * Custom event handlers:
- * - We skip hover/selection if the target is the root node.
+ * - Skip hover/selection if the target is the root node.
  */
 class CustomEventHandlers extends DefaultEventHandlers<MyEventHandlersOptions> {
   constructor(public options: MyEventHandlersOptions) {
@@ -43,7 +43,7 @@ class CustomEventHandlers extends DefaultEventHandlers<MyEventHandlersOptions> {
 
       // Overriding 'select'
       select: (el: HTMLElement, id: string) => {
-        // If node is root, don't allow selection:
+        // If node is root, don't allow selection
         if (this.options.store.query.node(id).isRoot()) {
           return () => {};
         }
@@ -52,7 +52,7 @@ class CustomEventHandlers extends DefaultEventHandlers<MyEventHandlersOptions> {
 
       // Overriding 'hover'
       hover: (el: HTMLElement, id: string) => {
-        // If node is root, don't allow hover:
+        // If node is root, don't allow hover
         if (this.options.store.query.node(id).isRoot()) {
           return () => {};
         }
@@ -74,27 +74,6 @@ class CustomEventHandlers extends DefaultEventHandlers<MyEventHandlersOptions> {
     };
   }
 }
-
-const DroppableCanvas: React.FC = () => {
-  return (
-    <div className="droppable-canvas">
-      <Frame>
-        <Element
-          is={Container}
-          canvas
-          background={{ r: 255, g: 255, b: 255, a: 1 }}
-          padding={['20', '20', '20', '20']}
-          custom={{ isRootContainer: true }}
-        >
-          <CraftText
-            text="Welcome! Drag components from the left!"
-            fontSize={22}
-          />
-        </Element>
-      </Frame>
-    </div>
-  );
-};
 
 const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
   children,
@@ -118,6 +97,30 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
     >
       {children}
     </div>
+  );
+};
+
+/**
+ * The main droppable canvas (using a Container as the root node).
+ */
+const DroppableCanvas: React.FC = () => {
+  return (
+    <Frame>
+      <Element
+        is={Container}
+        canvas
+        custom={{ isRootContainer: true }}
+        width="800px"
+        height="1235px"
+        background={{ r: 255, g: 255, b: 255, a: 1 }}
+        padding={['20', '20', '20', '20']}
+      >
+        <CraftText
+          text="Welcome! Drag components from the left!"
+          fontSize={22}
+        />
+      </Element>
+    </Frame>
   );
 };
 

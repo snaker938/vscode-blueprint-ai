@@ -12,11 +12,7 @@ body {
 
 .main-interface-container {
   display: grid;
-
-  /* Changed from fixed 220px / 280px columns to allow sidebars to resize 
-     according to their own internal logic */
   grid-template-columns: auto 1fr auto;
-
   height: 100vh;
   width: 100%;
 }
@@ -42,24 +38,19 @@ body {
   height: 100%;
 }
 
+/* Wrapper for the main canvas area */
 .canvas-border-wrapper {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-
-  /* top/bottom "borders": 30px each */
   padding-top: 30px;
   padding-bottom: 30px;
 
   display: flex;
   justify-content: center; /* center the 800px canvas horizontally */
-  align-items: flex-start; /* no vertical centering */
+  align-items: flex-start;
   overflow-y: auto; /* scroll vertically if content is tall */
-  overflow-x: hidden; /* hide horizontal scroll, not needed here */
+  overflow-x: hidden;
 }
 
-.droppable-canvas {
-  width: 800px;
-  height: 1235px;
-  background-color: #ffffff;
-}
+/* Removed the old .droppable-canvas since we're using the Container directly */
