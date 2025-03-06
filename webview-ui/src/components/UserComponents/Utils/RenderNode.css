@@ -1,9 +1,51 @@
-.craft-node-hovered {
-  outline: 2px dotted red;
-  outline-offset: -2px;
+/* Wrapper that holds everything so the indicator can be absolutely positioned */
+.craft-node-wrapper {
+  position: relative;
 }
 
+/* Indicator box above the node */
+.craft-node-indicator {
+  position: absolute;
+  top: -30px; /* Move above the node */
+  left: 0;
+  display: flex;
+  align-items: center;
+  background: #f1f1f1;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2px 4px;
+  z-index: 999;
+  font-size: 12px;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Draggable cursor on the drag handle */
+.drag-handle {
+  cursor: move;
+}
+
+/* Space out icons/text a bit */
+.craft-node-indicator > * {
+  margin-right: 4px;
+}
+
+/* Name input style when editing */
+.craft-name-input {
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  padding: 2px;
+  width: 120px;
+}
+
+/* Hovered border: dotted with some offset so it’s not tight to text */
+.craft-node-hovered {
+  outline: 2px dotted red;
+  outline-offset: 2px;
+}
+
+/* Selected border: solid with some offset */
 .craft-node-selected {
   outline: 2px solid blue;
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
