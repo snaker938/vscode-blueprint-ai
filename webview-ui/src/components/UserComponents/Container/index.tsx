@@ -7,7 +7,7 @@ import {
   subscribeSelectedPageChange,
 } from '../../PrimarySidebar/PagesTab/pageStore';
 
-// Import the Fluent UI Label
+// Fluent UI Label
 import { Label, ILabelStyles } from '@fluentui/react';
 
 export type ContainerProps = {
@@ -51,7 +51,7 @@ const defaultProps: Partial<ContainerProps> = {
 export const Container = (incomingProps: Partial<ContainerProps>) => {
   const props = { ...defaultProps, ...incomingProps };
 
-  // Retrieve custom data from Craft's node.
+  // Retrieve custom data from Craft's node
   const { data } = useNode((node) => ({ data: node.data }));
   const isRoot = data.custom?.isRootContainer === true;
 
@@ -66,7 +66,7 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     return () => unsub();
   }, []);
 
-  // Safely handle color/spacing properties.
+  // Safely handle color/spacing
   const safeBackground = props.background ?? defaultProps.background!;
   const safeColor = props.color ?? defaultProps.color!;
   const safeMargin = Array.isArray(props.margin)
@@ -88,7 +88,7 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     children,
   } = props;
 
-  // Non-root containers can keep the user-defined shadow
+  // Non-root containers can keep user-defined shadow
   const computedBoxShadow =
     isRoot || shadow === 0
       ? 'none'
@@ -112,47 +112,69 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     height,
   };
 
-  // If it's the root container, add a subtle border & soft shadow
+  // Make the root container's border more noticeable + subtle shadow
   if (isRoot) {
-    containerStyle.border = '1px solid rgba(0, 0, 0, 0.1)';
-    containerStyle.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.05)';
+    containerStyle.border = '2px solid rgba(0, 0, 0, 0.2)';
+    containerStyle.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.07)';
   }
 
   /**
-   * Fluent UI Label styles:
-   * - Slight offset at top-left
-   * - Blueish color (#0078D4 is MS brand)
-   * - Double underline for a "neat" stylized effect
+   * Fluent UI Label styles for the root container title:
+   * We use pseudo-elements to create two underscoring lines:
+   * - A line at full width
+   * - A second line at half width, slightly below the first
    */
   const rootLabelStyles: ILabelStyles = {
     root: {
       position: 'absolute',
-      top: '-25px',
+      // Slightly higher offset so the lines remain above the container
+      top: '-30px',
       left: '15px',
       color: '#0078D4',
-      textDecoration: 'underline double',
-      textUnderlineOffset: '3px',
+      display: 'inline-block',
       fontWeight: 'bold',
-      whiteSpace: 'nowrap',
       pointerEvents: 'none',
       zIndex: 10000,
+      whiteSpace: 'nowrap',
+
+      // Pseudo-element lines
+      selectors: {
+        ':before': {
+          content: "''",
+          position: 'absolute',
+          width: '50%',
+          height: '2px',
+          backgroundColor: '#0078D4',
+          bottom: '-5px', // further from the text
+          left: 0,
+        },
+        ':after': {
+          content: "''",
+          position: 'absolute',
+          width: '100%',
+          height: '2px',
+          backgroundColor: '#0078D4',
+          bottom: '-2px', // closer to the text
+          left: 0,
+        },
+      },
     },
   };
 
+  // Root container: add label plus children
   if (isRoot) {
     return (
       <Resizer
         propKey={{ width: 'width', height: 'height' }}
         style={containerStyle}
       >
-        {/* Use a Fluent UI Label for the root container title */}
         <Label styles={rootLabelStyles}>{pageName}</Label>
         {children}
       </Resizer>
     );
   }
 
-  // For non-root containers
+  // Non-root container
   return (
     <Resizer
       propKey={{ width: 'width', height: 'height' }}
