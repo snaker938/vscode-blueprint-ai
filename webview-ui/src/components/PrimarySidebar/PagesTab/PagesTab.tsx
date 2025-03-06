@@ -5,13 +5,17 @@ import {
   Modal,
   PrimaryButton,
   DefaultButton,
-  // Icon,
-  // Text
 } from '@fluentui/react';
 import styled from 'styled-components';
 import './PagesTab.css';
 
-import { Page, getGlobalPages, setGlobalPages } from './pageStore';
+import {
+  Page,
+  getGlobalPages,
+  setGlobalPages,
+  getGlobalSelectedPageId,
+  setGlobalSelectedPageId,
+} from './pageStore';
 import SuggestedPages from '../../SuggestedPages/SuggestedPages';
 
 /* ------------------ Styled Components ------------------ */
@@ -38,7 +42,7 @@ const TabTitle = styled.h2`
 const ActionIconsRow = styled.div`
   display: flex;
   justify-content: center;
-  flex-wrap: wrap; /* If icons exceed width, wrap to avoid horizontal scroll */
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 15px;
 `;
@@ -97,9 +101,10 @@ const PageName = styled.div`
 /* ------------------ Component ------------------ */
 
 const PagesTab: React.FC = () => {
+  // Initialize from global store
   const [pages, setPages] = useState<Page[]>(() => getGlobalPages());
-  const [selectedPageId, setSelectedPageId] = useState<number>(
-    pages[0]?.id ?? 1
+  const [selectedPageId, setSelectedPageId] = useState<number>(() =>
+    getGlobalSelectedPageId()
   );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addPageName, setAddPageName] = useState('');
@@ -107,9 +112,16 @@ const PagesTab: React.FC = () => {
   const [newPageName, setNewPageName] = useState('');
   const [showSuggested, setShowSuggested] = useState(false);
 
+  // Helper: update global & local page list
   const updatePages = (newPages: Page[]) => {
     setPages(newPages);
     setGlobalPages(newPages);
+  };
+
+  // Helper: update both local + global selected page
+  const updateSelectedPageId = (id: number) => {
+    setSelectedPageId(id);
+    setGlobalSelectedPageId(id);
   };
 
   const handleAddPage = () => {
@@ -121,8 +133,9 @@ const PagesTab: React.FC = () => {
       name: addPageName.trim(),
       thumbnail: '',
     };
-    updatePages([...pages, newPage]);
-    setSelectedPageId(newId);
+    const newPages = [...pages, newPage];
+    updatePages(newPages);
+    updateSelectedPageId(newId);
     setAddPageName('');
     setIsAddModalOpen(false);
   };
@@ -141,21 +154,22 @@ const PagesTab: React.FC = () => {
     if (pages.length <= 1) return;
     const updated = pages.filter((p) => p.id !== selectedPageId);
     updatePages(updated);
+    // pick a new valid selected page
     if (updated.length) {
-      setSelectedPageId(updated[0].id);
+      updateSelectedPageId(updated[0].id);
     } else {
-      setSelectedPageId(1);
+      updateSelectedPageId(1);
     }
   };
 
   const handleResetPages = () => {
     const defaultPages: Page[] = [{ id: 1, name: 'Page 1', thumbnail: '' }];
     updatePages(defaultPages);
-    setSelectedPageId(1);
+    updateSelectedPageId(1);
   };
 
   const handlePageClick = (id: number) => {
-    setSelectedPageId(id);
+    updateSelectedPageId(id);
   };
 
   return (
