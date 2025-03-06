@@ -124,28 +124,55 @@ const PagesTab: React.FC = () => {
     setGlobalSelectedPageId(id);
   };
 
+  /**
+   * Add a new page. If no name given, default to "Page {pages.length + 1}".
+   */
   const handleAddPage = () => {
-    if (!addPageName.trim()) return;
+    // Prepare the page name (if user left it blank => default name)
+    let finalName = addPageName.trim();
+    if (!finalName) {
+      finalName = `Page ${pages.length + 1}`;
+    }
+
+    // Determine a new page's ID
     const maxId = pages.reduce((acc, p) => Math.max(acc, p.id), 0);
     const newId = maxId + 1;
+
+    // Create and add the new page
     const newPage: Page = {
       id: newId,
-      name: addPageName.trim(),
+      name: finalName,
       thumbnail: '',
     };
     const newPages = [...pages, newPage];
     updatePages(newPages);
     updateSelectedPageId(newId);
+
+    // Reset local states and close modal
     setAddPageName('');
     setIsAddModalOpen(false);
   };
 
+  /**
+   * Rename the currently selected page. If user left it blank => just cancel/close.
+   */
   const handleRenamePage = () => {
-    if (!newPageName.trim()) return;
+    const finalName = newPageName.trim();
+
+    // If no name was entered, just cancel (close modal)
+    if (!finalName) {
+      setIsRenameModalOpen(false);
+      setNewPageName('');
+      return;
+    }
+
+    // Otherwise, rename selected page
     const updated = pages.map((p) =>
-      p.id === selectedPageId ? { ...p, name: newPageName.trim() } : p
+      p.id === selectedPageId ? { ...p, name: finalName } : p
     );
     updatePages(updated);
+
+    // Clean up
     setNewPageName('');
     setIsRenameModalOpen(false);
   };
