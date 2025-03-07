@@ -3,11 +3,12 @@
   position: relative;
 }
 
-/* Indicator box above the node */
+/* Indicator box attached directly to the top of the node with no gap */
 .craft-node-indicator {
   position: absolute;
-  top: -30px; /* Move above the node */
+  top: 0;
   left: 0;
+  transform: translateY(-100%);
   display: flex;
   align-items: center;
   background: #f1f1f1;

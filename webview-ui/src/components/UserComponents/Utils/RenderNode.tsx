@@ -12,28 +12,24 @@ interface RenderNodeProps {
 
 export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
   const {
-    isHovered,
     isSelected,
-    connectors: { drag },
+    connectors: { connect, drag },
     id,
-    // Suppose this is the "name" prop for your component, from the node's data:
     ameString,
   } = useNode((node) => ({
-    isHovered: node.events.hovered,
+    // We’re not using Craft’s hovered state since we’re handling hover manually
     isSelected: node.events.selected,
-    ameString: node.data.props.ameString, // if your prop is named differently, adjust here
+    ameString: node.data.props.ameString,
   }));
 
   const { actions } = useEditor();
 
-  // We'll store the Node's underlying DOM here for adding/removing outline classes
-  const {
-    dom, // The actual DOM element associated with this node
-  } = useNode((node) => ({
+  // Access the underlying DOM for adding outline classes
+  const { dom } = useNode((node) => ({
     dom: node.dom,
   }));
 
-  // Toggle the "selected" CSS class
+  // Apply/remove the "selected" class
   useEffect(() => {
     if (!dom) return;
     if (isSelected) {
@@ -43,17 +39,20 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, isSelected]);
 
-  // Toggle the "hovered" CSS class
+  // Use local state for hover
+  const [manualHovered, setManualHovered] = useState(false);
+
+  // Apply/remove the "hovered" class based on our manual hover state
   useEffect(() => {
     if (!dom) return;
-    if (isHovered) {
+    if (manualHovered) {
       dom.classList.add('craft-node-hovered');
     } else {
       dom.classList.remove('craft-node-hovered');
     }
-  }, [dom, isHovered]);
+  }, [dom, manualHovered]);
 
-  // Inline editing of the node's name
+  // Inline editing state for the node’s name
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(ameString);
 
@@ -67,7 +66,6 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
   };
 
   const handleNameBlur = () => {
-    // Commit changes to the node's ameString prop
     actions.setProp(id, (props: any) => {
       props.ameString = tempName;
     });
@@ -75,19 +73,57 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
   };
 
   const handleHide = () => {
-    // Hide the node (and its children) without deleting
     actions.setHidden(id, true);
   };
 
   const handleDelete = () => {
-    // Delete the node (and its children)
     actions.delete(id);
   };
 
+  // --- Manual hover handlers using local state ---
+  const handleWrapperMouseEnter = () => {
+    setManualHovered(true);
+  };
+
+  const handleWrapperMouseLeave = (e: React.MouseEvent) => {
+    const related = e.relatedTarget as HTMLElement | null;
+    if (
+      !related ||
+      (!related.closest('.craft-node-indicator') &&
+        !related.closest('.craft-node-wrapper'))
+    ) {
+      setManualHovered(false);
+    }
+  };
+
+  const handleIndicatorMouseEnter = () => {
+    setManualHovered(true);
+  };
+
+  const handleIndicatorMouseLeave = (e: React.MouseEvent) => {
+    const related = e.relatedTarget as HTMLElement | null;
+    if (
+      !related ||
+      (!related.closest('.craft-node-indicator') &&
+        !related.closest('.craft-node-wrapper'))
+    ) {
+      setManualHovered(false);
+    }
+  };
+
   return (
-    <div className="craft-node-wrapper">
-      {(isSelected || isHovered) && (
-        <div className="craft-node-indicator">
+    <div
+      className="craft-node-wrapper"
+      ref={(ref) => ref && connect(ref)}
+      onMouseEnter={handleWrapperMouseEnter}
+      onMouseLeave={handleWrapperMouseLeave}
+    >
+      {(isSelected || manualHovered) && (
+        <div
+          className="craft-node-indicator"
+          onMouseEnter={handleIndicatorMouseEnter}
+          onMouseLeave={handleIndicatorMouseLeave}
+        >
           {editingName ? (
             <input
               className="craft-name-input"
@@ -135,11 +171,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
         </div>
       )}
 
-      {/*
-        Render the actual node's contents.
-        We do not wrap {render} in any additional element,
-        so your original node structure remains intact.
-      */}
+      {/* Render the node’s actual contents */}
       {render}
     </div>
   );
