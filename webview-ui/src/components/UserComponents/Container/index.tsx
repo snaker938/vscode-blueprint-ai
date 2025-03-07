@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useNode, Node } from '@craftjs/core';
 import { Resizer } from '../Utils/Resizer';
 import { ContainerProperties } from './ContainerProperties';
-import { useNode } from '@craftjs/core';
 import {
   getGlobalSelectedPage,
   subscribeSelectedPageChange,
@@ -51,8 +51,13 @@ const defaultProps: Partial<ContainerProps> = {
 export const Container = (incomingProps: Partial<ContainerProps>) => {
   const props = { ...defaultProps, ...incomingProps };
 
-  // Retrieve custom data from Craft's node
-  const { data } = useNode((node) => ({ data: node.data }));
+  const {
+    connectors: { connect },
+    data,
+  } = useNode((node: Node) => ({
+    data: node.data,
+  }));
+
   const isRoot = data.custom?.isRootContainer === true;
 
   const [pageName, setPageName] = useState(
@@ -88,7 +93,6 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     children,
   } = props;
 
-  // Non-root containers can keep user-defined shadow
   const computedBoxShadow =
     isRoot || shadow === 0
       ? 'none'
@@ -112,22 +116,15 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     height,
   };
 
-  // Make the root container's border more noticeable + subtle shadow
   if (isRoot) {
+    // Emphasized root container border & shadow
     containerStyle.border = '2px solid rgba(0, 0, 0, 0.2)';
     containerStyle.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.07)';
   }
 
-  /**
-   * Fluent UI Label styles for the root container title:
-   * We use pseudo-elements to create two underscoring lines:
-   * - A line at full width
-   * - A second line at half width, slightly below the first
-   */
   const rootLabelStyles: ILabelStyles = {
     root: {
       position: 'absolute',
-      // Slightly higher offset so the lines remain above the container
       top: '-30px',
       left: '15px',
       color: '#0078D4',
@@ -136,8 +133,6 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
       pointerEvents: 'none',
       zIndex: 10000,
       whiteSpace: 'nowrap',
-
-      // Pseudo-element lines
       selectors: {
         ':before': {
           content: "''",
@@ -145,7 +140,7 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
           width: '50%',
           height: '2px',
           backgroundColor: '#0078D4',
-          bottom: '-5px', // further from the text
+          bottom: '-5px',
           left: 0,
         },
         ':after': {
@@ -154,29 +149,37 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
           width: '100%',
           height: '2px',
           backgroundColor: '#0078D4',
-          bottom: '-2px', // closer to the text
+          bottom: '-2px',
           left: 0,
         },
       },
     },
   };
 
-  // Root container: add label plus children
+  // Root container: pointerEvents="none" to prevent selection/clicks,
+  // but an inner div re-enables pointer events for dropping children.
   if (isRoot) {
     return (
-      <Resizer
-        propKey={{ width: 'width', height: 'height' }}
-        style={containerStyle}
-      >
+      <div style={{ ...containerStyle, pointerEvents: 'none' }}>
         <Label styles={rootLabelStyles}>{pageName}</Label>
-        {children}
-      </Resizer>
+        <div
+          style={{ pointerEvents: 'auto', width: '100%', height: '100%' }}
+          ref={(ref) => {
+            if (ref) connect(ref);
+          }}
+        >
+          {children}
+        </div>
+      </div>
     );
   }
 
-  // Non-root container
+  // Non-root containers remain resizable + selectable
   return (
     <Resizer
+      ref={(ref) => {
+        if (ref) connect(ref);
+      }}
       propKey={{ width: 'width', height: 'height' }}
       style={containerStyle}
     >
@@ -189,7 +192,8 @@ Container.craft = {
   displayName: 'Container',
   props: defaultProps,
   rules: {
-    canDrag: () => true,
+    // typed node parameter
+    canDrag: (node: Node) => !node.data.custom?.isRootContainer,
   },
   related: {
     settings: ContainerProperties,
