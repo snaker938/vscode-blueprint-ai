@@ -1,20 +1,107 @@
 import { useNode } from '@craftjs/core';
+import { Grid } from '@mui/material';
+
 import { Section } from '../../PropertiesSidebar/UI/Section';
 import { Item } from '../../PropertiesSidebar/UI/Item';
 import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
 import { Radio } from '../../PropertiesSidebar/UI/Radio';
+import { SwitchInput } from '../../PropertiesSidebar/UI/SwitchInput';
+import { Slider } from '../../PropertiesSidebar/UI/Slider';
+import { ColourPicker } from '../../PropertiesSidebar/UI/ColourPicker';
 
 /**
- * A "properties" component for editing Container props.
- * It uses your new UI components (Section, Item, etc.)
- * to replicate the same structure as the old "Toolbar" version.
+ * Type for the Container's props within the Craft node.
+ * Customize this if your Container has more/different props.
  */
+interface ContainerProps {
+  width: string;
+  height: string;
+  background: string;
+  Colour: RGBA;
+  margin: number[]; // [top, right, bottom, left]
+  padding: number[]; // [top, right, bottom, left]
+  radius: number;
+  shadow: number;
+  flexDirection: 'row' | 'column';
+  fillSpace: 'yes' | 'no';
+  alignItems: 'flex-start' | 'center' | 'flex-end';
+  justifyContent: 'flex-start' | 'center' | 'flex-end';
+  border: {
+    Colour: string;
+    style: string;
+    width: number;
+  };
+}
+
+/**
+ * RGBA object for typed Colour usage.
+ */
+interface RGBA {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
+/**
+ * A small helper to display margin/padding controls with a Slider + TextInput for each side.
+ */
+function SpacingControl({
+  label,
+  values,
+  onChangeValues,
+  max = 100,
+}: {
+  label: string;
+  values: number[];
+  onChangeValues: (newValues: number[]) => void;
+  max?: number;
+}) {
+  return (
+    <Section title={label}>
+      <Grid container spacing={2}>
+        {['Top', 'Right', 'Bottom', 'Left'].map((pos, idx) => (
+          <Grid item xs={6} key={pos}>
+            <Slider
+              label={`${label} ${pos}`}
+              value={values[idx]}
+              min={0}
+              max={max}
+              onChangeValue={(val) => {
+                const newVals = [...values];
+                newVals[idx] = val;
+                onChangeValues(newVals);
+              }}
+              showValueInput={false}
+            />
+            <TextInput
+              label={`${pos} (Manual)`}
+              type="number"
+              value={values[idx].toString()}
+              onChangeValue={(val) => {
+                const num = parseInt(val, 10) || 0;
+                const newVals = [...values];
+                newVals[idx] = num;
+                onChangeValues(newVals);
+              }}
+            />
+          </Grid>
+        ))}
+      </Grid>
+    </Section>
+  );
+}
+
 export const ContainerProperties = () => {
+  /**
+   * Pull out props from the node via `useNode`.
+   * We strongly type them as ContainerProps so we can avoid `any`.
+   */
   const {
     width,
     height,
     background,
-    color,
+    Colour,
     margin,
     padding,
     radius,
@@ -23,32 +110,37 @@ export const ContainerProperties = () => {
     fillSpace,
     alignItems,
     justifyContent,
+    border,
     actions: { setProp },
-  } = useNode((node) => ({
-    width: node.data.props.width,
-    height: node.data.props.height,
-    background: node.data.props.background,
-    color: node.data.props.color,
-    margin: node.data.props.margin,
-    padding: node.data.props.padding,
-    radius: node.data.props.radius,
-    shadow: node.data.props.shadow,
-    flexDirection: node.data.props.flexDirection,
-    fillSpace: node.data.props.fillSpace,
-    alignItems: node.data.props.alignItems,
-    justifyContent: node.data.props.justifyContent,
-  }));
+  } = useNode((node) => {
+    const props = node.data.props as ContainerProps;
+    return {
+      width: props.width,
+      height: props.height,
+      background: props.background,
+      Colour: props.Colour,
+      margin: props.margin,
+      padding: props.padding,
+      radius: props.radius,
+      shadow: props.shadow,
+      flexDirection: props.flexDirection,
+      fillSpace: props.fillSpace,
+      alignItems: props.alignItems,
+      justifyContent: props.justifyContent,
+      border: props.border,
+    };
+  });
 
   return (
     <>
-      {/* Dimensions */}
-      <Section title={`Dimensions (${width} x ${height})`} defaultExpanded>
+      {/** DIMENSIONS */}
+      <Section title="Dimensions">
         <Item>
           <TextInput
             label="Width"
             value={width}
             onChangeValue={(val) =>
-              setProp((props: any) => {
+              setProp((props: ContainerProps) => {
                 props.width = val;
               })
             }
@@ -59,7 +151,7 @@ export const ContainerProperties = () => {
             label="Height"
             value={height}
             onChangeValue={(val) =>
-              setProp((props: any) => {
+              setProp((props: ContainerProps) => {
                 props.height = val;
               })
             }
@@ -67,169 +159,138 @@ export const ContainerProperties = () => {
         </Item>
       </Section>
 
-      {/* Colors */}
-      <Section title="Colors">
+      {/** ColourS */}
+      <Section title="Colours">
         <Item>
-          <TextInput
-            label="Background (rgba)"
-            value={Object.values(background).join(', ')}
-            onChangeValue={(val) => {
-              const [r, g, b, a] = val.split(',').map(Number);
-              setProp((props: any) => {
-                props.background = { r, g, b, a };
-              });
-            }}
+          <ColourPicker
+            label="Background Colour"
+            value={background}
+            onChangeValue={(newVal) =>
+              setProp((props: ContainerProps) => {
+                props.background = newVal;
+              })
+            }
+            allowTextInput
+            helperText="Pick or enter background Colour"
           />
         </Item>
         <Item>
-          <TextInput
-            label="Text Color (rgba)"
-            value={Object.values(color).join(', ')}
-            onChangeValue={(val) => {
-              const [r, g, b, a] = val.split(',').map(Number);
-              setProp((props: any) => {
-                props.color = { r, g, b, a };
-              });
-            }}
+          <ColourPicker
+            label="Text Colour"
+            value={rgbaOrHex(Colour)}
+            onChangeValue={(newVal) =>
+              setProp((props: ContainerProps) => {
+                props.Colour = parseColourToRGBA(newVal);
+              })
+            }
+            allowTextInput
+            helperText="Pick or enter RGBA/HEX"
           />
         </Item>
       </Section>
 
-      {/* Margin */}
-      <Section
-        title={`Margin: ${margin[0]} ${margin[1]} ${margin[2]} ${margin[3]}`}
-      >
-        <Item>
-          <TextInput
-            label="Top"
-            value={margin[0].toString()}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.margin[0] = parseInt(val, 10) || 0;
-              })
-            }
-          />
-        </Item>
-        <Item>
-          <TextInput
-            label="Right"
-            value={margin[1].toString()}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.margin[1] = parseInt(val, 10) || 0;
-              })
-            }
-          />
-        </Item>
-        <Item>
-          <TextInput
-            label="Bottom"
-            value={margin[2].toString()}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.margin[2] = parseInt(val, 10) || 0;
-              })
-            }
-          />
-        </Item>
-        <Item>
-          <TextInput
-            label="Left"
-            value={margin[3].toString()}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.margin[3] = parseInt(val, 10) || 0;
-              })
-            }
-          />
-        </Item>
-      </Section>
+      {/** MARGIN */}
+      <SpacingControl
+        label="Margin"
+        values={margin}
+        onChangeValues={(vals) =>
+          setProp((props: ContainerProps) => {
+            props.margin = vals;
+          })
+        }
+      />
 
-      {/* Padding */}
-      <Section
-        title={`Padding: ${padding[0]} ${padding[1]} ${padding[2]} ${padding[3]}`}
-      >
-        <Item>
-          <TextInput
-            label="Top"
-            value={padding[0].toString()}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.padding[0] = parseInt(val, 10) || 0;
-              })
-            }
-          />
-        </Item>
-        <Item>
-          <TextInput
-            label="Right"
-            value={padding[1].toString()}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.padding[1] = parseInt(val, 10) || 0;
-              })
-            }
-          />
-        </Item>
-        <Item>
-          <TextInput
-            label="Bottom"
-            value={padding[2].toString()}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.padding[2] = parseInt(val, 10) || 0;
-              })
-            }
-          />
-        </Item>
-        <Item>
-          <TextInput
-            label="Left"
-            value={padding[3].toString()}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.padding[3] = parseInt(val, 10) || 0;
-              })
-            }
-          />
-        </Item>
-      </Section>
+      {/** PADDING */}
+      <SpacingControl
+        label="Padding"
+        values={padding}
+        onChangeValues={(vals) =>
+          setProp((props: ContainerProps) => {
+            props.padding = vals;
+          })
+        }
+      />
 
-      {/* Decoration */}
+      {/** DECORATION */}
       <Section title="Decoration">
         <Item>
-          <TextInput
-            label="Radius"
-            value={radius.toString()}
+          <Slider
+            label="Corner Radius"
+            value={radius}
+            min={0}
+            max={50}
+            step={1}
             onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.radius = parseInt(val, 10) || 0;
+              setProp((props: ContainerProps) => {
+                props.radius = val;
               })
             }
           />
         </Item>
         <Item>
-          <TextInput
+          <Slider
             label="Shadow"
-            value={shadow.toString()}
+            value={shadow}
+            min={0}
+            max={50}
+            step={1}
             onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.shadow = parseInt(val, 10) || 0;
+              setProp((props: ContainerProps) => {
+                props.shadow = val;
               })
             }
           />
         </Item>
       </Section>
 
-      {/* Alignment */}
+      {/** BORDER */}
+      <Section title="Border">
+        <Item>
+          <ColourPicker
+            label="Border Colour"
+            value={border.Colour}
+            onChangeValue={(newColour) =>
+              setProp((props: ContainerProps) => {
+                props.border.Colour = newColour;
+              })
+            }
+          />
+        </Item>
+        <Item>
+          <TextInput
+            label="Border Style"
+            value={border.style}
+            onChangeValue={(val) =>
+              setProp((props: ContainerProps) => {
+                props.border.style = val;
+              })
+            }
+          />
+        </Item>
+        <Item>
+          <Slider
+            label="Border Width"
+            value={border.width}
+            min={0}
+            max={20}
+            onChangeValue={(val) =>
+              setProp((props: ContainerProps) => {
+                props.border.width = val;
+              })
+            }
+          />
+        </Item>
+      </Section>
+
+      {/** LAYOUT / FLEX */}
       <Section title="Alignment">
         <Item>
           <Radio
             label="Flex Direction"
             value={flexDirection}
             onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.flexDirection = val;
+              setProp((props: ContainerProps) => {
+                props.flexDirection = val as ContainerProps['flexDirection'];
               })
             }
             options={[
@@ -239,18 +300,14 @@ export const ContainerProperties = () => {
           />
         </Item>
         <Item>
-          <Radio
+          <SwitchInput
             label="Fill Space"
-            value={fillSpace}
-            onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.fillSpace = val;
+            value={fillSpace === 'yes'}
+            onChangeValue={(checked) =>
+              setProp((props: ContainerProps) => {
+                props.fillSpace = checked ? 'yes' : 'no';
               })
             }
-            options={[
-              { label: 'Yes', value: 'yes' },
-              { label: 'No', value: 'no' },
-            ]}
           />
         </Item>
         <Item>
@@ -258,8 +315,8 @@ export const ContainerProperties = () => {
             label="Align Items"
             value={alignItems}
             onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.alignItems = val;
+              setProp((props: ContainerProps) => {
+                props.alignItems = val as ContainerProps['alignItems'];
               })
             }
             options={[
@@ -274,8 +331,8 @@ export const ContainerProperties = () => {
             label="Justify Content"
             value={justifyContent}
             onChangeValue={(val) =>
-              setProp((props: any) => {
-                props.justifyContent = val;
+              setProp((props: ContainerProps) => {
+                props.justifyContent = val as ContainerProps['justifyContent'];
               })
             }
             options={[
@@ -289,3 +346,50 @@ export const ContainerProperties = () => {
     </>
   );
 };
+
+/**
+ * Convert an RGBA object to either a hex string or an rgba() string.
+ */
+function rgbaOrHex({ r, g, b, a }: RGBA) {
+  if (a < 1) {
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+  const hex = ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+  return `#${hex}`;
+}
+
+/**
+ * Parse a Colour string (#hex or rgb/rgba) into an RGBA object.
+ * Returns black (0,0,0,1) if parsing fails.
+ */
+function parseColourToRGBA(ColourStr: string): RGBA {
+  if (ColourStr.startsWith('#')) {
+    let hex = ColourStr.slice(1);
+    // Expand short #abc to #aabbcc
+    if (hex.length === 3) {
+      hex = hex
+        .split('')
+        .map((c) => c + c)
+        .join('');
+    }
+    const num = parseInt(hex, 16) || 0;
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return { r, g, b, a: 1 };
+  } else if (ColourStr.startsWith('rgba') || ColourStr.startsWith('rgb')) {
+    const match = ColourStr.match(/\(([^)]+)\)/);
+    if (match) {
+      const parts = match[1].split(',').map((p) => parseFloat(p.trim()));
+      const [r, g, b, a = 1] = parts;
+      return {
+        r: r || 0,
+        g: g || 0,
+        b: b || 0,
+        a: a || 1,
+      };
+    }
+  }
+  // fallback to black
+  return { r: 0, g: 0, b: 0, a: 1 };
+}
