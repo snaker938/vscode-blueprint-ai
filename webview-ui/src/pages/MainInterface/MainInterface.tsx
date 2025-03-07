@@ -1,5 +1,5 @@
 import React from 'react';
-import { Editor, Frame, Element } from '@craftjs/core';
+import { Editor, Frame, Element, useEditor } from '@craftjs/core';
 import { Container } from '../../components/UserComponents/Container';
 import { Text as CraftText } from '../../components/UserComponents/Text';
 import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
@@ -11,8 +11,22 @@ import './MainInterface.css';
 const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
   children,
 }) => {
+  const { actions } = useEditor();
+
+  // Clicking on empty area of the canvas to unselect
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only unselect if user clicked the wrapper itself (not a child node)
+    if (e.target === e.currentTarget) {
+      actions.selectNode([]);
+    }
+  };
+
   return (
-    <div id="droppable-canvas-border" className="canvas-border-wrapper">
+    <div
+      id="droppable-canvas-border"
+      className="canvas-border-wrapper"
+      onClick={handleClick}
+    >
       {children}
     </div>
   );
@@ -44,7 +58,7 @@ const MainInterface: React.FC = () => {
     <Editor
       resolver={{ Container, Text: CraftText }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
-      // Removed custom event handlers to rely on our manual hover handling.
+      // Custom event handlers removed to rely on manual handling
     >
       <div className="main-interface-container">
         <aside className="sidebar left-sidebar">

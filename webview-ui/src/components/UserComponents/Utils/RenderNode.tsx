@@ -11,51 +11,63 @@ interface RenderNodeProps {
 }
 
 export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
+  // Collect all node-related data in a single `useNode` call
   const {
     isSelected,
     connectors: { connect, drag },
     id,
     ameString,
+    isRootContainer,
+    dom,
   } = useNode((node) => ({
-    // We’re not using Craft’s hovered state since we’re handling hover manually
+    // We’re not using Craft’s hovered state since we handle hover manually
     isSelected: node.events.selected,
     ameString: node.data.props.ameString,
+    // Flag to detect if this is our “root container”
+    isRootContainer: node.data.custom?.isRootContainer,
+    dom: node.dom,
   }));
 
   const { actions } = useEditor();
 
-  // Access the underlying DOM for adding outline classes
-  const { dom } = useNode((node) => ({
-    dom: node.dom,
-  }));
-
-  // Apply/remove the "selected" class
-  useEffect(() => {
-    if (!dom) return;
-    if (isSelected) {
-      dom.classList.add('craft-node-selected');
-    } else {
-      dom.classList.remove('craft-node-selected');
-    }
-  }, [dom, isSelected]);
-
-  // Use local state for hover
+  // Manual hover state
   const [manualHovered, setManualHovered] = useState(false);
-
-  // Apply/remove the "hovered" class based on our manual hover state
-  useEffect(() => {
-    if (!dom) return;
-    if (manualHovered) {
-      dom.classList.add('craft-node-hovered');
-    } else {
-      dom.classList.remove('craft-node-hovered');
-    }
-  }, [dom, manualHovered]);
 
   // Inline editing state for the node’s name
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(ameString);
 
+  // ---------------------------------------------------------------------------
+  // 1) Add/remove "selected" class
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    // Skip if there is no DOM or this is the root container
+    if (!dom || isRootContainer) return;
+
+    if (isSelected) {
+      dom.classList.add('craft-node-selected');
+    } else {
+      dom.classList.remove('craft-node-selected');
+    }
+  }, [dom, isSelected, isRootContainer]);
+
+  // ---------------------------------------------------------------------------
+  // 2) Add/remove "hovered" class based on our manual hover state
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    // Skip if there is no DOM or this is the root container
+    if (!dom || isRootContainer) return;
+
+    if (manualHovered) {
+      dom.classList.add('craft-node-hovered');
+    } else {
+      dom.classList.remove('craft-node-hovered');
+    }
+  }, [dom, manualHovered, isRootContainer]);
+
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
   const handleNameDoubleClick = () => {
     setTempName(ameString);
     setEditingName(true);
@@ -80,7 +92,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     actions.delete(id);
   };
 
-  // --- Manual hover handlers using local state ---
+  // Manual hover handlers
   const handleWrapperMouseEnter = () => {
     setManualHovered(true);
   };
@@ -111,6 +123,17 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Early return if this is our root container
+  // (We do NOT skip hooks; they are above this block)
+  // ---------------------------------------------------------------------------
+  if (isRootContainer) {
+    return <div ref={(ref) => ref && connect(ref)}>{render}</div>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Regular node rendering with hover/selection UI
+  // ---------------------------------------------------------------------------
   return (
     <div
       className="craft-node-wrapper"
