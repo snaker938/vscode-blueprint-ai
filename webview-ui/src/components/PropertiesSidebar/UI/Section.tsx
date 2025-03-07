@@ -13,17 +13,34 @@ interface SectionProps {
   title: string;
   children: React.ReactNode;
   defaultExpanded?: boolean;
+  subtitle?: string;
+  /**
+   * Optional: if you want the Accordion to show no outer border or padding.
+   */
+  disableGutters?: boolean;
 }
 
 export const Section: React.FC<SectionProps> = ({
   title,
   children,
+  subtitle,
   defaultExpanded = false,
+  disableGutters = false,
 }) => {
   return (
-    <Accordion defaultExpanded={defaultExpanded}>
+    <Accordion
+      defaultExpanded={defaultExpanded}
+      disableGutters={disableGutters}
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="subtitle1">{title}</Typography>
+        <div>
+          <Typography variant="subtitle1">{title}</Typography>
+          {subtitle && (
+            <Typography variant="body2" color="text.secondary">
+              {subtitle}
+            </Typography>
+          )}
+        </div>
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>
     </Accordion>

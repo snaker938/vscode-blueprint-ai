@@ -8,6 +8,7 @@ import {
   MenuItem,
   SelectProps,
   SelectChangeEvent,
+  FormHelperText,
 } from '@mui/material';
 
 interface Option {
@@ -15,11 +16,18 @@ interface Option {
   label: string;
 }
 
-interface DropdownProps extends Omit<SelectProps, 'onChange'> {
+interface DropdownProps extends Omit<SelectProps, 'onChange' | 'value'> {
   label: string;
   options: Option[];
   value: string;
   onChangeValue(newVal: string): void;
+  helperText?: string;
+  error?: boolean;
+  disabled?: boolean;
+  /**
+   * If you want to show a "no selection" placeholder
+   */
+  placeholder?: string;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -27,6 +35,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
   options,
   value,
   onChangeValue,
+  helperText,
+  error,
+  disabled,
+  placeholder,
   ...rest
 }) => {
   const handleChange = (e: SelectChangeEvent<unknown>) => {
@@ -34,15 +46,27 @@ export const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <FormControl fullWidth size="small" margin="normal">
+    <FormControl
+      fullWidth
+      size="small"
+      margin="normal"
+      error={error}
+      disabled={disabled}
+    >
       <InputLabel>{label}</InputLabel>
       <Select value={value} label={label} onChange={handleChange} {...rest}>
+        {placeholder && (
+          <MenuItem disabled value="">
+            {placeholder}
+          </MenuItem>
+        )}
         {options.map((opt) => (
           <MenuItem key={opt.value} value={opt.value}>
             {opt.label}
           </MenuItem>
         ))}
       </Select>
+      {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   );
 };
