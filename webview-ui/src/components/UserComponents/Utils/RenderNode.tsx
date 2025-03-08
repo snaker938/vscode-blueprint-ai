@@ -37,9 +37,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(ameString);
 
-  // ---------------------------------------------------------------------------
   // 1) Add/remove "selected" class
-  // ---------------------------------------------------------------------------
   useEffect(() => {
     // Skip if there is no DOM or this is the root container
     if (!dom || isRootContainer) return;
@@ -51,9 +49,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, isSelected, isRootContainer]);
 
-  // ---------------------------------------------------------------------------
   // 2) Add/remove "hovered" class based on our manual hover state
-  // ---------------------------------------------------------------------------
   useEffect(() => {
     // Skip if there is no DOM or this is the root container
     if (!dom || isRootContainer) return;
@@ -65,9 +61,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, manualHovered, isRootContainer]);
 
-  // ---------------------------------------------------------------------------
   // Handlers
-  // ---------------------------------------------------------------------------
   const handleNameDoubleClick = () => {
     setTempName(ameString);
     setEditingName(true);
@@ -123,21 +117,16 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   };
 
-  // ---------------------------------------------------------------------------
-  // Early return if this is our root container
-  // (We do NOT skip hooks; they are above this block)
-  // ---------------------------------------------------------------------------
+  // If this is our root container, we connect here:
   if (isRootContainer) {
     return <div ref={(ref) => ref && connect(ref)}>{render}</div>;
   }
 
-  // ---------------------------------------------------------------------------
-  // Regular node rendering with hover/selection UI
-  // ---------------------------------------------------------------------------
+  // Otherwise, we do NOT connect the main wrapper again (to avoid conflicting DOM).
+  // We simply wrap the rendered node for the custom hover/selection UI.
   return (
     <div
       className="craft-node-wrapper"
-      ref={(ref) => ref && connect(ref)}
       onMouseEnter={handleWrapperMouseEnter}
       onMouseLeave={handleWrapperMouseLeave}
     >

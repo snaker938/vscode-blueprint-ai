@@ -11,7 +11,6 @@ import { ColorPicker } from '../../PropertiesSidebar/UI/ColorPicker';
 
 /**
  * Type for the Container's props within the Craft node.
- * NOTE: We removed 'Colour' in line with removing the Text Colour property.
  */
 interface ContainerProps {
   width: string;
@@ -67,7 +66,8 @@ function SpacingControl({
               showValueInput={false}
             />
             <TextInput
-              label={`${pos} (Manual)`}
+              /** Removed "(Manual)" from the label */
+              label={`${pos}`}
               type="number"
               value={safeValues[idx].toString()}
               onChangeValue={(val) => {
@@ -106,8 +106,9 @@ export const ContainerProperties = () => {
   } = useNode((node) => {
     const props = node.data.props as ContainerProps;
     return {
-      width: props.width ?? '',
-      height: props.height ?? '',
+      // Default to pixel-based dimensions if no width/height is set
+      width: props.width ?? '300px',
+      height: props.height ?? '150px',
       background: props.background ?? '#ffffff',
       margin: props.margin,
       padding: props.padding,
