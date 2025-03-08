@@ -8,14 +8,16 @@ import { RenderNode } from '../../components/UserComponents/Utils/RenderNode';
 
 import './MainInterface.css';
 
+/**
+ * A wrapper that detects clicks on empty canvas space to unselect all nodes.
+ */
 const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
   children,
 }) => {
   const { actions } = useEditor();
 
-  // Clicking on empty area of the canvas to unselect
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only unselect if user clicked the wrapper itself (not a child node)
+    // Unselect node if user clicked the wrapper itself (not a child).
     if (e.target === e.currentTarget) {
       actions.selectNode([]);
     }
@@ -32,6 +34,10 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
   );
 };
 
+/**
+ * The core Canvas area, where users can drop & rearrange components.
+ * Uses our new Container as the root container with pixel-based width/height.
+ */
 const DroppableCanvas: React.FC = () => {
   return (
     <Frame>
@@ -41,8 +47,8 @@ const DroppableCanvas: React.FC = () => {
         custom={{ isRootContainer: true }}
         width="800px"
         height="1235px"
-        background={{ r: 255, g: 255, b: 255, a: 1 }}
-        padding={['20', '20', '20', '20']}
+        background="#ffffff"
+        padding={[20, 20, 20, 20]}
       >
         <CraftText
           text="Welcome! Drag components from the left!"
@@ -58,19 +64,21 @@ const MainInterface: React.FC = () => {
     <Editor
       resolver={{ Container, Text: CraftText }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
-      // Custom event handlers removed to rely on manual handling
     >
       <div className="main-interface-container">
+        {/* PrimarySidebar on the left */}
         <aside className="sidebar left-sidebar">
           <PrimarySidebar />
         </aside>
 
+        {/* The droppable canvas area */}
         <main className="editor-canvas-area">
           <CanvasBorderWrapper>
             <DroppableCanvas />
           </CanvasBorderWrapper>
         </main>
 
+        {/* PropertiesSidebar on the right */}
         <aside className="sidebar right-sidebar">
           <PropertiesSidebar />
         </aside>

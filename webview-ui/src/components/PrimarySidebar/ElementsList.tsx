@@ -1,5 +1,3 @@
-// webview-ui/src/components/PrimarySidebar/ElementsList.tsx
-
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useEditor } from '@craftjs/core';
@@ -9,8 +7,10 @@ import {
   Icon,
   Separator,
 } from '@fluentui/react';
+
 import { Container } from '../UserComponents/Container';
 import { Text as CraftText } from '../UserComponents/Text';
+
 import './sidebarStyles.css';
 
 // ----- Styled Components -----
@@ -70,16 +70,14 @@ const ElementName = styled(FluentText)`
 /**
  * Return a React element corresponding to the given key,
  * or null if it's not something we want to create.
+ * Now updated to use the new Container with a simple color string.
  */
 const elementToCreate = (key: string) => {
   switch (key) {
     case 'container':
       return (
-        <Container
-          background={{ r: 147, g: 148, b: 158, a: 1 }}
-          padding={['40', '40', '40', '40']}
-        >
-          + <CraftText text="Inside new container" fontSize={14} />+{' '}
+        <Container background="#93949e" padding={[40, 40, 40, 40]}>
+          <CraftText text="Inside new container" fontSize={14} />
         </Container>
       );
     case 'text':
@@ -93,7 +91,7 @@ export const ElementsList: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const { connectors } = useEditor();
 
-  // Note: added a "text" item so it is also draggable
+  // Basic items, including container + text that are draggable
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
     { key: 'text', icon: 'AlignLeft', name: 'Text' },
@@ -151,7 +149,7 @@ export const ElementsList: React.FC = () => {
       </FluentText>
       <GridArea>
         {filteredBasic.map((item) => {
-          // Decide if this is one of our draggable items (container/text)
+          // Decide if this is one of our draggable items (container / text)
           const draggableElement = elementToCreate(item.key);
           const isDraggable = !!draggableElement;
 
