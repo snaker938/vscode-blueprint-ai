@@ -7,27 +7,35 @@ import {
   subscribeSelectedPageChange,
 } from '../../PrimarySidebar/PagesTab/pageStore';
 
-// Fluent UI Label
 import { Label, ILabelStyles } from '@fluentui/react';
 
+/**
+ * ContainerProps for our Container component.
+ * Removed the TextColour property (previously `Colour?`).
+ */
 export type ContainerProps = {
-  background: Record<'r' | 'g' | 'b' | 'a', number>;
-  color: Record<'r' | 'g' | 'b' | 'a', number>;
-  flexDirection: string;
-  alignItems: string;
-  justifyContent: string;
-  fillSpace: string;
-  width: string;
-  height: string;
-  padding: string[];
-  margin: string[];
-  marginTop: number;
-  marginLeft: number;
-  marginBottom: number;
-  marginRight: number;
-  shadow: number;
-  radius: number;
+  /** A string like "#ffffff" or "rgba(...)" for background color */
+  background?: string;
+  flexDirection?: 'row' | 'column';
+  alignItems?: 'flex-start' | 'center' | 'flex-end';
+  justifyContent?: 'flex-start' | 'center' | 'flex-end';
+  fillSpace?: 'yes' | 'no';
+  /** e.g. "100%", "auto", "300px", etc. */
+  width?: string;
+  height?: string;
+  /** margin/padding arrays: [top, right, bottom, left] in px */
+  margin?: number[];
+  padding?: number[];
+  /** Box-shadow & radius */
+  shadow?: number;
+  radius?: number;
   children?: React.ReactNode;
+  /** Optional border object with color, style, and width */
+  border?: {
+    Colour?: string;
+    style?: string;
+    width?: number;
+  };
   custom?: {
     isRootContainer?: boolean;
   };
@@ -38,17 +46,16 @@ const defaultProps: Partial<ContainerProps> = {
   alignItems: 'flex-start',
   justifyContent: 'flex-start',
   fillSpace: 'no',
-  padding: ['0', '0', '0', '0'],
-  margin: ['0', '0', '0', '0'],
-  background: { r: 255, g: 255, b: 255, a: 1 },
-  color: { r: 0, g: 0, b: 0, a: 1 },
+  margin: [0, 0, 0, 0],
+  padding: [0, 0, 0, 0],
+  background: '#ffffff',
   shadow: 0,
   radius: 0,
   width: '100%',
   height: 'auto',
 };
 
-export const Container = (incomingProps: Partial<ContainerProps>) => {
+export const Container = (incomingProps: ContainerProps) => {
   const props = { ...defaultProps, ...incomingProps };
 
   const {
@@ -71,17 +78,14 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     return () => unsub();
   }, []);
 
-  // Safely handle color/spacing
-  const safeBackground = props.background ?? defaultProps.background!;
-  const safeColor = props.color ?? defaultProps.color!;
-  const safeMargin = Array.isArray(props.margin)
-    ? props.margin
-    : defaultProps.margin!;
+  // Pull out numeric arrays for margin/padding
+  const safeMargin = Array.isArray(props.margin) ? props.margin : [0, 0, 0, 0];
   const safePadding = Array.isArray(props.padding)
     ? props.padding
-    : defaultProps.padding!;
+    : [0, 0, 0, 0];
 
   const {
+    background,
     flexDirection,
     alignItems,
     justifyContent,
@@ -90,34 +94,43 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     radius,
     width,
     height,
+    border,
     children,
   } = props;
 
+  // If there's a shadow set, use a subtle box-shadow.
+  // If it's the root container, override the shadow for a simpler style.
   const computedBoxShadow =
-    isRoot || shadow === 0
+    isRoot || !shadow
       ? 'none'
-      : `0px 3px 100px ${shadow}px rgba(0, 0, 0, 0.13)`;
+      : `0px 3px 10px rgba(0,0,0,0.1), 0px 3px ${shadow}px rgba(0,0,0,0.2)`;
 
-  // Base container style
+  // Build the main container style
   const containerStyle: React.CSSProperties = {
     position: 'relative',
     display: 'flex',
-    justifyContent,
-    flexDirection: flexDirection as React.CSSProperties['flexDirection'],
+    flexDirection,
     alignItems,
-    background: `rgba(${safeBackground.r}, ${safeBackground.g}, ${safeBackground.b}, ${safeBackground.a})`,
-    color: `rgba(${safeColor.r}, ${safeColor.g}, ${safeColor.b}, ${safeColor.a})`,
+    justifyContent,
+    background: background,
     padding: `${safePadding[0]}px ${safePadding[1]}px ${safePadding[2]}px ${safePadding[3]}px`,
     margin: `${safeMargin[0]}px ${safeMargin[1]}px ${safeMargin[2]}px ${safeMargin[3]}px`,
     boxShadow: computedBoxShadow,
-    borderRadius: `${radius}px`,
+    borderRadius: `${radius || 0}px`,
     flex: fillSpace === 'yes' ? 1 : 'unset',
-    width,
-    height,
+    width: width || 'auto',
+    height: height || 'auto',
   };
 
+  // Handle border if defined
+  if (border) {
+    containerStyle.borderStyle = border.style || 'solid';
+    containerStyle.borderColor = border.Colour || '#000000';
+    containerStyle.borderWidth = border.width ? `${border.width}px` : '0px';
+  }
+
   if (isRoot) {
-    // Emphasized root container border & shadow
+    // A special style for the root container
     containerStyle.border = '2px solid rgba(0, 0, 0, 0.2)';
     containerStyle.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.07)';
   }
@@ -156,8 +169,7 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     },
   };
 
-  // Root container: pointerEvents="none" to prevent selection/clicks,
-  // but an inner div re-enables pointer events for dropping children.
+  // For the root container, we wrap the actual content in a pointer-enabled DIV
   if (isRoot) {
     return (
       <div style={{ ...containerStyle, pointerEvents: 'none' }}>
@@ -174,7 +186,7 @@ export const Container = (incomingProps: Partial<ContainerProps>) => {
     );
   }
 
-  // Non-root containers remain resizable + selectable
+  // Otherwise, render a resizable container
   return (
     <Resizer
       ref={(ref) => {
@@ -192,7 +204,7 @@ Container.craft = {
   displayName: 'Container',
   props: defaultProps,
   rules: {
-    // typed node parameter
+    // Allow dragging unless it is a root container
     canDrag: (node: Node) => !node.data.custom?.isRootContainer,
   },
   related: {
