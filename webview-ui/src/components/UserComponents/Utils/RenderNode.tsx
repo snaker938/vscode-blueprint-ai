@@ -33,15 +33,15 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
   // Manual hover state
   const [manualHovered, setManualHovered] = useState(false);
 
-  // Inline editing state for the node’s name
+  // Inline editing state for the node’s ameString
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(ameString);
 
-  // 1) Add/remove "selected" class
+  /**
+   * 1) Update the DOM class for selection.
+   */
   useEffect(() => {
-    // Skip if there is no DOM or this is the root container
     if (!dom || isRootContainer) return;
-
     if (isSelected) {
       dom.classList.add('craft-node-selected');
     } else {
@@ -49,11 +49,11 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, isSelected, isRootContainer]);
 
-  // 2) Add/remove "hovered" class based on our manual hover state
+  /**
+   * 2) Update the DOM class for hover.
+   */
   useEffect(() => {
-    // Skip if there is no DOM or this is the root container
     if (!dom || isRootContainer) return;
-
     if (manualHovered) {
       dom.classList.add('craft-node-hovered');
     } else {
@@ -61,7 +61,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, manualHovered, isRootContainer]);
 
-  // Handlers
+  // Handlers for name editing
   const handleNameDoubleClick = () => {
     setTempName(ameString);
     setEditingName(true);
@@ -86,18 +86,19 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     actions.delete(id);
   };
 
-  // Manual hover handlers
+  /**
+   * HOVER logic:
+   * We attach `data-node-id={id}` to ensure we only remain hovered
+   * if the mouse is still inside *this* node’s wrapper/indicator.
+   */
   const handleWrapperMouseEnter = () => {
     setManualHovered(true);
   };
 
   const handleWrapperMouseLeave = (e: React.MouseEvent) => {
     const related = e.relatedTarget as HTMLElement | null;
-    if (
-      !related ||
-      (!related.closest('.craft-node-indicator') &&
-        !related.closest('.craft-node-wrapper'))
-    ) {
+    // Unhover if the related target is not in the same node's wrapper/indicator
+    if (!related || !related.closest(`[data-node-id="${id}"]`)) {
       setManualHovered(false);
     }
   };
@@ -108,12 +109,21 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
 
   const handleIndicatorMouseLeave = (e: React.MouseEvent) => {
     const related = e.relatedTarget as HTMLElement | null;
-    if (
-      !related ||
-      (!related.closest('.craft-node-indicator') &&
-        !related.closest('.craft-node-wrapper'))
-    ) {
+    if (!related || !related.closest(`[data-node-id="${id}"]`)) {
       setManualHovered(false);
+    }
+  };
+
+  /**
+   * SINGLE-SELECTION logic:
+   * Clicking on this node will select ONLY this node,
+   * ignoring multiple selection.
+   */
+  const handleNodeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isRootContainer) {
+      // Force single-node selection
+      actions.selectNode([id]);
     }
   };
 
@@ -122,17 +132,19 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     return <div ref={(ref) => ref && connect(ref)}>{render}</div>;
   }
 
-  // Otherwise, we do NOT connect the main wrapper again (to avoid conflicting DOM).
-  // We simply wrap the rendered node for the custom hover/selection UI.
+  // Otherwise, wrap the rendered node for custom hover/selection UI.
   return (
     <div
       className="craft-node-wrapper"
+      data-node-id={id}
       onMouseEnter={handleWrapperMouseEnter}
       onMouseLeave={handleWrapperMouseLeave}
+      onClick={handleNodeClick}
     >
       {(isSelected || manualHovered) && (
         <div
           className="craft-node-indicator"
+          data-node-id={id}
           onMouseEnter={handleIndicatorMouseEnter}
           onMouseLeave={handleIndicatorMouseLeave}
         >

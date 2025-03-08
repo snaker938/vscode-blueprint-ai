@@ -36,7 +36,6 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
 
 /**
  * The core Canvas area, where users can drop & rearrange components.
- * Uses our new Container as the root container with pixel-based width/height.
  */
 const DroppableCanvas: React.FC = () => {
   return (
