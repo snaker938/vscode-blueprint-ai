@@ -17,7 +17,7 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
   const { actions } = useEditor();
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Unselect node if user clicked the wrapper itself (not a child).
+    // Unselect if user clicked the wrapper itself.
     if (e.target === e.currentTarget) {
       actions.selectNode([]);
     }
@@ -35,9 +35,9 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
 };
 
 /**
- * The core Canvas area, where users can drop & rearrange components.
+ * The core Canvas area, with a root Container + sample text.
  */
-const DroppableCanvas: React.FC = () => {
+export const DroppableCanvas: React.FC = () => {
   return (
     <Frame>
       <Element

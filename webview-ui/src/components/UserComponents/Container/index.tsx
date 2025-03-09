@@ -9,27 +9,19 @@ import {
 
 import { Label, ILabelStyles } from '@fluentui/react';
 
-/**
- * ContainerProps for our Container component.
- */
 export type ContainerProps = {
-  /** A string like "#ffffff" or "rgba(...)" for background color */
   background?: string;
   flexDirection?: 'row' | 'column';
   alignItems?: 'flex-start' | 'center' | 'flex-end';
   justifyContent?: 'flex-start' | 'center' | 'flex-end';
   fillSpace?: 'yes' | 'no';
-  /** e.g. "300px", "150px", "auto", "50%", etc. */
   width?: string;
   height?: string;
-  /** margin/padding arrays: [top, right, bottom, left] in px */
   margin?: number[];
   padding?: number[];
-  /** Box-shadow & corner radius */
   shadow?: number;
   radius?: number;
   children?: React.ReactNode;
-  /** Optional border object with color, style, and width */
   border?: {
     Colour?: string;
     style?: string;
@@ -40,11 +32,6 @@ export type ContainerProps = {
   };
 };
 
-/**
- * Default settings for a container.
- * Notice we use pixel-based defaults for width/height so it doesn't
- * automatically fill the entire space. The user can override with percentages if desired.
- */
 const defaultProps: Partial<ContainerProps> = {
   background: '#ffffff',
   flexDirection: 'column',
@@ -55,14 +42,12 @@ const defaultProps: Partial<ContainerProps> = {
   padding: [0, 0, 0, 0],
   shadow: 0,
   radius: 0,
-  /** Default to a medium rectangular container size */
   width: '300px',
   height: '150px',
 };
 
 export const Container = (incomingProps: ContainerProps) => {
   const props = { ...defaultProps, ...incomingProps };
-
   const {
     connectors: { connect },
     data,
@@ -70,10 +55,8 @@ export const Container = (incomingProps: ContainerProps) => {
     data: node.data,
   }));
 
-  // Check if this container is designated as root
   const isRoot = data.custom?.isRootContainer === true;
 
-  // For page naming display if it's root
   const [pageName, setPageName] = useState(
     () => getGlobalSelectedPage()?.name ?? 'Untitled Page'
   );
@@ -85,7 +68,6 @@ export const Container = (incomingProps: ContainerProps) => {
     return () => unsub();
   }, []);
 
-  // Safely pull out margin/padding arrays
   const safeMargin = Array.isArray(props.margin) ? props.margin : [0, 0, 0, 0];
   const safePadding = Array.isArray(props.padding)
     ? props.padding
@@ -105,7 +87,7 @@ export const Container = (incomingProps: ContainerProps) => {
     children,
   } = props;
 
-  // If shadow is set, create a box-shadow. If root, use a simpler style
+  // If shadow is set, create a box-shadow; if it's root, ignore user shadow.
   const computedBoxShadow =
     isRoot || !shadow
       ? 'none'
@@ -128,14 +110,13 @@ export const Container = (incomingProps: ContainerProps) => {
     height: height || 'auto',
   };
 
-  // Optional border handling
   if (border) {
     containerStyle.borderStyle = border.style || 'solid';
     containerStyle.borderColor = border.Colour || '#000000';
     containerStyle.borderWidth = border.width ? `${border.width}px` : '0px';
   }
 
-  // If it's root, override with a special border & shadow
+  // If it's the root container, give it a distinct border & a label
   if (isRoot) {
     containerStyle.border = '2px solid rgba(0, 0, 0, 0.2)';
     containerStyle.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.07)';
@@ -147,52 +128,31 @@ export const Container = (incomingProps: ContainerProps) => {
       top: '-30px',
       left: '15px',
       color: '#0078D4',
-      display: 'inline-block',
       fontWeight: 'bold',
       pointerEvents: 'none',
       zIndex: 10000,
-      whiteSpace: 'nowrap',
-      selectors: {
-        ':before': {
-          content: "''",
-          position: 'absolute',
-          width: '50%',
-          height: '2px',
-          backgroundColor: '#0078D4',
-          bottom: '-5px',
-          left: 0,
-        },
-        ':after': {
-          content: "''",
-          position: 'absolute',
-          width: '100%',
-          height: '2px',
-          backgroundColor: '#0078D4',
-          bottom: '-2px',
-          left: 0,
-        },
-      },
     },
   };
 
-  // Root container: pointer-events disabled on main, but re-enabled on a child div
+  /**
+   * If this is the root container, we only use `drop(...)`
+   * so it can receive child elements but never be selected.
+   * We also stop the mouse event to prevent selection.
+   */
   if (isRoot) {
     return (
-      <div style={{ ...containerStyle, pointerEvents: 'none' }}>
+      <div
+        style={containerStyle}
+        ref={(ref) => ref && connect(ref)} // only connect
+        onMouseDown={(e) => e.stopPropagation()} // block selection
+      >
         <Label styles={rootLabelStyles}>{pageName}</Label>
-        <div
-          style={{ pointerEvents: 'auto', width: '100%', height: '100%' }}
-          ref={(ref) => {
-            if (ref) connect(ref);
-          }}
-        >
-          {children}
-        </div>
+        {children}
       </div>
     );
   }
 
-  // Non-root containers are resizable & selectable
+  // Otherwise, for normal containers, we attach the usual resizing & selection
   return (
     <Resizer
       ref={(ref) => {
@@ -217,5 +177,3 @@ Container.craft = {
     settings: ContainerProperties,
   },
 };
-
-export default Container;
