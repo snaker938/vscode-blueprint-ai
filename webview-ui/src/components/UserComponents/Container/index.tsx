@@ -48,12 +48,25 @@ const defaultProps: Partial<ContainerProps> = {
 
 export const Container = (incomingProps: ContainerProps) => {
   const props = { ...defaultProps, ...incomingProps };
-  const {
-    connectors: { connect },
-    data,
-  } = useNode((node: Node) => ({
+
+  // Destructure only connect from connectors
+  const { connectors, data, id } = useNode((node: Node) => ({
     data: node.data,
+    id: node.id,
   }));
+
+  // We'll define our own dropRef() that calls connectors.drop cast as any
+  const dropRef = (ref: HTMLElement | null) => {
+    if (!ref) return;
+    console.log(`[Container] Attempting .drop(ref) on nodeId=${id}`);
+    (connectors as any).drop?.(ref);
+  };
+
+  const connectRef = (ref: HTMLElement | null) => {
+    if (!ref) return;
+    console.log(`[Container] .connect(ref) on nodeId=${id}`);
+    connectors.connect(ref);
+  };
 
   const isRoot = data.custom?.isRootContainer === true;
 
@@ -87,13 +100,13 @@ export const Container = (incomingProps: ContainerProps) => {
     children,
   } = props;
 
-  // If shadow is set, create a box-shadow; if it's root, ignore user shadow.
+  console.log(`[Container] Render -> nodeId=${id}, isRoot=${isRoot}`);
+
   const computedBoxShadow =
     isRoot || !shadow
       ? 'none'
       : `0px 3px 10px rgba(0,0,0,0.1), 0px 3px ${shadow}px rgba(0,0,0,0.2)`;
 
-  // Main container style
   const containerStyle: React.CSSProperties = {
     position: 'relative',
     display: 'flex',
@@ -116,7 +129,6 @@ export const Container = (incomingProps: ContainerProps) => {
     containerStyle.borderWidth = border.width ? `${border.width}px` : '0px';
   }
 
-  // If it's the root container, give it a distinct border & a label
   if (isRoot) {
     containerStyle.border = '2px solid rgba(0, 0, 0, 0.2)';
     containerStyle.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.07)';
@@ -134,29 +146,25 @@ export const Container = (incomingProps: ContainerProps) => {
     },
   };
 
-  /**
-   * If this is the root container, we only use `drop(...)`
-   * so it can receive child elements but never be selected.
-   * We also stop the mouse event to prevent selection.
-   */
   if (isRoot) {
     return (
-      <div
-        style={containerStyle}
-        ref={(ref) => ref && connect(ref)} // only connect
-        onMouseDown={(e) => e.stopPropagation()} // block selection
-      >
+      <div style={containerStyle} ref={dropRef}>
         <Label styles={rootLabelStyles}>{pageName}</Label>
         {children}
       </div>
     );
   }
 
-  // Otherwise, for normal containers, we attach the usual resizing & selection
+  // Non-root containers: use Resizer & connect
   return (
     <Resizer
       ref={(ref) => {
-        if (ref) connect(ref);
+        if (ref) {
+          console.log(
+            `[Container] Normal container -> connect(ref). nodeId=${id}`
+          );
+          connectRef(ref);
+        }
       }}
       propKey={{ width: 'width', height: 'height' }}
       style={containerStyle}
@@ -170,8 +178,38 @@ Container.craft = {
   displayName: 'Container',
   props: defaultProps,
   rules: {
-    // Disallow dragging if it's a root container
-    canDrag: (node: Node) => !node.data.custom?.isRootContainer,
+    canDrag: (node: Node) => {
+      const isRoot = !!node.data.custom?.isRootContainer;
+      const canDrag = !isRoot;
+      console.log(
+        `[Container.craft.rules.canDrag] nodeId=${node.id}, isRoot=${isRoot}, canDrag=${canDrag}`
+      );
+      return canDrag;
+    },
+    canMove: (node: Node) => {
+      const isRoot = !!node.data.custom?.isRootContainer;
+      const canMove = !isRoot;
+      console.log(
+        `[Container.craft.rules.canMove] nodeId=${node.id}, isRoot=${isRoot}, canMove=${canMove}`
+      );
+      return canMove;
+    },
+    canDelete: (node: Node) => {
+      const isRoot = !!node.data.custom?.isRootContainer;
+      const canDelete = !isRoot;
+      console.log(
+        `[Container.craft.rules.canDelete] nodeId=${node.id}, isRoot=${isRoot}, canDelete=${canDelete}`
+      );
+      return canDelete;
+    },
+    canSelect: (node: Node) => {
+      const isRoot = !!node.data.custom?.isRootContainer;
+      const canSelect = !isRoot;
+      console.log(
+        `[Container.craft.rules.canSelect] nodeId=${node.id}, isRoot=${isRoot}, canSelect=${canSelect}`
+      );
+      return canSelect;
+    },
   },
   related: {
     settings: ContainerProperties,
