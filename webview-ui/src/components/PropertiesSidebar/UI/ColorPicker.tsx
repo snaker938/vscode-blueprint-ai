@@ -1,3 +1,5 @@
+// webview-ui/src/components/PropertiesSidebar/UI/ColorPicker.tsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import {

@@ -1,4 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  CSSProperties,
+  FC,
+  MouseEvent,
+  useEffect,
+  useState,
+} from 'react';
 import { useNode, Node } from '@craftjs/core';
 import { Resizer } from '../Utils/Resizer';
 import { ContainerProperties } from './ContainerProperties';
@@ -6,10 +12,25 @@ import {
   getGlobalSelectedPage,
   subscribeSelectedPageChange,
 } from '../../PrimarySidebar/PagesTab/pageStore';
-
 import { Label, ILabelStyles } from '@fluentui/react';
 
-export type ContainerProps = {
+/** Border props for the container */
+interface IBorderProps {
+  Colour?: string;
+  style?: string;
+  width?: number;
+}
+
+/** Custom data on the container node */
+interface IContainerCustomProps {
+  isRootContainer?: boolean;
+}
+
+/** Strict 4-number array for margin/padding usage */
+type FourNumberArray = [number, number, number, number];
+
+/** Container component props */
+export interface IContainerProps {
   background?: string;
   flexDirection?: 'row' | 'column';
   alignItems?: 'flex-start' | 'center' | 'flex-end';
@@ -17,22 +38,17 @@ export type ContainerProps = {
   fillSpace?: 'yes' | 'no';
   width?: string;
   height?: string;
-  margin?: number[];
-  padding?: number[];
+  margin?: FourNumberArray;
+  padding?: FourNumberArray;
   shadow?: number;
   radius?: number;
   children?: React.ReactNode;
-  border?: {
-    Colour?: string;
-    style?: string;
-    width?: number;
-  };
-  custom?: {
-    isRootContainer?: boolean;
-  };
-};
+  border?: IBorderProps;
+  custom?: IContainerCustomProps;
+}
 
-const defaultProps: Partial<ContainerProps> = {
+/** Default values for Container props */
+const defaultProps: Partial<IContainerProps> = {
   background: '#ffffff',
   flexDirection: 'column',
   alignItems: 'flex-start',
@@ -46,40 +62,69 @@ const defaultProps: Partial<ContainerProps> = {
   height: '150px',
 };
 
-export const Container = (incomingProps: ContainerProps) => {
-  const props = { ...defaultProps, ...incomingProps };
+/**
+ * Extend FC with a "craft" property signature
+ * so we can define Container.craft without TS errors.
+ */
+interface IContainerCraft {
+  displayName: string;
+  props: Partial<IContainerProps>;
+  isCanvas: boolean;
+  rules: {
+    canDrag: (node: Node) => boolean;
+    canMove: (node: Node) => boolean;
+    canDelete: (node: Node) => boolean;
+    canSelect: (node: Node) => boolean;
+  };
+  related: {
+    settings: typeof ContainerProperties;
+  };
+}
+
+/** Container component type with a "craft" static field */
+interface IContainer extends FC<IContainerProps> {
+  craft: IContainerCraft;
+}
+
+/**
+ * Container component for layout & grouping within Craft.js.
+ */
+export const Container: IContainer = (incomingProps) => {
+  // Access node data from Craft.js (excluding unused 'id')
   const { connectors, data } = useNode((node: Node) => ({
     data: node.data,
   }));
 
-  const dropRef = (ref: HTMLElement | null) => {
-    if (!ref) return;
-    (connectors as any).drop?.(ref);
-  };
+  // Merge defaultProps with incoming
+  const props: IContainerProps = { ...defaultProps, ...incomingProps };
 
-  const connectRef = (ref: HTMLElement | null) => {
-    if (!ref) return;
-    connectors.connect(ref);
-  };
+  // Detect if this node is a "root" container
+  const isRoot: boolean = data.custom?.isRootContainer === true;
 
-  const isRoot = data.custom?.isRootContainer === true;
-
-  const [pageName, setPageName] = useState(
+  // Subscribe to page name changes
+  const [pageName, setPageName] = useState<string>(
     () => getGlobalSelectedPage()?.name ?? 'Untitled Page'
   );
 
   useEffect(() => {
     const unsub = subscribeSelectedPageChange(() => {
-      setPageName(getGlobalSelectedPage()?.name ?? 'Untitled Page');
+      const newPageName = getGlobalSelectedPage()?.name ?? 'Untitled Page';
+      setPageName(newPageName);
     });
-    return () => unsub();
+    return () => {
+      unsub();
+    };
   }, []);
 
-  const safeMargin = Array.isArray(props.margin) ? props.margin : [0, 0, 0, 0];
-  const safePadding = Array.isArray(props.padding)
+  // Ensure margin/padding is a 4-number array
+  const safeMargin: FourNumberArray = Array.isArray(props.margin)
+    ? props.margin
+    : [0, 0, 0, 0];
+  const safePadding: FourNumberArray = Array.isArray(props.padding)
     ? props.padding
     : [0, 0, 0, 0];
 
+  // Extract relevant props
   const {
     background,
     flexDirection,
@@ -94,12 +139,14 @@ export const Container = (incomingProps: ContainerProps) => {
     children,
   } = props;
 
-  const computedBoxShadow =
+  // Compute a box-shadow unless this is the root container or shadow is 0
+  const computedBoxShadow: string =
     isRoot || !shadow
       ? 'none'
       : `0px 3px 10px rgba(0,0,0,0.1), 0px 3px ${shadow}px rgba(0,0,0,0.2)`;
 
-  const containerStyle: React.CSSProperties = {
+  // Base styling
+  const containerStyle: CSSProperties = {
     position: 'relative',
     display: 'flex',
     flexDirection,
@@ -115,17 +162,20 @@ export const Container = (incomingProps: ContainerProps) => {
     height: height || 'auto',
   };
 
+  // Optional border styling
   if (border) {
     containerStyle.borderStyle = border.style || 'solid';
     containerStyle.borderColor = border.Colour || '#000000';
     containerStyle.borderWidth = border.width ? `${border.width}px` : '0px';
   }
 
+  // Root container styling
   if (isRoot) {
     containerStyle.border = '2px solid rgba(0, 0, 0, 0.2)';
     containerStyle.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.07)';
   }
 
+  // Styles for the root label
   const rootLabelStyles: ILabelStyles = {
     root: {
       position: 'absolute',
@@ -138,6 +188,20 @@ export const Container = (incomingProps: ContainerProps) => {
     },
   };
 
+  // Connect the container to Craft
+  const dropRef = (ref: HTMLDivElement | null): void => {
+    if (!ref) return;
+    // “connect” makes this DOM node droppable (and draggable if needed)
+    connectors.connect(ref);
+  };
+
+  // For non-root containers, we still want Resizer + droppability
+  const connectRef = (ref: HTMLDivElement | null): void => {
+    if (!ref) return;
+    connectors.connect(ref);
+  };
+
+  // Root containers are not selectable or resizable
   if (isRoot) {
     return (
       <div style={containerStyle} ref={dropRef}>
@@ -147,41 +211,39 @@ export const Container = (incomingProps: ContainerProps) => {
     );
   }
 
+  // Handle clicks on non-root containers
+  const handleClick = (e: MouseEvent<HTMLDivElement>): void => {
+    e.stopPropagation();
+  };
+
+  // Non-root containers are selectable & resizable
   return (
     <Resizer
       ref={(ref) => {
-        if (ref) {
-          connectRef(ref);
-        }
+        if (ref) connectRef(ref);
       }}
       propKey={{ width: 'width', height: 'height' }}
       style={containerStyle}
+      onClick={handleClick}
     >
       {children}
     </Resizer>
   );
 };
 
+/**
+ * Craft.js configuration for selection/draggability
+ * and marking the Container as a "Canvas" node to allow children.
+ */
 Container.craft = {
   displayName: 'Container',
   props: defaultProps,
+  isCanvas: true,
   rules: {
-    canDrag: (node: Node) => {
-      const isRoot = !!node.data.custom?.isRootContainer;
-      return !isRoot;
-    },
-    canMove: (node: Node) => {
-      const isRoot = !!node.data.custom?.isRootContainer;
-      return !isRoot;
-    },
-    canDelete: (node: Node) => {
-      const isRoot = !!node.data.custom?.isRootContainer;
-      return !isRoot;
-    },
-    canSelect: (node: Node) => {
-      const isRoot = !!node.data.custom?.isRootContainer;
-      return !isRoot;
-    },
+    canDrag: (node: Node) => !node.data.custom?.isRootContainer,
+    canMove: (node: Node) => !node.data.custom?.isRootContainer,
+    canDelete: (node: Node) => !node.data.custom?.isRootContainer,
+    canSelect: (node: Node) => !node.data.custom?.isRootContainer,
   },
   related: {
     settings: ContainerProperties,
