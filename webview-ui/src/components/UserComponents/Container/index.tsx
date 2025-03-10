@@ -48,23 +48,17 @@ const defaultProps: Partial<ContainerProps> = {
 
 export const Container = (incomingProps: ContainerProps) => {
   const props = { ...defaultProps, ...incomingProps };
-
-  // Destructure only connect from connectors
-  const { connectors, data, id } = useNode((node: Node) => ({
+  const { connectors, data } = useNode((node: Node) => ({
     data: node.data,
-    id: node.id,
   }));
 
-  // We'll define our own dropRef() that calls connectors.drop cast as any
   const dropRef = (ref: HTMLElement | null) => {
     if (!ref) return;
-    console.log(`[Container] Attempting .drop(ref) on nodeId=${id}`);
     (connectors as any).drop?.(ref);
   };
 
   const connectRef = (ref: HTMLElement | null) => {
     if (!ref) return;
-    console.log(`[Container] .connect(ref) on nodeId=${id}`);
     connectors.connect(ref);
   };
 
@@ -99,8 +93,6 @@ export const Container = (incomingProps: ContainerProps) => {
     border,
     children,
   } = props;
-
-  console.log(`[Container] Render -> nodeId=${id}, isRoot=${isRoot}`);
 
   const computedBoxShadow =
     isRoot || !shadow
@@ -155,14 +147,10 @@ export const Container = (incomingProps: ContainerProps) => {
     );
   }
 
-  // Non-root containers: use Resizer & connect
   return (
     <Resizer
       ref={(ref) => {
         if (ref) {
-          console.log(
-            `[Container] Normal container -> connect(ref). nodeId=${id}`
-          );
           connectRef(ref);
         }
       }}
@@ -180,35 +168,19 @@ Container.craft = {
   rules: {
     canDrag: (node: Node) => {
       const isRoot = !!node.data.custom?.isRootContainer;
-      const canDrag = !isRoot;
-      console.log(
-        `[Container.craft.rules.canDrag] nodeId=${node.id}, isRoot=${isRoot}, canDrag=${canDrag}`
-      );
-      return canDrag;
+      return !isRoot;
     },
     canMove: (node: Node) => {
       const isRoot = !!node.data.custom?.isRootContainer;
-      const canMove = !isRoot;
-      console.log(
-        `[Container.craft.rules.canMove] nodeId=${node.id}, isRoot=${isRoot}, canMove=${canMove}`
-      );
-      return canMove;
+      return !isRoot;
     },
     canDelete: (node: Node) => {
       const isRoot = !!node.data.custom?.isRootContainer;
-      const canDelete = !isRoot;
-      console.log(
-        `[Container.craft.rules.canDelete] nodeId=${node.id}, isRoot=${isRoot}, canDelete=${canDelete}`
-      );
-      return canDelete;
+      return !isRoot;
     },
     canSelect: (node: Node) => {
       const isRoot = !!node.data.custom?.isRootContainer;
-      const canSelect = !isRoot;
-      console.log(
-        `[Container.craft.rules.canSelect] nodeId=${node.id}, isRoot=${isRoot}, canSelect=${canSelect}`
-      );
-      return canSelect;
+      return !isRoot;
     },
   },
   related: {
