@@ -4,7 +4,7 @@ import { useEditor } from '@craftjs/core';
 import {
   TextField,
   Text as FluentText,
-  Icon,
+  Icon as FluentIcon, // Renamed to avoid collision
   Separator,
 } from '@fluentui/react';
 
@@ -12,7 +12,10 @@ import { Container } from '../UserComponents/Container';
 import { Text as CraftText } from '../UserComponents/Text';
 import { Heading as CraftHeading } from '../UserComponents/Heading';
 import { Grid as CraftGrid } from '../UserComponents/Grid';
-import { Row as CraftRow } from '../UserComponents/Row'; // <-- 1) Import the Row component
+import { Row as CraftRow } from '../UserComponents/Row';
+import { Section as CraftSection } from '../UserComponents/Section';
+import { TextBox } from '../UserComponents/Textbox';
+import { Icon as CraftIcon } from '../UserComponents/Icon'; // <-- Import your custom Icon component
 
 import './sidebarStyles.css';
 
@@ -57,7 +60,7 @@ const ElementCard = styled.div<{ $draggable?: boolean }>`
   }
 `;
 
-const ElementIcon = styled(Icon)`
+const ElementIcon = styled(FluentIcon)`
   font-size: 28px !important;
   color: #4b3f72;
 `;
@@ -145,7 +148,6 @@ const elementToCreate = (key: string) => {
         />
       );
 
-    /* 2) Add the new "row" case to create a CraftRow with default props */
     case 'row':
       return (
         <CraftRow
@@ -176,6 +178,76 @@ const elementToCreate = (key: string) => {
         </CraftRow>
       );
 
+    case 'section':
+      return (
+        <CraftSection
+          background="#f9f9f9"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          fillSpace="no"
+          width="100%"
+          height="auto"
+          margin={[10, 10, 10, 10]}
+          padding={[20, 20, 20, 20]}
+          shadow={1}
+          radius={8}
+          border={{
+            Colour: '#ccc',
+            style: 'solid',
+            width: 1,
+          }}
+        >
+          <CraftText
+            text="A brand new Section with default props!"
+            fontSize={16}
+            fontWeight="400"
+            color={{ r: 0, g: 0, b: 0, a: 1 }}
+            shadow={0}
+            textAlign="center"
+            margin={[0, 0, 0, 0]}
+          />
+        </CraftSection>
+      );
+
+    case 'textbox':
+      return (
+        <TextBox
+          text="New TextBox"
+          placeholder="Type here..."
+          fontSize={14}
+          fontFamily="Arial"
+          color="#000000"
+          background="#ffffff"
+          multiline={false}
+          disabled={false}
+          readOnly={false}
+          margin={[0, 0, 0, 0]}
+          padding={[5, 5, 5, 5]}
+          radius={4}
+          shadow={0}
+          borderColor="#ccc"
+          borderStyle="solid"
+          borderWidth={1}
+          width="200px"
+          height="40px"
+        />
+      );
+
+    // --------------------------------------------------------
+    // Add the new Icon case:
+    case 'icon':
+      return (
+        <CraftIcon
+          iconName="AiFillSmile"
+          size={24}
+          color="#000000"
+          margin={[0, 0, 0, 0]}
+          padding={[0, 0, 0, 0]}
+        />
+      );
+    // --------------------------------------------------------
+
     default:
       return null;
   }
@@ -192,15 +264,15 @@ export const ElementsList: React.FC = () => {
     { key: 'heading', icon: 'Header1', name: 'Heading' },
     { key: 'text', icon: 'AlignLeft', name: 'Text' },
     { key: 'textbox', icon: 'TextField', name: 'Textbox' },
-    { key: 'icon', icon: 'Emoji2', name: 'Icon' },
+    { key: 'icon', icon: 'Emoji2', name: 'Icon' }, // <-- Listed here
     { key: 'link', icon: 'Link', name: 'Link' },
   ];
 
-  /* ----- LAYOUT ITEMS ("Row" and "Grid" now draggable) ----- */
+  /* ----- LAYOUT ITEMS (Row, Section, Grid) ----- */
   const layoutItems = [
-    { key: 'row', icon: 'ArrangeBringForward', name: 'Row' }, // Draggable
+    { key: 'row', icon: 'ArrangeBringForward', name: 'Row' },
     { key: 'section', icon: 'GroupedList', name: 'Section' },
-    { key: 'grid', icon: 'GridViewSmall', name: 'Grid' }, // Draggable
+    { key: 'grid', icon: 'GridViewSmall', name: 'Grid' },
   ];
 
   const navigationItems = [
@@ -288,7 +360,7 @@ export const ElementsList: React.FC = () => {
                 isDraggable
                   ? (ref) => {
                       if (ref) {
-                        // Connect the ref to the editor; when dragged, a new element is created
+                        // Connect the element to Craft for drag creation
                         connectors.create(ref, draggableElement!);
                       }
                     }
