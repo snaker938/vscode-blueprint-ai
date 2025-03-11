@@ -10,11 +10,11 @@ import {
 
 import { Container } from '../UserComponents/Container';
 import { Text as CraftText } from '../UserComponents/Text';
-// If you have actual components for Button, Heading, Textbox, etc.,
-// import them here similarly.
+import { Heading as CraftHeading } from '../UserComponents/Heading';
+/** 1) Import the Grid component **/
+import { Grid as CraftGrid } from '../UserComponents/Grid';
 
 import './sidebarStyles.css';
-import { Heading } from '../UserComponents/Heading';
 
 /* ------------------ Styled Components ------------------ */
 const Wrapper = styled.div`
@@ -71,8 +71,8 @@ const ElementName = styled(FluentText)`
 `;
 
 /**
- * Only return draggable components for 'container' or 'text'.
- * All other keys return null to avoid large placeholders.
+ * Returns the actual React component that should be created/draggable
+ * based on a given "key" from our items array.
  */
 const elementToCreate = (key: string) => {
   switch (key) {
@@ -107,6 +107,7 @@ const elementToCreate = (key: string) => {
           />
         </Container>
       );
+
     case 'text':
       return (
         <CraftText
@@ -119,10 +120,11 @@ const elementToCreate = (key: string) => {
           margin={[0, 0, 0, 0]}
         />
       );
+
     case 'heading':
       return (
-        <Heading
-          text="Heading 1"
+        <CraftHeading
+          text="New Heading Element"
           level={1}
           color="#333"
           fontSize={32}
@@ -132,6 +134,18 @@ const elementToCreate = (key: string) => {
           padding={[5, 5, 5, 5]}
         />
       );
+
+    /** 2) Add a new "grid" case to return the CraftGrid component **/
+    case 'grid':
+      return (
+        <CraftGrid
+          rows={2}
+          columns={2}
+          margin={[10, 10, 10, 10]}
+          padding={[10, 10, 10, 10]}
+        />
+      );
+
     default:
       return null;
   }
@@ -141,24 +155,25 @@ export const ElementsList: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const { connectors } = useEditor();
 
-  /* ----- Immutable: Basic Items (Container, Text are draggable) ----- */
+  /* ----- Basic Items (Container, Text, Heading are draggable) ----- */
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
     { key: 'button', icon: 'ButtonControl', name: 'Button' },
-    { key: 'heading', icon: 'Header1', name: 'Heading' },
-    { key: 'text', icon: 'AlignLeft', name: 'Text' },
+    { key: 'heading', icon: 'Header1', name: 'Heading' }, // Draggable
+    { key: 'text', icon: 'AlignLeft', name: 'Text' }, // Draggable
     { key: 'textbox', icon: 'TextField', name: 'Textbox' },
     { key: 'icon', icon: 'Emoji2', name: 'Icon' },
     { key: 'link', icon: 'Link', name: 'Link' },
   ];
 
-  // Other category arrays remain, but they'll show up as non-draggable
+  /* ----- Layout Items (we'll now make "Grid" draggable) ----- */
   const layoutItems = [
     { key: 'row', icon: 'ArrangeBringForward', name: 'Row' },
     { key: 'section', icon: 'GroupedList', name: 'Section' },
-    { key: 'grid', icon: 'GridViewSmall', name: 'Grid' },
+    { key: 'grid', icon: 'GridViewSmall', name: 'Grid' }, // Draggable
   ];
 
+  /* Other categories remain the same; still non-draggable by default */
   const navigationItems = [
     { key: 'navbar', icon: 'GlobalNavButton', name: 'Navbar' },
     { key: 'sidebar', icon: 'CollapseMenu', name: 'Sidebar' },
@@ -233,9 +248,8 @@ export const ElementsList: React.FC = () => {
       </FluentText>
       <GridArea>
         {filteredBasic.map((item) => {
-          // Only Container/Text will return a valid component:
+          // Only certain keys return a valid component (container, text, heading)
           const draggableElement = elementToCreate(item.key);
-          // It's only draggable if it's Container or Text
           const isDraggable = !!draggableElement;
 
           return (
@@ -243,14 +257,10 @@ export const ElementsList: React.FC = () => {
               key={item.key}
               $draggable={isDraggable}
               ref={
-                // Only attach connectors if it's draggable
                 isDraggable
                   ? (ref) => {
                       if (ref) {
-                        connectors.create(
-                          ref,
-                          draggableElement as React.ReactElement
-                        );
+                        connectors.create(ref, draggableElement!);
                       }
                     }
                   : undefined
@@ -267,7 +277,7 @@ export const ElementsList: React.FC = () => {
         styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
       />
 
-      {/* ----- LAYOUT ELEMENTS (non-draggable) ----- */}
+      {/* ----- LAYOUT ELEMENTS ----- */}
       <FluentText
         variant="xLarge"
         styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
@@ -275,12 +285,30 @@ export const ElementsList: React.FC = () => {
         Layout Elements
       </FluentText>
       <GridArea>
-        {filteredLayout.map((item) => (
-          <ElementCard key={item.key}>
-            <ElementIcon iconName={item.icon} />
-            <ElementName>{item.name}</ElementName>
-          </ElementCard>
-        ))}
+        {filteredLayout.map((item) => {
+          // "Grid" returns a valid component; "Row" & "Section" do not
+          const draggableElement = elementToCreate(item.key);
+          const isDraggable = !!draggableElement;
+
+          return (
+            <ElementCard
+              key={item.key}
+              $draggable={isDraggable}
+              ref={
+                isDraggable
+                  ? (ref) => {
+                      if (ref) {
+                        connectors.create(ref, draggableElement!);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              <ElementIcon iconName={item.icon} />
+              <ElementName>{item.name}</ElementName>
+            </ElementCard>
+          );
+        })}
       </GridArea>
 
       <Separator

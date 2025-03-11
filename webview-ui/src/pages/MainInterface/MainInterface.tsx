@@ -7,6 +7,9 @@ import { PropertiesSidebar } from '../../components/PropertiesSidebar/Properties
 import { RenderNode } from '../../components/UserComponents/Utils/RenderNode';
 
 import './MainInterface.css';
+import { Heading } from '../../components/UserComponents/Heading';
+import { Grid } from '../../components/UserComponents/Grid';
+import { Row } from '../../components/UserComponents/Roe';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -61,7 +64,7 @@ export const DroppableCanvas: React.FC = () => {
 const MainInterface: React.FC = () => {
   return (
     <Editor
-      resolver={{ Container, Text: CraftText }}
+      resolver={{ Container, Text: CraftText, Heading, Grid, Row }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >
       <div className="main-interface-container">

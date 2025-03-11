@@ -1,32 +1,49 @@
-import React, {
-  CSSProperties,
-  MouseEvent,
-  forwardRef,
-  MutableRefObject,
-} from 'react';
-import { useNode, Node } from '@craftjs/core';
-import { HeadingProperties } from './HeadingProperties';
+import React, { useRef } from 'react';
+import { useNode, useEditor } from '@craftjs/core';
+import ContentEditable from 'react-contenteditable';
 
-/** Strict 4-number array for margin/padding usage */
-type FourNumberArray = [number, number, number, number];
-
-/** Heading levels supported */
-type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
-
-/** Heading component props */
-export interface IHeadingProps {
-  text?: string;
-  level?: HeadingLevel;
-  color?: string;
-  fontSize?: number;
-  fontWeight?: number | 'normal' | 'bold' | 'bolder' | 'lighter';
-  textAlign?: 'left' | 'center' | 'right' | 'justify';
-  margin?: FourNumberArray;
-  padding?: FourNumberArray;
+interface IHeadingProps {
+  /**
+   * The textual content of the heading.
+   */
+  text: string;
+  /**
+   * The heading level (1 to 6).
+   */
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  /**
+   * Color specified as a string (e.g., '#000000' or 'rgba(...)').
+   */
+  color: string;
+  /**
+   * Font size in pixels.
+   */
+  fontSize: number;
+  /**
+   * Font weight (e.g., 'bold', 'normal', '500').
+   */
+  fontWeight: string;
+  /**
+   * Text alignment: left, right, center, justify, or fallback string.
+   */
+  textAlign: 'left' | 'right' | 'center' | 'justify' | string;
+  /**
+   * Margin array: [top, right, bottom, left].
+   */
+  margin: [number, number, number, number];
+  /**
+   * Padding array: [top, right, bottom, left].
+   */
+  padding: [number, number, number, number];
 }
 
-/** Default values for Heading props */
-const defaultProps: Partial<IHeadingProps> = {
+/**
+ * Use Partial if you want to allow omissions of certain props
+ * when you declare <Heading /> in other files.
+ */
+export type HeadingComponentProps = Partial<IHeadingProps>;
+
+const defaultProps: IHeadingProps = {
   text: 'Heading Text',
   level: 1,
   color: '#000000',
@@ -37,122 +54,103 @@ const defaultProps: Partial<IHeadingProps> = {
   padding: [0, 0, 0, 0],
 };
 
-/**
- * The Craft-specific interface used to define how the component is
- * handled by the editor (e.g., draggable rules, settings component, etc.)
- */
-interface IHeadingCraft {
+// Craft.js settings interface
+interface ICraftSettings {
   displayName: string;
-  props: Partial<IHeadingProps>;
-  isCanvas?: boolean;
-  rules: {
-    canDrag: (node: Node) => boolean;
-  };
+  props: IHeadingProps;
   related: {
-    settings: typeof HeadingProperties;
+    settings: React.ComponentType<any>;
   };
 }
 
-/**
- * Extend FC so we can annotate Heading with a static `.craft` field.
- */
-interface IHeading extends React.FC<IHeadingProps> {
-  craft: IHeadingCraft;
+// Extend React.FC with our Craft config
+interface ICraftComponent<T = object> extends React.FC<T> {
+  craft: ICraftSettings;
 }
 
 /**
- * Heading component, wrapped with React.forwardRef so that
- * Craft.js can attach a ref for drag-and-drop functionality.
+ * Replace this import with your own HeadingProperties component
+ * that you want to use in the settings panel, or remove it if you
+ * have not yet created a dedicated properties component.
  */
-export const Heading = forwardRef<HTMLDivElement, IHeadingProps>(
-  (incomingProps, ref) => {
-    // Pull out both connect and drag from useNode
-    const {
-      connectors: { connect, drag },
-    } = useNode((node: Node) => ({
-      selected: node.events.selected,
-    }));
-
-    // Merge defaultProps with the incoming props
-    const props: IHeadingProps = { ...defaultProps, ...incomingProps };
-    const {
-      text,
-      level,
-      color,
-      fontSize,
-      fontWeight,
-      textAlign,
-      margin,
-      padding,
-    } = props;
-
-    // Ensure margin/padding are 4-number arrays
-    const safeMargin: FourNumberArray = Array.isArray(margin)
-      ? margin
-      : [0, 0, 0, 0];
-    const safePadding: FourNumberArray = Array.isArray(padding)
-      ? padding
-      : [0, 0, 0, 0];
-
-    // Construct the heading style
-    const headingStyle: CSSProperties = {
-      color,
-      fontSize,
-      fontWeight,
-      textAlign,
-      margin: `${safeMargin[0]}px ${safeMargin[1]}px ${safeMargin[2]}px ${safeMargin[3]}px`,
-      padding: `${safePadding[0]}px ${safePadding[1]}px ${safePadding[2]}px ${safePadding[3]}px`,
-    };
-
-    // Dynamically choose the heading tag (h1 - h6)
-    const HeadingTag = `h${level}` as keyof JSX.IntrinsicElements;
-
-    // Prevent clicks from propagating if needed
-    const handleClick = (e: MouseEvent<HTMLDivElement>) => {
-      e.stopPropagation();
-    };
-
-    /**
-     * Combine Craft.js' connect+drag with the forwarded ref
-     * so the editor can attach the correct ref for DnD.
-     */
-    const setRef = (dom: HTMLDivElement | null) => {
-      if (dom) {
-        connect(drag(dom));
-      }
-      if (typeof ref === 'function') {
-        ref(dom);
-      } else if (ref) {
-        (ref as MutableRefObject<HTMLDivElement | null>).current = dom;
-      }
-    };
-
-    return (
-      <div ref={setRef} style={headingStyle} onClick={handleClick}>
-        <HeadingTag>{text}</HeadingTag>
-      </div>
-    );
-  }
-);
-
-/**
- * Configure this component for the Craft.js editor.
- * - `displayName`: How it appears in the Layers panel
- * - `props`: Default props
- * - `isCanvas`: Whether this component can contain child nodes
- * - `rules`: Draggable conditions, etc.
- * - `related.settings`: The settings panel component
- */
-(Heading as unknown as IHeading).craft = {
-  displayName: 'Heading',
-  props: defaultProps,
-  isCanvas: false,
-  rules: {
-    canDrag: () => true,
-  },
-  related: {
-    settings: HeadingProperties,
-  },
+// import { HeadingProperties } from './HeadingProperties';
+const PlaceholderSettings = () => {
+  return <div>Heading Settings Placeholder</div>;
 };
 
-export default Heading;
+/**
+ * Heading component for Craft.js
+ */
+export const Heading: ICraftComponent<HeadingComponentProps> = (props) => {
+  const {
+    text,
+    level,
+    color,
+    fontSize,
+    fontWeight,
+    textAlign,
+    margin,
+    padding,
+  } = {
+    ...defaultProps,
+    ...props,
+  };
+
+  const {
+    connectors: { connect, drag },
+    actions: { setProp },
+  } = useNode(() => ({}));
+
+  const { enabled } = useEditor((state) => ({
+    enabled: state.options.enabled,
+  }));
+
+  const editableRef = useRef<HTMLHeadingElement>(null);
+
+  return (
+    <div
+      ref={(dom) => {
+        if (dom) {
+          connect(drag(dom));
+        }
+      }}
+      style={{
+        width: '100%',
+        margin: `${margin[0]}px ${margin[1]}px ${margin[2]}px ${margin[3]}px`,
+        padding: `${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px`,
+        position: 'relative',
+      }}
+    >
+      <ContentEditable
+        innerRef={editableRef}
+        html={text}
+        disabled={!enabled}
+        onChange={(e) => {
+          const newValue = e.target.value;
+          setProp((currentProps: IHeadingProps) => {
+            currentProps.text = newValue;
+          }, 500);
+        }}
+        tagName={`h${level}`}
+        style={{
+          color,
+          fontSize: `${fontSize}px`,
+          fontWeight,
+          textAlign,
+          // Add any additional styling here if needed
+        }}
+      />
+    </div>
+  );
+};
+
+Heading.craft = {
+  displayName: 'Heading',
+  props: {
+    ...defaultProps,
+  },
+  related: {
+    // Replace this with your real HeadingProperties component:
+    settings: PlaceholderSettings,
+  },
+};
