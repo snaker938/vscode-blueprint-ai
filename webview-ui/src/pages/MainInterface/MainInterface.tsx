@@ -13,6 +13,7 @@ import { Row } from '../../components/UserComponents/Row';
 import { Section } from '../../components/UserComponents/Section';
 import { TextBox } from '../../components/UserComponents/Textbox';
 import { Icon } from '../../components/UserComponents/Icon';
+import { Button } from '../../components/UserComponents/Button';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -76,6 +77,7 @@ const MainInterface: React.FC = () => {
         Section,
         TextBox,
         Icon,
+        Button,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >
