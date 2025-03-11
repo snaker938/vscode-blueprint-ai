@@ -1,28 +1,18 @@
 import React from 'react';
 import { Grid } from '@mui/material';
 import { useNode } from '@craftjs/core';
+
 import { Section } from '../../PropertiesSidebar/UI/Section';
 import { Item } from '../../PropertiesSidebar/UI/Item';
 import { Slider } from '../../PropertiesSidebar/UI/Slider';
-import { Dropdown } from '../../PropertiesSidebar/UI/Dropdown';
+// import { Dropdown } from '../../PropertiesSidebar/UI/Dropdown';
 import { ColorPicker } from '../../PropertiesSidebar/UI/ColorPicker';
 import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
+import { Radio } from '../../PropertiesSidebar/UI/Radio';
 
-// Example text interface for reference
-export interface ITextProps {
-  text: string;
-  fontSize: number;
-  fontWeight: number; // Make sure this is a number
-  color: { r: number; g: number; b: number; a: number };
-  shadow: number;
-  textAlign: string;
-  margin: number[];
-}
+// Helper components & functions ----------------------------------------------
 
-/**
- * A small helper to display margin/padding controls with a Slider + TextInput for each side.
- * NOTE: We’ve removed the <Section> from inside this function to avoid nested sections.
- */
+// Same spacing helper from your example (copy/paste as needed):
 function SpacingControl({
   label,
   values,
@@ -34,7 +24,6 @@ function SpacingControl({
   onChangeValues: (newValues: number[]) => void;
   max?: number;
 }) {
-  // Fallback to [0,0,0,0] if values is undefined
   const safeValues = values ?? [0, 0, 0, 0];
 
   return (
@@ -70,7 +59,8 @@ function SpacingControl({
   );
 }
 
-function rgbaToHex(r: number, g: number, b: number): string {
+// Color conversion helpers (same approach as in TextProperties):
+function rgbaToHex(r: number, g: number, b: number) {
   const clamp = (val: number) => Math.max(0, Math.min(255, val));
   const hr = clamp(r).toString(16).padStart(2, '0');
   const hg = clamp(g).toString(16).padStart(2, '0');
@@ -78,21 +68,14 @@ function rgbaToHex(r: number, g: number, b: number): string {
   return `#${hr}${hg}${hb}`;
 }
 
-function hexToRgba(hex: string): {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-} {
+function hexToRgba(hex: string) {
   let safeHex = hex.replace(/^#/, '');
-  // Expand shorthand (#abc -> #aabbcc)
   if (safeHex.length === 3) {
     safeHex = safeHex
       .split('')
       .map((c) => c + c)
       .join('');
   }
-  // Fallback to black if invalid
   if (!/^[0-9A-Fa-f]{6}$/.test(safeHex)) {
     return { r: 0, g: 0, b: 0, a: 1 };
   }
@@ -102,24 +85,44 @@ function hexToRgba(hex: string): {
   return { r, g, b, a: 1 };
 }
 
-export const TextProperties: React.FC = () => {
+// ---------------------------------------------------------------------------
+
+// 1) Define the interface for the Button component’s props:
+export interface IButtonProps {
+  background: { r: number; g: number; b: number; a: number };
+  color: { r: number; g: number; b: number; a: number };
+  buttonStyle: 'full' | 'outline' | string;
+  margin: [number, number, number, number];
+  text: string;
+  /**
+   * Configuration object for the internal Text component.
+   * You can pass any of the Text.craft.props fields here.
+   */
+  textComponent: any;
+}
+
+/**
+ * The ButtonProperties panel for the CraftJS Button component.
+ */
+export const ButtonProperties: React.FC = () => {
+  // Access the component’s props from the Craft node
   const {
-    fontSize,
-    textAlign,
-    fontWeight,
+    background,
     color,
-    shadow,
-    text,
+    buttonStyle,
     margin,
+    text,
+    // If you need textComponent, uncomment:
+    // textComponent,
     actions: { setProp },
   } = useNode((node) => ({
-    fontSize: node.data.props.fontSize,
-    textAlign: node.data.props.textAlign,
-    fontWeight: node.data.props.fontWeight,
+    background: node.data.props.background,
     color: node.data.props.color,
-    shadow: node.data.props.shadow,
-    text: node.data.props.text,
+    buttonStyle: node.data.props.buttonStyle,
     margin: node.data.props.margin,
+    text: node.data.props.text,
+    // If you need textComponent, uncomment:
+    // textComponent: node.data.props.textComponent,
   }));
 
   return (
@@ -128,10 +131,10 @@ export const TextProperties: React.FC = () => {
       <Section title="Content" defaultExpanded={false}>
         <Item>
           <TextInput
-            label="Content"
+            label="Button Text"
             value={text}
             onChangeValue={(newVal) =>
-              setProp((props: ITextProps) => {
+              setProp((props: IButtonProps) => {
                 props.text = newVal;
               })
             }
@@ -139,47 +142,35 @@ export const TextProperties: React.FC = () => {
         </Item>
       </Section>
 
-      {/* FONT SECTION */}
-      <Section title="Font" defaultExpanded={false}>
-        {/* Font Size */}
+      {/* STYLE SECTION */}
+      <Section title="Style" defaultExpanded={false}>
+        {/* Background Color */}
         <Item>
-          <Slider
-            label="Font Size"
-            value={fontSize}
-            min={1}
-            max={100}
-            onChangeValue={(newVal) =>
-              setProp((props: ITextProps) => {
-                props.fontSize = newVal;
+          <ColorPicker
+            label="Background Color"
+            value={rgbaToHex(background.r, background.g, background.b)}
+            onChangeValue={(newHex) =>
+              setProp((props: IButtonProps) => {
+                const rgba = hexToRgba(newHex);
+                props.background = {
+                  r: rgba.r,
+                  g: rgba.g,
+                  b: rgba.b,
+                  a: props.background?.a ?? 1,
+                };
               })
             }
+            allowTextInput
           />
         </Item>
 
-        {/* Font Weight */}
-        <Item>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
-            <Slider
-              label="Font Weight"
-              value={fontWeight}
-              min={0}
-              max={1000}
-              onChangeValue={(val) =>
-                setProp((props: ITextProps) => {
-                  props.fontWeight = val;
-                })
-              }
-            />
-          </div>
-        </Item>
-
-        {/* Text Colour */}
+        {/* Text Color */}
         <Item>
           <ColorPicker
-            label="Text Colour"
+            label="Text Color"
             value={rgbaToHex(color.r, color.g, color.b)}
             onChangeValue={(newHex) =>
-              setProp((props: ITextProps) => {
+              setProp((props: IButtonProps) => {
                 const rgba = hexToRgba(newHex);
                 props.color = {
                   r: rgba.r,
@@ -190,44 +181,24 @@ export const TextProperties: React.FC = () => {
               })
             }
             allowTextInput
-            helperText="Pick or enter Text Colour"
           />
         </Item>
-      </Section>
 
-      {/* STYLING SECTION */}
-      <Section title="Styling" defaultExpanded={false}>
-        {/* Text Align */}
+        {/* Button Style */}
         <Item>
-          <Dropdown
-            label="Text Align"
-            value={textAlign}
+          <Radio
+            label="Button Style"
+            value={buttonStyle}
             onChangeValue={(newVal) =>
-              setProp((props: ITextProps) => {
-                props.textAlign = newVal;
+              setProp((props: IButtonProps) => {
+                props.buttonStyle = newVal;
               })
             }
             options={[
-              { label: 'Left', value: 'left' },
-              { label: 'Center', value: 'center' },
-              { label: 'Right', value: 'right' },
-              { label: 'Justify', value: 'justify' },
+              { label: 'Full', value: 'full' },
+              { label: 'Outline', value: 'outline' },
             ]}
-          />
-        </Item>
-
-        {/* Shadow */}
-        <Item>
-          <Slider
-            label="Shadow"
-            value={shadow}
-            min={0}
-            max={100}
-            onChangeValue={(newVal) =>
-              setProp((props: ITextProps) => {
-                props.shadow = newVal;
-              })
-            }
+            row
           />
         </Item>
       </Section>
@@ -238,12 +209,36 @@ export const TextProperties: React.FC = () => {
           label="Margin"
           values={margin}
           onChangeValues={(vals) =>
-            setProp((props: ITextProps) => {
-              props.margin = vals;
+            setProp((props: IButtonProps) => {
+              props.margin = [vals[0], vals[1], vals[2], vals[3]];
             })
           }
         />
       </Section>
+
+      {/* ADVANCED / TEXT COMPONENT SECTION (optional) */}
+      {/* 
+        If you want to expose additional props for the internal Text component,
+        you could add another <Section> here that manipulates `textComponent`.
+        For example:
+      */}
+
+      {/* 
+      <Section title="Text Component Props" defaultExpanded={false}>
+        <Item>
+          <TextInput
+            label="Custom Font Size"
+            value={textComponent.fontSize?.toString() ?? ''}
+            onChangeValue={(val) =>
+              setProp((props: IButtonProps) => {
+                const num = parseInt(val, 10) || 16;
+                props.textComponent.fontSize = num;
+              })
+            }
+          />
+        </Item>
+      </Section>
+      */}
     </>
   );
 };
