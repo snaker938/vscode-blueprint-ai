@@ -11,8 +11,8 @@ import {
 import { Container } from '../UserComponents/Container';
 import { Text as CraftText } from '../UserComponents/Text';
 import { Heading as CraftHeading } from '../UserComponents/Heading';
-/** 1) Import the Grid component **/
 import { Grid as CraftGrid } from '../UserComponents/Grid';
+import { Row as CraftRow } from '../UserComponents/Row'; // <-- 1) Import the Row component
 
 import './sidebarStyles.css';
 
@@ -97,7 +97,7 @@ const elementToCreate = (key: string) => {
           }}
         >
           <CraftText
-            text="A brand new container with all default props!"
+            text="A brand new container with default props!"
             fontSize={16}
             fontWeight="400"
             color={{ r: 0, g: 0, b: 0, a: 1 }}
@@ -135,7 +135,6 @@ const elementToCreate = (key: string) => {
         />
       );
 
-    /** 2) Add a new "grid" case to return the CraftGrid component **/
     case 'grid':
       return (
         <CraftGrid
@@ -144,6 +143,37 @@ const elementToCreate = (key: string) => {
           margin={[10, 10, 10, 10]}
           padding={[10, 10, 10, 10]}
         />
+      );
+
+    /* 2) Add the new "row" case to create a CraftRow with default props */
+    case 'row':
+      return (
+        <CraftRow
+          background="#f0f0f0"
+          margin={[10, 10, 10, 10]}
+          padding={[10, 10, 10, 10]}
+          shadow={0}
+          radius={4}
+          gap={8}
+          fillSpace="no"
+          alignItems="center"
+          justifyContent="center"
+          border={{
+            colour: '#ccc',
+            style: 'solid',
+            width: 1,
+          }}
+        >
+          <CraftText
+            text="A brand new Row with default props!"
+            fontSize={16}
+            fontWeight="400"
+            color={{ r: 0, g: 0, b: 0, a: 1 }}
+            shadow={0}
+            textAlign="center"
+            margin={[0, 0, 0, 0]}
+          />
+        </CraftRow>
       );
 
     default:
@@ -155,25 +185,24 @@ export const ElementsList: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const { connectors } = useEditor();
 
-  /* ----- Basic Items (Container, Text, Heading are draggable) ----- */
+  /* ----- BASIC ITEMS (Container, Text, Heading, etc.) ----- */
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
     { key: 'button', icon: 'ButtonControl', name: 'Button' },
-    { key: 'heading', icon: 'Header1', name: 'Heading' }, // Draggable
-    { key: 'text', icon: 'AlignLeft', name: 'Text' }, // Draggable
+    { key: 'heading', icon: 'Header1', name: 'Heading' },
+    { key: 'text', icon: 'AlignLeft', name: 'Text' },
     { key: 'textbox', icon: 'TextField', name: 'Textbox' },
     { key: 'icon', icon: 'Emoji2', name: 'Icon' },
     { key: 'link', icon: 'Link', name: 'Link' },
   ];
 
-  /* ----- Layout Items (we'll now make "Grid" draggable) ----- */
+  /* ----- LAYOUT ITEMS ("Row" and "Grid" now draggable) ----- */
   const layoutItems = [
-    { key: 'row', icon: 'ArrangeBringForward', name: 'Row' },
+    { key: 'row', icon: 'ArrangeBringForward', name: 'Row' }, // Draggable
     { key: 'section', icon: 'GroupedList', name: 'Section' },
     { key: 'grid', icon: 'GridViewSmall', name: 'Grid' }, // Draggable
   ];
 
-  /* Other categories remain the same; still non-draggable by default */
   const navigationItems = [
     { key: 'navbar', icon: 'GlobalNavButton', name: 'Navbar' },
     { key: 'sidebar', icon: 'CollapseMenu', name: 'Sidebar' },
@@ -212,7 +241,7 @@ export const ElementsList: React.FC = () => {
     { key: 'lineChart', icon: 'LineChart', name: 'Line Chart' },
   ];
 
-  /* ----- Search filtering ----- */
+  /* ----- Filter by search text ----- */
   const filterBySearch = (item: { name: string }) =>
     item.name.toLowerCase().includes(searchText.toLowerCase());
 
@@ -248,7 +277,6 @@ export const ElementsList: React.FC = () => {
       </FluentText>
       <GridArea>
         {filteredBasic.map((item) => {
-          // Only certain keys return a valid component (container, text, heading)
           const draggableElement = elementToCreate(item.key);
           const isDraggable = !!draggableElement;
 
@@ -260,6 +288,7 @@ export const ElementsList: React.FC = () => {
                 isDraggable
                   ? (ref) => {
                       if (ref) {
+                        // Connect the ref to the editor; when dragged, a new element is created
                         connectors.create(ref, draggableElement!);
                       }
                     }
@@ -286,7 +315,6 @@ export const ElementsList: React.FC = () => {
       </FluentText>
       <GridArea>
         {filteredLayout.map((item) => {
-          // "Grid" returns a valid component; "Row" & "Section" do not
           const draggableElement = elementToCreate(item.key);
           const isDraggable = !!draggableElement;
 
