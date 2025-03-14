@@ -1,11 +1,10 @@
-import React, { CSSProperties, FC } from 'react';
+import React, { CSSProperties, FC, MouseEvent } from 'react';
 import { useNode } from '@craftjs/core';
 import { Resizer } from '../Utils/Resizer';
 import { LinkProperties } from './LinkProperties';
 
 /**
  * Represents the props for the Link component.
- * (Defined in a separate LinkProperties file, but referenced here.)
  */
 export interface ILinkProps {
   /**
@@ -127,13 +126,12 @@ interface ILink extends FC<ILinkProps> {
 
 /**
  * A Link component for usage within Craft.js.
+ * The link only navigates if CTRL is held down during click.
  */
 export const Link: ILink = (incomingProps) => {
   const {
     connectors: { connect, drag },
-  } = useNode(() => ({
-    // You can collect additional state here if needed
-  }));
+  } = useNode(() => ({}));
 
   // Merge incoming props with defaults
   const props: ILinkProps = { ...defaultProps, ...incomingProps };
@@ -177,9 +175,17 @@ export const Link: ILink = (incomingProps) => {
       shadow && shadow > 0 ? `0px 3px ${shadow}px rgba(0,0,0,0.2)` : 'none',
   };
 
+  /**
+   * Only navigate if CTRL is held.
+   */
+  const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!e.ctrlKey) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <Resizer
-      // Provide ability to drag/drop/resize this component in Craft
       ref={(ref) => ref && connect(drag(ref))}
       style={containerStyle}
       propKey={{ width: 'width', height: 'height' }}
@@ -189,11 +195,12 @@ export const Link: ILink = (incomingProps) => {
         target={target}
         style={{
           color: color || '#000',
-          textDecoration: 'none', // Could be customizable if needed
+          textDecoration: 'none',
           display: 'inline-block',
           width: '100%',
           height: '100%',
         }}
+        onClick={handleClick}
       >
         {text && !children ? text : children}
       </a>
@@ -209,7 +216,6 @@ Link.craft = {
   props: defaultProps,
   isCanvas: false, // set to true if you want this Link to contain other draggable components
   related: {
-    // Use our separate LinkProperties component for the settings panel
     settings: LinkProperties,
   },
 };
