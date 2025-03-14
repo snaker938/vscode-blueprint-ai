@@ -15,7 +15,9 @@ import { Grid as CraftGrid } from '../UserComponents/Grid';
 import { Row as CraftRow } from '../UserComponents/Row';
 import { Section as CraftSection } from '../UserComponents/Section';
 import { TextBox } from '../UserComponents/Textbox';
-import { Icon as CraftIcon } from '../UserComponents/Icon'; // <-- Import your custom Icon component
+import { Icon as CraftIcon } from '../UserComponents/Icon';
+import { Button as CraftButton } from '../UserComponents/Button'; // <-- Import your custom Button component
+import { Link as CraftLink } from '../UserComponents/Link';
 
 import './sidebarStyles.css';
 
@@ -234,8 +236,6 @@ const elementToCreate = (key: string) => {
         />
       );
 
-    // --------------------------------------------------------
-    // Add the new Icon case:
     case 'icon':
       return (
         <CraftIcon
@@ -246,7 +246,44 @@ const elementToCreate = (key: string) => {
           padding={[0, 0, 0, 0]}
         />
       );
-    // --------------------------------------------------------
+
+    /* --------------------------------------
+     *  New Button case
+     * -------------------------------------- */
+    case 'button':
+      return (
+        <CraftButton
+          text="Button"
+          /* 
+            Note: These props must match 
+            your Button's prop definitions 
+            (IButtonProps / ButtonComponentProps).
+          */
+          background={{ r: 0, g: 120, b: 212, a: 1 }} // e.g. #0078D4
+          color={{ r: 255, g: 255, b: 255, a: 1 }}
+          buttonStyle="full"
+          margin={[10, 10, 10, 10]}
+        />
+      );
+    case 'link':
+      return (
+        <CraftLink
+          text="Click Here"
+          href="#"
+          target="_blank"
+          color="#0078D4"
+          background="transparent"
+          margin={[5, 5, 5, 5]}
+          padding={[10, 10, 10, 10]}
+          radius={4}
+          shadow={2}
+          width="auto"
+          height="auto"
+          borderWidth={1}
+          borderStyle="solid"
+          borderColor="#ccc"
+        />
+      );
 
     default:
       return null;
@@ -257,14 +294,14 @@ export const ElementsList: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const { connectors } = useEditor();
 
-  /* ----- BASIC ITEMS (Container, Text, Heading, etc.) ----- */
+  /* ----- BASIC ITEMS (Container, Button, Text, Heading, etc.) ----- */
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
-    { key: 'button', icon: 'ButtonControl', name: 'Button' },
+    { key: 'button', icon: 'ButtonControl', name: 'Button' }, // <--- Added here
     { key: 'heading', icon: 'Header1', name: 'Heading' },
     { key: 'text', icon: 'AlignLeft', name: 'Text' },
     { key: 'textbox', icon: 'TextField', name: 'Textbox' },
-    { key: 'icon', icon: 'Emoji2', name: 'Icon' }, // <-- Listed here
+    { key: 'icon', icon: 'Emoji2', name: 'Icon' },
     { key: 'link', icon: 'Link', name: 'Link' },
   ];
 
