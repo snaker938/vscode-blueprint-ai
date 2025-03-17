@@ -15,6 +15,9 @@ import { TextBox } from '../../components/UserComponents/Textbox';
 import { Icon } from '../../components/UserComponents/Icon';
 import { Button } from '../../components/UserComponents/Button';
 import { Link } from '../../components/UserComponents/Link';
+import { Navbar } from '../../components/UserComponents/Navbar';
+import { Sidebar } from '../../components/UserComponents/Sidebar';
+import { HeroSection } from '../../components/UserComponents/HeroSection';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -80,6 +83,9 @@ const MainInterface: React.FC = () => {
         Icon,
         Button,
         Link,
+        Navbar,
+        Sidebar,
+        HeroSection,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >

@@ -16,8 +16,11 @@ import { Row as CraftRow } from '../UserComponents/Row';
 import { Section as CraftSection } from '../UserComponents/Section';
 import { TextBox } from '../UserComponents/Textbox';
 import { Icon as CraftIcon } from '../UserComponents/Icon';
-import { Button as CraftButton } from '../UserComponents/Button'; // <-- Import your custom Button component
+import { Button as CraftButton } from '../UserComponents/Button';
+import { Navbar as CraftNavbar } from '../UserComponents/Navbar';
 import { Link as CraftLink } from '../UserComponents/Link';
+import { Sidebar as CraftSidebar } from '../UserComponents/Sidebar';
+import { HeroSection as CraftHeroSection } from '../UserComponents/HeroSection';
 
 import './sidebarStyles.css';
 
@@ -246,19 +249,10 @@ const elementToCreate = (key: string) => {
           padding={[0, 0, 0, 0]}
         />
       );
-
-    /* --------------------------------------
-     *  New Button case
-     * -------------------------------------- */
     case 'button':
       return (
         <CraftButton
           text="Button"
-          /* 
-            Note: These props must match 
-            your Button's prop definitions 
-            (IButtonProps / ButtonComponentProps).
-          */
           background={{ r: 0, g: 120, b: 212, a: 1 }} // e.g. #0078D4
           color={{ r: 255, g: 255, b: 255, a: 1 }}
           buttonStyle="full"
@@ -283,6 +277,72 @@ const elementToCreate = (key: string) => {
           borderStyle="solid"
           borderColor="#ccc"
         />
+      );
+    case 'navbar':
+      return (
+        <CraftNavbar
+          background="#ffffff"
+          brandName="MySite"
+          brandStyle={{ color: '#000000' }}
+          navItems={['Home', 'About', 'Contact']}
+          padding={[10, 15, 10, 15]}
+        />
+      );
+    case 'sidebar':
+      return (
+        <CraftSidebar
+          background="#fff"
+          width="250px"
+          height="100vh"
+          margin={[0, 0, 0, 0]}
+          padding={[10, 10, 10, 10]}
+          border={{ style: 'solid', width: 1, color: '#eaeaea' }}
+          collapsible={true}
+          collapsedWidth="80px"
+          expandedWidth="250px"
+          navItems={['Dashboard', 'Components', 'Settings']}
+        />
+      );
+    case 'heroSection':
+      return (
+        <CraftHeroSection
+          background="#f5f5f5"
+          width="100%"
+          height="400px"
+          margin={[0, 0, 0, 0]}
+          padding={[20, 20, 20, 20]}
+          textAlign="center"
+          shadow={5}
+          radius={0}
+          border={{ style: 'solid', width: 0, color: '#eaeaea' }}
+        >
+          <Container
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            width="100%"
+            height="100%"
+          >
+            <CraftHeading
+              text="Welcome to the Hero Section"
+              level={1}
+              color="#000000"
+              fontSize={32}
+              fontWeight="bold"
+              textAlign="center"
+              margin={[0, 0, 0, 0]}
+            />
+            <CraftText
+              text="Your captivating tagline goes here."
+              fontSize={16}
+              fontWeight="400"
+              color={{ r: 0, g: 0, b: 0, a: 1 }}
+              shadow={0}
+              textAlign="center"
+              margin={[0, 0, 0, 0]}
+            />
+          </Container>
+        </CraftHeroSection>
       );
 
     default:
@@ -397,7 +457,6 @@ export const ElementsList: React.FC = () => {
                 isDraggable
                   ? (ref) => {
                       if (ref) {
-                        // Connect the element to Craft for drag creation
                         connectors.create(ref, draggableElement!);
                       }
                     }
@@ -452,7 +511,7 @@ export const ElementsList: React.FC = () => {
         styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
       />
 
-      {/* ----- NAVIGATION ELEMENTS (non-draggable) ----- */}
+      {/* ----- NAVIGATION ELEMENTS  ----- */}
       <FluentText
         variant="xLarge"
         styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
@@ -460,19 +519,36 @@ export const ElementsList: React.FC = () => {
         Navigation Elements
       </FluentText>
       <GridArea>
-        {filteredNavigation.map((item) => (
-          <ElementCard key={item.key}>
-            <ElementIcon iconName={item.icon} />
-            <ElementName>{item.name}</ElementName>
-          </ElementCard>
-        ))}
+        {filteredNavigation.map((item) => {
+          const draggableElement = elementToCreate(item.key);
+          const isDraggable = !!draggableElement;
+
+          return (
+            <ElementCard
+              key={item.key}
+              $draggable={isDraggable}
+              ref={
+                isDraggable
+                  ? (ref) => {
+                      if (ref) {
+                        connectors.create(ref, draggableElement!);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              <ElementIcon iconName={item.icon} />
+              <ElementName>{item.name}</ElementName>
+            </ElementCard>
+          );
+        })}
       </GridArea>
 
       <Separator
         styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
       />
 
-      {/* ----- MEDIA ELEMENTS (non-draggable) ----- */}
+      {/* ----- MEDIA ELEMENTS ----- */}
       <FluentText
         variant="xLarge"
         styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
@@ -492,7 +568,7 @@ export const ElementsList: React.FC = () => {
         styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
       />
 
-      {/* ----- COMMON SECTIONS (non-draggable) ----- */}
+      {/* ----- COMMON SECTIONS ----- */}
       <FluentText
         variant="xLarge"
         styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
@@ -500,19 +576,36 @@ export const ElementsList: React.FC = () => {
         Common Sections
       </FluentText>
       <GridArea>
-        {filteredCommonSections.map((item) => (
-          <ElementCard key={item.key}>
-            <ElementIcon iconName={item.icon} />
-            <ElementName>{item.name}</ElementName>
-          </ElementCard>
-        ))}
+        {filteredCommonSections.map((item) => {
+          const draggableElement = elementToCreate(item.key);
+          const isDraggable = !!draggableElement;
+
+          return (
+            <ElementCard
+              key={item.key}
+              $draggable={isDraggable}
+              ref={
+                isDraggable
+                  ? (ref) => {
+                      if (ref) {
+                        connectors.create(ref, draggableElement!);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              <ElementIcon iconName={item.icon} />
+              <ElementName>{item.name}</ElementName>
+            </ElementCard>
+          );
+        })}
       </GridArea>
 
       <Separator
         styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
       />
 
-      {/* ----- FORM ELEMENTS (non-draggable) ----- */}
+      {/* ----- FORM ELEMENTS ----- */}
       <FluentText
         variant="xLarge"
         styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
@@ -532,7 +625,7 @@ export const ElementsList: React.FC = () => {
         styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
       />
 
-      {/* ----- SMART ELEMENTS (non-draggable) ----- */}
+      {/* ----- SMART ELEMENTS ----- */}
       <FluentText
         variant="xLarge"
         styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
