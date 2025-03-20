@@ -1,136 +1,197 @@
-import React from 'react';
-import { useNode } from '@craftjs/core';
-import cx from 'classnames';
-import styled from 'styled-components';
+import React, { FC, useMemo, CSSProperties } from 'react';
+import { Node, useNode, useEditor, Element } from '@craftjs/core';
 
+import { Resizer } from '../Utils/Resizer';
 import { ButtonProperties } from './ButtonProperties';
 import { Text } from '../Text';
 
 /**
- * Button prop definitions
+ * A helper to parse RGBA or string color into a valid CSS color.
  */
-export interface IButtonProps {
-  background: { r: number; g: number; b: number; a: number };
-  color: { r: number; g: number; b: number; a: number };
-  buttonStyle: 'full' | 'outline' | string;
-  margin: [number, number, number, number];
-  text: string;
-  /**
-   * Configuration object for the internal Text component.
-   * You can pass any of the `Text.craft.props` fields here.
-   */
-  textComponent: any;
+function parseColor(
+  c?: { r: number; g: number; b: number; a: number } | string
+): string {
+  if (!c) return 'transparent';
+  if (typeof c === 'string') return c;
+  const { r, g, b, a } = c;
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
 /**
- * Make all fields optional when using <Button ...props />
+ * Utility type for margin/padding: [top, right, bottom, left]
  */
-export type ButtonComponentProps = Partial<IButtonProps>;
+type FourNumberArray = [number, number, number, number];
 
 /**
- * Default props for the Button
+ * Button styles
  */
-const defaultProps: IButtonProps = {
+export type ButtonStyle = 'full' | 'outline' | string;
+
+/**
+ * Main props for the Button
+ */
+export interface ButtonProps extends Record<string, unknown> {
+  background?: { r: number; g: number; b: number; a: number } | string;
+  buttonStyle?: ButtonStyle;
+
+  margin?: FourNumberArray;
+  padding?: FourNumberArray;
+
+  width?: number | string;
+  height?: number | string;
+
+  borderWidth?: number;
+  borderRadius?: number;
+  borderColor?: { r: number; g: number; b: number; a: number } | string;
+
+  boxShadow?: string;
+  cursor?: string;
+}
+
+/**
+ * Default values
+ */
+const defaultProps: Partial<ButtonProps> = {
   background: { r: 255, g: 255, b: 255, a: 0.5 },
-  color: { r: 92, g: 90, b: 90, a: 1 },
   buttonStyle: 'full',
   margin: [5, 0, 5, 0],
-  text: 'Button',
-  textComponent: {
-    ...Text.craft.props,
-    textAlign: 'center',
-  },
+  padding: [10, 20, 10, 20],
+  width: 200,
+  height: 50,
+  borderWidth: 2,
+  borderRadius: 4,
+  borderColor: { r: 0, g: 0, b: 0, a: 1 },
+  boxShadow: '',
+  cursor: 'pointer',
 };
 
 /**
- * Styled component for the Button
- * Using Transient Props ($propName) to avoid passing them to the DOM
+ * Extend FC so we can attach Craft config
  */
-const StyledButton = styled.button<{
-  $background: IButtonProps['background'];
-  $buttonStyle: IButtonProps['buttonStyle'];
-  $margin: IButtonProps['margin'];
-}>`
-  background: ${({ $buttonStyle, $background }) =>
-    $buttonStyle === 'full'
-      ? `rgba(${$background.r}, ${$background.g}, ${$background.b}, ${$background.a})`
-      : 'transparent'};
-  border: 2px solid transparent;
-  border-color: ${({ $buttonStyle, $background }) =>
-    $buttonStyle === 'outline'
-      ? `rgba(${$background.r}, ${$background.g}, ${$background.b}, ${$background.a})`
-      : 'transparent'};
-  margin: ${({ $margin }) =>
-    `${$margin[0]}px ${$margin[1]}px ${$margin[2]}px ${$margin[3]}px`};
-`;
-
-/**
- * Craft.js settings interface
- */
-interface ICraftSettings {
-  displayName: string;
-  props: IButtonProps;
-  related: {
-    settings: React.ComponentType<any>;
+interface CraftButtonFC<
+  P extends Record<string, unknown> = Record<string, unknown>
+> extends FC<P> {
+  craft?: {
+    displayName: string;
+    props?: Partial<P>;
+    rules?: {
+      canMoveIn?: (incomingNodes: Node[]) => boolean;
+    };
+    related?: {
+      settings?: React.ComponentType<any>;
+    };
   };
 }
 
 /**
- * Custom Craft.js component type
+ * The Button component
  */
-interface ICraftComponent<T = object> extends React.FC<T> {
-  craft: ICraftSettings;
-}
-
-/**
- * Button component for Craft.js
- */
-export const Button: ICraftComponent<ButtonComponentProps> = (props) => {
-  // Merge default props with props passed in
-  const { background, color, buttonStyle, margin, text, textComponent } = {
-    ...defaultProps,
-    ...props,
-  };
-
-  // Craft.js node connector
+const ButtonComponent: CraftButtonFC<ButtonProps> = (incomingProps) => {
+  const props = { ...defaultProps, ...incomingProps };
   const {
-    connectors: { connect, drag },
-  } = useNode((node) => ({
-    selected: node.events.selected,
-  }));
+    background,
+    buttonStyle,
+    margin,
+    padding,
+    width,
+    height,
+    borderWidth,
+    borderRadius,
+    borderColor,
+    boxShadow,
+    cursor,
+  } = props;
+
+  const { node } = useNode((node) => ({ node }));
+  const editor = useEditor();
+  const { connectors } = editor;
+  const isEditorEnabled = editor.query.getOptions().enabled;
+
+  const containerStyle: CSSProperties = useMemo(() => {
+    const safeMargin = margin ?? [0, 0, 0, 0];
+    const finalWidth = typeof width === 'number' ? `${width}px` : width;
+    const finalHeight = typeof height === 'number' ? `${height}px` : height;
+
+    return {
+      position: 'relative',
+      display: 'inline-block',
+      width: finalWidth,
+      height: finalHeight,
+      margin: `${safeMargin[0]}px ${safeMargin[1]}px ${safeMargin[2]}px ${safeMargin[3]}px`,
+      boxShadow,
+    };
+  }, [margin, width, height, boxShadow]);
+
+  const buttonStyleObj: CSSProperties = useMemo(() => {
+    const usedBorderColor = borderColor ?? background;
+    const bgColor =
+      buttonStyle === 'full' ? parseColor(background) : 'transparent';
+    const borderCol =
+      buttonStyle === 'outline' ? parseColor(usedBorderColor) : 'transparent';
+    const safePadding = padding ?? [0, 0, 0, 0];
+
+    return {
+      width: '100%',
+      height: '100%',
+      background: bgColor,
+      border: `${borderWidth}px solid ${borderCol}`,
+      borderRadius: borderRadius || 0,
+      padding: `${safePadding[0]}px ${safePadding[1]}px ${safePadding[2]}px ${safePadding[3]}px`,
+      cursor: cursor || 'pointer',
+    };
+  }, [
+    buttonStyle,
+    background,
+    borderColor,
+    borderWidth,
+    borderRadius,
+    padding,
+    cursor,
+  ]);
+
+  const connectRef = (dom: HTMLDivElement | null) => {
+    if (!dom) return;
+    connectors.connect(dom, node.id);
+    connectors.drag(dom, node.id);
+  };
 
   return (
-    <StyledButton
-      ref={(dom) => {
-        if (dom) {
-          connect(drag(dom));
-        }
-      }}
-      className={cx([
-        'rounded w-full px-4 py-2',
-        {
-          'shadow-lg': buttonStyle === 'full',
-        },
-      ])}
-      $buttonStyle={buttonStyle}
-      $background={background}
-      $margin={margin}
+    <Resizer
+      ref={connectRef}
+      propKey={{ width: 'width', height: 'height' }}
+      style={containerStyle}
     >
-      {/* The Text component is responsible for editing its own text via ContentEditable */}
-      <Text {...textComponent} text={text} color={color} />
-    </StyledButton>
+      <Element
+        /* ↓↓↓ This ID prop is required ↓↓↓ */
+        id="button_element"
+        is="button"
+        canvas
+        style={buttonStyleObj}
+        disabled={!isEditorEnabled}
+      >
+        <Text text="Button" fontSize={16} textAlign="center" />
+      </Element>
+    </Resizer>
   );
 };
 
 /**
- * Craft.js configuration
+ * Attach Craft.js config
  */
-Button.craft = {
+ButtonComponent.craft = {
   displayName: 'Button',
   props: {
     ...defaultProps,
+  },
+  rules: {
+    canMoveIn: (incomingNodes: Node[]) => {
+      // Only allow <Text> inside
+      return incomingNodes.every((node) => node.data.type === Text);
+    },
   },
   related: {
     settings: ButtonProperties,
   },
 };
+
+export const Button = ButtonComponent;

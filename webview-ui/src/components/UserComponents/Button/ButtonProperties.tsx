@@ -1,18 +1,28 @@
 import React from 'react';
-import { Grid } from '@mui/material';
 import { useNode } from '@craftjs/core';
+import { Grid } from '@mui/material';
 
-import { Section } from '../../PropertiesSidebar/UI/Section';
-import { Item } from '../../PropertiesSidebar/UI/Item';
-import { Slider } from '../../PropertiesSidebar/UI/Slider';
-// import { Dropdown } from '../../PropertiesSidebar/UI/Dropdown';
+/**
+ * Import UI components from your library
+ * Adjust these imports to the correct paths in your codebase.
+ */
 import { ColorPicker } from '../../PropertiesSidebar/UI/ColorPicker';
+import { Dropdown } from '../../PropertiesSidebar/UI/Dropdown';
+import { Item } from '../../PropertiesSidebar/UI/Item';
+import { Section } from '../../PropertiesSidebar/UI/Section';
+import { Slider } from '../../PropertiesSidebar/UI/Slider';
 import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
-import { Radio } from '../../PropertiesSidebar/UI/Radio';
 
-// Helper components & functions ----------------------------------------------
+/**
+ * Import the ButtonProps type from your Button component, if needed.
+ * Otherwise, replicate it here.
+ */
+import { ButtonProps, ButtonStyle } from './index';
 
-// Same spacing helper from your example (copy/paste as needed):
+/**
+ * A small helper to display margin/padding controls with a Slider + TextInput for each side.
+ * It's taken from the example in the TextProperties file.
+ */
 function SpacingControl({
   label,
   values,
@@ -24,6 +34,7 @@ function SpacingControl({
   onChangeValues: (newValues: number[]) => void;
   max?: number;
 }) {
+  // Fallback to [0, 0, 0, 0] if values is undefined
   const safeValues = values ?? [0, 0, 0, 0];
 
   return (
@@ -59,186 +70,170 @@ function SpacingControl({
   );
 }
 
-// Color conversion helpers (same approach as in TextProperties):
-function rgbaToHex(r: number, g: number, b: number) {
-  const clamp = (val: number) => Math.max(0, Math.min(255, val));
-  const hr = clamp(r).toString(16).padStart(2, '0');
-  const hg = clamp(g).toString(16).padStart(2, '0');
-  const hb = clamp(b).toString(16).padStart(2, '0');
-  return `#${hr}${hg}${hb}`;
-}
-
-function hexToRgba(hex: string) {
-  let safeHex = hex.replace(/^#/, '');
-  if (safeHex.length === 3) {
-    safeHex = safeHex
-      .split('')
-      .map((c) => c + c)
-      .join('');
-  }
-  if (!/^[0-9A-Fa-f]{6}$/.test(safeHex)) {
-    return { r: 0, g: 0, b: 0, a: 1 };
-  }
-  const r = parseInt(safeHex.slice(0, 2), 16);
-  const g = parseInt(safeHex.slice(2, 4), 16);
-  const b = parseInt(safeHex.slice(4, 6), 16);
-  return { r, g, b, a: 1 };
-}
-
-// ---------------------------------------------------------------------------
-
-// 1) Define the interface for the Button component’s props:
-export interface IButtonProps {
-  background: { r: number; g: number; b: number; a: number };
-  color: { r: number; g: number; b: number; a: number };
-  buttonStyle: 'full' | 'outline' | string;
-  margin: [number, number, number, number];
-  text: string;
-  /**
-   * Configuration object for the internal Text component.
-   * You can pass any of the Text.craft.props fields here.
-   */
-  textComponent: any;
-}
-
 /**
- * The ButtonProperties panel for the CraftJS Button component.
+ * The properties panel for the Button component
  */
 export const ButtonProperties: React.FC = () => {
-  // Access the component’s props from the Craft node
+  /**
+   * Access the current component's props and the setProp action from Craft.js
+   */
   const {
+    actions: { setProp },
     background,
-    color,
     buttonStyle,
     margin,
-    text,
-    // If you need textComponent, uncomment:
-    // textComponent,
-    actions: { setProp },
+    padding,
+    width,
+    height,
+    borderWidth,
+    borderRadius,
+    borderColor,
+    boxShadow,
+    cursor,
   } = useNode((node) => ({
     background: node.data.props.background,
-    color: node.data.props.color,
     buttonStyle: node.data.props.buttonStyle,
     margin: node.data.props.margin,
-    text: node.data.props.text,
-    // If you need textComponent, uncomment:
-    // textComponent: node.data.props.textComponent,
+    padding: node.data.props.padding,
+    width: node.data.props.width,
+    height: node.data.props.height,
+    borderWidth: node.data.props.borderWidth,
+    borderRadius: node.data.props.borderRadius,
+    borderColor: node.data.props.borderColor,
+    boxShadow: node.data.props.boxShadow,
+    cursor: node.data.props.cursor,
   }));
 
+  /**
+   * Utility: sets any prop key to a new value using setProp
+   */
+  const handleChange = <K extends keyof ButtonProps>(
+    propName: K,
+    value: ButtonProps[K]
+  ) => {
+    setProp((props: ButtonProps) => {
+      props[propName] = value;
+    });
+  };
+
+  /**
+   * Options for buttonStyle
+   */
+  const buttonStyleOptions = [
+    { label: 'Full', value: 'full' },
+    { label: 'Outline', value: 'outline' },
+  ];
+
+  /**
+   * Render
+   */
   return (
     <>
-      {/* CONTENT SECTION */}
-      <Section title="Content" defaultExpanded={false}>
+      {/* Appearance Section */}
+      <Section title="Appearance" defaultExpanded>
         <Item>
-          <TextInput
-            label="Button Text"
-            value={text}
-            onChangeValue={(newVal) =>
-              setProp((props: IButtonProps) => {
-                props.text = newVal;
-              })
-            }
-          />
-        </Item>
-      </Section>
-
-      {/* STYLE SECTION */}
-      <Section title="Style" defaultExpanded={false}>
-        {/* Background Color */}
-        <Item>
-          <ColorPicker
-            label="Background Color"
-            value={rgbaToHex(background.r, background.g, background.b)}
-            onChangeValue={(newHex) =>
-              setProp((props: IButtonProps) => {
-                const rgba = hexToRgba(newHex);
-                props.background = {
-                  r: rgba.r,
-                  g: rgba.g,
-                  b: rgba.b,
-                  a: props.background?.a ?? 1,
-                };
-              })
-            }
-            allowTextInput
-          />
-        </Item>
-
-        {/* Text Color */}
-        <Item>
-          <ColorPicker
-            label="Text Color"
-            value={rgbaToHex(color.r, color.g, color.b)}
-            onChangeValue={(newHex) =>
-              setProp((props: IButtonProps) => {
-                const rgba = hexToRgba(newHex);
-                props.color = {
-                  r: rgba.r,
-                  g: rgba.g,
-                  b: rgba.b,
-                  a: props.color?.a ?? 1,
-                };
-              })
-            }
-            allowTextInput
-          />
-        </Item>
-
-        {/* Button Style */}
-        <Item>
-          <Radio
+          <Dropdown
             label="Button Style"
-            value={buttonStyle}
-            onChangeValue={(newVal) =>
-              setProp((props: IButtonProps) => {
-                props.buttonStyle = newVal;
-              })
+            value={buttonStyle ?? 'full'}
+            options={buttonStyleOptions}
+            onChangeValue={(val) =>
+              handleChange('buttonStyle', val as ButtonStyle)
             }
-            options={[
-              { label: 'Full', value: 'full' },
-              { label: 'Outline', value: 'outline' },
-            ]}
-            row
           />
         </Item>
-      </Section>
-
-      {/* MARGINS SECTION */}
-      <Section title="Margins" defaultExpanded={false}>
-        <SpacingControl
-          label="Margin"
-          values={margin}
-          onChangeValues={(vals) =>
-            setProp((props: IButtonProps) => {
-              props.margin = [vals[0], vals[1], vals[2], vals[3]];
-            })
-          }
-        />
-      </Section>
-
-      {/* ADVANCED / TEXT COMPONENT SECTION (optional) */}
-      {/* 
-        If you want to expose additional props for the internal Text component,
-        you could add another <Section> here that manipulates `textComponent`.
-        For example:
-      */}
-
-      {/* 
-      <Section title="Text Component Props" defaultExpanded={false}>
+        <Item>
+          <ColorPicker
+            label="Background"
+            value={background}
+            onChangeValue={(newColor) => handleChange('background', newColor)}
+          />
+        </Item>
+        <Item>
+          <ColorPicker
+            label="Border Color"
+            value={borderColor}
+            onChangeValue={(newColor) => handleChange('borderColor', newColor)}
+          />
+        </Item>
+        <Item>
+          <Slider
+            label="Border Width"
+            value={borderWidth ?? 2}
+            min={0}
+            max={20}
+            onChangeValue={(val) => handleChange('borderWidth', val)}
+          />
+        </Item>
+        <Item>
+          <Slider
+            label="Border Radius"
+            value={borderRadius ?? 4}
+            min={0}
+            max={50}
+            onChangeValue={(val) => handleChange('borderRadius', val)}
+          />
+        </Item>
         <Item>
           <TextInput
-            label="Custom Font Size"
-            value={textComponent.fontSize?.toString() ?? ''}
-            onChangeValue={(val) =>
-              setProp((props: IButtonProps) => {
-                const num = parseInt(val, 10) || 16;
-                props.textComponent.fontSize = num;
-              })
-            }
+            label="Box Shadow"
+            value={boxShadow ?? ''}
+            onChangeValue={(val) => handleChange('boxShadow', val)}
+            helperText='e.g. "0px 0px 10px rgba(0,0,0,0.3)"'
+          />
+        </Item>
+        <Item>
+          <TextInput
+            label="Cursor"
+            value={cursor ?? 'pointer'}
+            onChangeValue={(val) => handleChange('cursor', val)}
+            helperText='e.g. "pointer", "default", "text"'
           />
         </Item>
       </Section>
-      */}
+
+      {/* Layout & Spacing Section */}
+      <Section title="Layout & Spacing" defaultExpanded>
+        <Item>
+          <SpacingControl
+            label="Margin"
+            values={margin}
+            onChangeValues={(newVals) =>
+              handleChange(
+                'margin',
+                newVals as [number, number, number, number]
+              )
+            }
+          />
+        </Item>
+        <Item>
+          <SpacingControl
+            label="Padding"
+            values={padding}
+            onChangeValues={(newVals) =>
+              handleChange(
+                'padding',
+                newVals as [number, number, number, number]
+              )
+            }
+          />
+        </Item>
+        <Item>
+          <TextInput
+            label="Width"
+            value={width?.toString() ?? ''}
+            onChangeValue={(val) => handleChange('width', val)}
+            helperText='Use CSS units (e.g. "200px", "50%", "auto")'
+          />
+        </Item>
+        <Item>
+          <TextInput
+            label="Height"
+            value={height?.toString() ?? ''}
+            onChangeValue={(val) => handleChange('height', val)}
+            helperText='Use CSS units (e.g. "50px", "auto")'
+          />
+        </Item>
+      </Section>
     </>
   );
 };

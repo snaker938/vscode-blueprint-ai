@@ -1,23 +1,16 @@
 import React from 'react';
 import { Editor, Frame, Element, useEditor } from '@craftjs/core';
-import { Container } from '../../components/UserComponents/Container';
-import { Text as CraftText } from '../../components/UserComponents/Text';
 import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
 import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
 import { RenderNode } from '../../components/UserComponents/Utils/RenderNode';
 
+import { Container } from '../../components/UserComponents/Container';
+import { Text } from '../../components/UserComponents/Text';
+
 import './MainInterface.css';
-import { Heading } from '../../components/UserComponents/Heading';
-import { Grid } from '../../components/UserComponents/Grid';
-import { Row } from '../../components/UserComponents/Row';
-import { Section } from '../../components/UserComponents/Section';
-import { TextBox } from '../../components/UserComponents/Textbox';
-import { Icon } from '../../components/UserComponents/Icon';
 import { Button } from '../../components/UserComponents/Button';
-import { Link } from '../../components/UserComponents/Link';
-import { Navbar } from '../../components/UserComponents/Navbar';
-import { Sidebar } from '../../components/UserComponents/Sidebar';
-import { HeroSection } from '../../components/UserComponents/HeroSection';
+import { Icon } from '../../components/UserComponents/Icon';
+import { StarRating } from '../../components/UserComponents/StarRating';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -60,10 +53,7 @@ export const DroppableCanvas: React.FC = () => {
         background="#ffffff"
         padding={[20, 20, 20, 20]}
       >
-        <CraftText
-          text="Welcome! Drag components from the left!"
-          fontSize={22}
-        />
+        <Text />
       </Element>
     </Frame>
   );
@@ -74,18 +64,10 @@ const MainInterface: React.FC = () => {
     <Editor
       resolver={{
         Container,
-        Text: CraftText,
-        Heading,
-        Grid,
-        Row,
-        Section,
-        TextBox,
-        Icon,
+        Text,
         Button,
-        Link,
-        Navbar,
-        Sidebar,
-        HeroSection,
+        Icon,
+        StarRating,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >

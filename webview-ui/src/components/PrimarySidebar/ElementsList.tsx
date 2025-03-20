@@ -8,21 +8,35 @@ import {
   Separator,
 } from '@fluentui/react';
 
-import { Container } from '../UserComponents/Container';
-import { Text as CraftText } from '../UserComponents/Text';
-import { Heading as CraftHeading } from '../UserComponents/Heading';
-import { Grid as CraftGrid } from '../UserComponents/Grid';
-import { Row as CraftRow } from '../UserComponents/Row';
-import { Section as CraftSection } from '../UserComponents/Section';
-import { TextBox } from '../UserComponents/Textbox';
-import { Icon as CraftIcon } from '../UserComponents/Icon';
-import { Button as CraftButton } from '../UserComponents/Button';
-import { Navbar as CraftNavbar } from '../UserComponents/Navbar';
-import { Link as CraftLink } from '../UserComponents/Link';
-import { Sidebar as CraftSidebar } from '../UserComponents/Sidebar';
-import { HeroSection as CraftHeroSection } from '../UserComponents/HeroSection';
+// import { Button as CraftButton } from '../UserComponents/Button';
+// import { ButtonGroup as CraftButtonGroup } from '../UserComponents/ButtonGroup';
+// import { CallToAction as CraftCallToAction } from '../UserComponents/CallToAction';
+// import { Checkbox as CraftCheckbox } from '../UserComponents/Checkbox';
+import { Container as CraftContainer } from '../UserComponents/Container';
+// import { Dropdown as CraftDropdown } from '../UserComponents/Dropdown';
+// import { Footer as CraftFooter } from '../UserComponents/Footer';
+// import { Grid as CraftGrid } from '../UserComponents/Grid';
+// import { Heading as CraftHeading } from '../UserComponents/Heading';
+// import { HeroSection as CraftHeroSection } from '../UserComponents/HeroSection';
+// import { Icon as CraftIcon } from '../UserComponents/Icon';
+// import { InputBox as CraftInputBox } from '../UserComponents/InputBox';
+// import { Link as CraftLink } from '../UserComponents/Link';
+// import { Navbar as CraftNavbar } from '../UserComponents/Navbar';
+// import { RadioButtons as CraftRadioButtons } from '../UserComponents/RadioButtons';
+// import { Row as CraftRow } from '../UserComponents/Row';
+// import { SearchBox as CraftSearchBox } from '../UserComponents/SearchBox';
+// import { Section as CraftSection } from '../UserComponents/Section';
+// import { Sidebar as CraftSidebar } from '../UserComponents/Sidebar';
+// import { Slider as CraftSlider } from '../UserComponents/Slider';
+// import { StarRating as CraftStarRating } from '../UserComponents/StarRating';
+// import { Text as CraftText } from '../UserComponents/Text';
+// import { TextBox as CraftTextbox } from '../UserComponents/Textbox';
 
 import './sidebarStyles.css';
+import { Text } from '../UserComponents/Text';
+import { Button } from '../UserComponents/Button';
+import { Icon } from '../UserComponents/Icon';
+import { StarRating } from '../UserComponents/StarRating';
 
 /* ------------------ Styled Components ------------------ */
 const Wrapper = styled.div`
@@ -86,265 +100,22 @@ const elementToCreate = (key: string) => {
   switch (key) {
     case 'container':
       return (
-        <Container
-          width="100%"
-          height="auto"
-          background="#f9f9f9"
-          margin={[10, 10, 10, 10]}
-          padding={[20, 20, 20, 20]}
-          radius={8}
-          shadow={1}
-          flexDirection="column"
-          fillSpace="no"
-          alignItems="center"
-          justifyContent="center"
-          border={{
-            Colour: '#ccc',
-            style: 'solid',
-            width: 1,
-          }}
-        >
-          <CraftText
-            text="A brand new container with default props!"
-            fontSize={16}
-            fontWeight="400"
-            color={{ r: 0, g: 0, b: 0, a: 1 }}
-            shadow={0}
-            textAlign="center"
-            margin={[0, 0, 0, 0]}
-          />
-        </Container>
-      );
-
-    case 'text':
-      return (
-        <CraftText
-          text="Brand new text element"
-          fontSize={14}
-          fontWeight="400"
-          color={{ r: 0, g: 0, b: 0, a: 1 }}
-          shadow={0}
-          textAlign="left"
-          margin={[0, 0, 0, 0]}
-        />
-      );
-
-    case 'heading':
-      return (
-        <CraftHeading
-          text="New Heading Element"
-          level={1}
-          color="#333"
-          fontSize={32}
-          fontWeight="bold"
-          textAlign="center"
-          margin={[10, 10, 10, 10]}
-          padding={[5, 5, 5, 5]}
-        />
-      );
-
-    case 'grid':
-      return (
-        <CraftGrid
-          rows={2}
-          columns={2}
-          margin={[10, 10, 10, 10]}
-          padding={[10, 10, 10, 10]}
-        />
-      );
-
-    case 'row':
-      return (
-        <CraftRow
-          background="#f0f0f0"
-          margin={[10, 10, 10, 10]}
-          padding={[10, 10, 10, 10]}
-          shadow={0}
-          radius={4}
-          gap={8}
-          fillSpace="no"
-          alignItems="center"
-          justifyContent="center"
-          border={{
-            colour: '#ccc',
-            style: 'solid',
-            width: 1,
-          }}
-        >
-          <CraftText
-            text="A brand new Row with default props!"
-            fontSize={16}
-            fontWeight="400"
-            color={{ r: 0, g: 0, b: 0, a: 1 }}
-            shadow={0}
-            textAlign="center"
-            margin={[0, 0, 0, 0]}
-          />
-        </CraftRow>
-      );
-
-    case 'section':
-      return (
-        <CraftSection
-          background="#f9f9f9"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          fillSpace="no"
-          width="100%"
-          height="auto"
-          margin={[10, 10, 10, 10]}
-          padding={[20, 20, 20, 20]}
-          shadow={1}
-          radius={8}
-          border={{
-            Colour: '#ccc',
-            style: 'solid',
-            width: 1,
-          }}
-        >
-          <CraftText
-            text="A brand new Section with default props!"
-            fontSize={16}
-            fontWeight="400"
-            color={{ r: 0, g: 0, b: 0, a: 1 }}
-            shadow={0}
-            textAlign="center"
-            margin={[0, 0, 0, 0]}
-          />
-        </CraftSection>
-      );
-
-    case 'textbox':
-      return (
-        <TextBox
-          text="New TextBox"
-          placeholder="Type here..."
-          fontSize={14}
-          fontFamily="Arial"
-          color="#000000"
+        <CraftContainer
           background="#ffffff"
-          multiline={false}
-          disabled={false}
-          readOnly={false}
-          margin={[0, 0, 0, 0]}
-          padding={[5, 5, 5, 5]}
-          radius={4}
-          shadow={0}
-          borderColor="#ccc"
-          borderStyle="solid"
-          borderWidth={1}
-          width="200px"
-          height="40px"
-        />
-      );
-
-    case 'icon':
-      return (
-        <CraftIcon
-          iconName="AiFillSmile"
-          size={24}
-          color="#000000"
-          margin={[0, 0, 0, 0]}
           padding={[0, 0, 0, 0]}
-        />
-      );
-    case 'button':
-      return (
-        <CraftButton
-          text="Button"
-          background={{ r: 0, g: 120, b: 212, a: 1 }} // e.g. #0078D4
-          color={{ r: 255, g: 255, b: 255, a: 1 }}
-          buttonStyle="full"
-          margin={[10, 10, 10, 10]}
-        />
-      );
-    case 'link':
-      return (
-        <CraftLink
-          text="Click Here"
-          href="#"
-          target="_blank"
-          color="#0078D4"
-          background="transparent"
-          margin={[5, 5, 5, 5]}
-          padding={[10, 10, 10, 10]}
-          radius={4}
-          shadow={2}
-          width="auto"
-          height="auto"
-          borderWidth={1}
-          borderStyle="solid"
-          borderColor="#ccc"
-        />
-      );
-    case 'navbar':
-      return (
-        <CraftNavbar
-          background="#ffffff"
-          brandName="MySite"
-          brandStyle={{ color: '#000000' }}
-          navItems={['Home', 'About', 'Contact']}
-          padding={[10, 15, 10, 15]}
-        />
-      );
-    case 'sidebar':
-      return (
-        <CraftSidebar
-          background="#fff"
-          width="250px"
-          height="100vh"
           margin={[0, 0, 0, 0]}
-          padding={[10, 10, 10, 10]}
-          border={{ style: 'solid', width: 1, color: '#eaeaea' }}
-          collapsible={true}
-          collapsedWidth="80px"
-          expandedWidth="250px"
-          navItems={['Dashboard', 'Components', 'Settings']}
-        />
-      );
-    case 'heroSection':
-      return (
-        <CraftHeroSection
-          background="#f5f5f5"
           width="100%"
-          height="400px"
-          margin={[0, 0, 0, 0]}
-          padding={[20, 20, 20, 20]}
-          textAlign="center"
-          shadow={5}
-          radius={0}
-          border={{ style: 'solid', width: 0, color: '#eaeaea' }}
-        >
-          <Container
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            width="100%"
-            height="100%"
-          >
-            <CraftHeading
-              text="Welcome to the Hero Section"
-              level={1}
-              color="#000000"
-              fontSize={32}
-              fontWeight="bold"
-              textAlign="center"
-              margin={[0, 0, 0, 0]}
-            />
-            <CraftText
-              text="Your captivating tagline goes here."
-              fontSize={16}
-              fontWeight="400"
-              color={{ r: 0, g: 0, b: 0, a: 1 }}
-              shadow={0}
-              textAlign="center"
-              margin={[0, 0, 0, 0]}
-            />
-          </Container>
-        </CraftHeroSection>
+          height="auto"
+        />
       );
-
+    case 'text':
+      return <Text />;
+    case 'button':
+      return <Button />;
+    case 'icon':
+      return <Icon />;
+    case 'starRating':
+      return <StarRating />;
     default:
       return null;
   }
@@ -357,12 +128,9 @@ export const ElementsList: React.FC = () => {
   /* ----- BASIC ITEMS (Container, Button, Text, Heading, etc.) ----- */
   const basicItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
-    { key: 'button', icon: 'ButtonControl', name: 'Button' }, // <--- Added here
-    { key: 'heading', icon: 'Header1', name: 'Heading' },
+    { key: 'button', icon: 'ButtonControl', name: 'Button' },
     { key: 'text', icon: 'AlignLeft', name: 'Text' },
-    { key: 'textbox', icon: 'TextField', name: 'Textbox' },
     { key: 'icon', icon: 'Emoji2', name: 'Icon' },
-    { key: 'link', icon: 'Link', name: 'Link' },
   ];
 
   /* ----- LAYOUT ITEMS (Row, Section, Grid) ----- */
@@ -383,31 +151,13 @@ export const ElementsList: React.FC = () => {
     { key: 'audio', icon: 'MusicInCollection', name: 'Audio' },
   ];
 
-  const commonSectionItems = [
-    { key: 'heroSection', icon: 'Design', name: 'Hero Section' },
-    { key: 'footer', icon: 'AlbumRemove', name: 'Footer' },
-    { key: 'callToAction', icon: 'Megaphone', name: 'Call To Action' },
-  ];
-
   const formItems = [
     { key: 'checkbox', icon: 'CheckboxComposite', name: 'Checkbox' },
-    { key: 'radioButtons', icon: 'RadioBtnOn', name: 'Radio Buttons' },
+    { key: 'radioButtons', icon: 'RadioBtnOn', name: 'Radio Button' },
     { key: 'dropdown', icon: 'Dropdown', name: 'Dropdown' },
     { key: 'slider', icon: 'Slider', name: 'Slider' },
     { key: 'starRating', icon: 'FavoriteStar', name: 'Star Rating' },
     { key: 'searchBox', icon: 'Search', name: 'Search Box' },
-  ];
-
-  const smartItems = [
-    { key: 'buttonGroup', icon: 'GroupedList', name: 'Button Group' },
-    { key: 'inputBox', icon: 'TextField', name: 'Input Box' },
-    { key: 'carousel', icon: 'Slideshow', name: 'Carousel' },
-  ];
-
-  const graphItems = [
-    { key: 'barChart', icon: 'BarChart4', name: 'Bar Chart' },
-    { key: 'pieChart', icon: 'DonutChart', name: 'Pie Chart' },
-    { key: 'lineChart', icon: 'LineChart', name: 'Line Chart' },
   ];
 
   /* ----- Filter by search text ----- */
@@ -418,10 +168,7 @@ export const ElementsList: React.FC = () => {
   const filteredLayout = layoutItems.filter(filterBySearch);
   const filteredNavigation = navigationItems.filter(filterBySearch);
   const filteredMedia = mediaItems.filter(filterBySearch);
-  const filteredCommonSections = commonSectionItems.filter(filterBySearch);
   const filteredForm = formItems.filter(filterBySearch);
-  const filteredSmart = smartItems.filter(filterBySearch);
-  const filteredGraph = graphItems.filter(filterBySearch);
 
   return (
     <Wrapper>
@@ -556,27 +303,7 @@ export const ElementsList: React.FC = () => {
         Media Elements
       </FluentText>
       <GridArea>
-        {filteredMedia.map((item) => (
-          <ElementCard key={item.key}>
-            <ElementIcon iconName={item.icon} />
-            <ElementName>{item.name}</ElementName>
-          </ElementCard>
-        ))}
-      </GridArea>
-
-      <Separator
-        styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
-      />
-
-      {/* ----- COMMON SECTIONS ----- */}
-      <FluentText
-        variant="xLarge"
-        styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
-      >
-        Common Sections
-      </FluentText>
-      <GridArea>
-        {filteredCommonSections.map((item) => {
+        {filteredMedia.map((item) => {
           const draggableElement = elementToCreate(item.key);
           const isDraggable = !!draggableElement;
 
@@ -613,52 +340,29 @@ export const ElementsList: React.FC = () => {
         Form Elements
       </FluentText>
       <GridArea>
-        {filteredForm.map((item) => (
-          <ElementCard key={item.key}>
-            <ElementIcon iconName={item.icon} />
-            <ElementName>{item.name}</ElementName>
-          </ElementCard>
-        ))}
-      </GridArea>
+        {filteredForm.map((item) => {
+          const draggableElement = elementToCreate(item.key);
+          const isDraggable = !!draggableElement;
 
-      <Separator
-        styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
-      />
-
-      {/* ----- SMART ELEMENTS ----- */}
-      <FluentText
-        variant="xLarge"
-        styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
-      >
-        Smart Elements
-      </FluentText>
-      <GridArea>
-        {filteredSmart.map((item) => (
-          <ElementCard key={item.key}>
-            <ElementIcon iconName={item.icon} />
-            <ElementName>{item.name}</ElementName>
-          </ElementCard>
-        ))}
-      </GridArea>
-
-      <Separator
-        styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
-      />
-
-      {/* ----- GRAPH ELEMENTS (non-draggable) ----- */}
-      <FluentText
-        variant="xLarge"
-        styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
-      >
-        Graph Elements
-      </FluentText>
-      <GridArea>
-        {filteredGraph.map((item) => (
-          <ElementCard key={item.key}>
-            <ElementIcon iconName={item.icon} />
-            <ElementName>{item.name}</ElementName>
-          </ElementCard>
-        ))}
+          return (
+            <ElementCard
+              key={item.key}
+              $draggable={isDraggable}
+              ref={
+                isDraggable
+                  ? (ref) => {
+                      if (ref) {
+                        connectors.create(ref, draggableElement!);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              <ElementIcon iconName={item.icon} />
+              <ElementName>{item.name}</ElementName>
+            </ElementCard>
+          );
+        })}
       </GridArea>
     </Wrapper>
   );

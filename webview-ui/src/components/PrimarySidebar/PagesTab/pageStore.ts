@@ -10,8 +10,11 @@ let globalPages: Page[] = [{ id: 1, name: 'Page 1', thumbnail: '' }];
 // Keep track of which page is currently selected:
 let globalSelectedPageId: number = 1;
 
-// Array of listeners to be notified when the selected page changes.
+// Listeners for changes in the *selected page*:
 let listeners: Array<() => void> = [];
+
+/** New: listeners for changes in the globalPages array itself. */
+let pagesListeners: Array<() => void> = [];
 
 /** Retrieve the entire list of global pages. */
 export const getGlobalPages = () => {
@@ -31,12 +34,14 @@ export const getGlobalSelectedPage = (): Page | undefined => {
 /** Set the entire list of global pages. */
 export const setGlobalPages = (newPages: Page[]) => {
   globalPages = newPages;
+  // Notify all subscribers that pages changed
+  pagesListeners.forEach((fn) => fn());
 };
 
 /** Set which page is currently selected and notify subscribers. */
 export const setGlobalSelectedPageId = (id: number) => {
   globalSelectedPageId = id;
-  // Notify all subscribers about the change.
+  // Notify all 'selected page' subscribers
   listeners.forEach((fn) => fn());
 };
 
@@ -47,5 +52,13 @@ export const subscribeSelectedPageChange = (listener: () => void) => {
   listeners.push(listener);
   return () => {
     listeners = listeners.filter((l) => l !== listener);
+  };
+};
+
+/** NEW: Subscribe to changes in the global pages array. */
+export const subscribeGlobalPagesChange = (listener: () => void) => {
+  pagesListeners.push(listener);
+  return () => {
+    pagesListeners = pagesListeners.filter((l) => l !== listener);
   };
 };

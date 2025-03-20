@@ -1,6 +1,7 @@
 import React from 'react';
-import { Grid } from '@mui/material';
+import { Grid, Autocomplete, TextField } from '@mui/material';
 import { useNode } from '@craftjs/core';
+import * as AiIcons from 'react-icons/ai';
 
 import { Section } from '../../PropertiesSidebar/UI/Section';
 import { Item } from '../../PropertiesSidebar/UI/Item';
@@ -10,24 +11,27 @@ import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
 
 /**
  * The interface for the Icon component's props within the editor.
- * These should match the fields used by the actual Icon component.
+ * (Note: 'size' is removed, as the icon fills via width/height)
  */
 export interface IIconProps {
-  /** The name of the icon to render (e.g. "AiFillHome") */
   iconName: string;
-  /** The size of the icon, in pixels */
-  size: number;
-  /** The icon color as a valid CSS color string (e.g. "#ff0000") */
   color: string;
-  /** Margin array: [top, right, bottom, left] */
   margin: number[];
-  /** Padding array: [top, right, bottom, left] */
   padding: number[];
+  width: number;
+  height: number;
 }
 
 /**
+ * Generate an array of valid Ai icon names.
+ * We filter to ensure the key references a valid React component (function).
+ */
+const AI_ICON_KEYS = Object.keys(AiIcons)
+  .filter((key) => typeof (AiIcons as any)[key] === 'function')
+  .sort();
+
+/**
  * A small helper to display margin/padding controls with a Slider + TextInput for each side.
- * NOTE: We’ve removed the <Section> from inside this function to avoid nested sections.
  */
 function SpacingControl({
   label,
@@ -80,50 +84,45 @@ function SpacingControl({
  * The property controls for the Icon component in the Craft editor.
  */
 export const IconProperties: React.FC = () => {
-  // Grab the current values + the method to set them from the node
+  // Grab the current values + setter from the node
   const {
     iconName,
-    size,
     color,
     margin,
     padding,
+    width,
+    height,
     actions: { setProp },
   } = useNode((node) => ({
     iconName: node.data.props.iconName,
-    size: node.data.props.size,
     color: node.data.props.color,
     margin: node.data.props.margin,
     padding: node.data.props.padding,
+    width: node.data.props.width,
+    height: node.data.props.height,
   }));
 
   return (
     <>
       {/* ICON SETTINGS */}
-      <Section title="Icon" defaultExpanded>
+      <Section title="Icon" defaultExpanded={false}>
         <Item>
-          <TextInput
-            label="Icon Name"
+          <Autocomplete
+            fullWidth
+            options={AI_ICON_KEYS}
             value={iconName}
-            onChangeValue={(newVal) =>
+            onChange={(_, newVal) =>
               setProp((props: IIconProps) => {
-                props.iconName = newVal;
+                props.iconName = newVal || 'AiFillSmile';
               })
             }
-            helperText="Enter the icon name, e.g. AiFillHome"
-          />
-        </Item>
-
-        <Item>
-          <Slider
-            label="Size"
-            value={size}
-            min={8}
-            max={128}
-            onChangeValue={(newVal) =>
-              setProp((props: IIconProps) => {
-                props.size = newVal;
-              })
-            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Icon Name"
+                helperText="Search or select an icon"
+              />
+            )}
           />
         </Item>
 
@@ -142,7 +141,57 @@ export const IconProperties: React.FC = () => {
         </Item>
       </Section>
 
-      {/* SPACING SETTINGS */}
+      {/* DIMENSIONS SETTINGS */}
+      <Section title="Dimensions" defaultExpanded={false}>
+        <Item>
+          <Slider
+            label="Width"
+            value={width}
+            min={0}
+            max={500}
+            onChangeValue={(val) =>
+              setProp((props: IIconProps) => {
+                props.width = val;
+              })
+            }
+          />
+          <TextInput
+            label="Width"
+            type="number"
+            value={width.toString()}
+            onChangeValue={(val) =>
+              setProp((props: IIconProps) => {
+                props.width = parseInt(val, 10) || 0;
+              })
+            }
+          />
+        </Item>
+        <Item>
+          <Slider
+            label="Height"
+            value={height}
+            min={0}
+            max={500}
+            onChangeValue={(val) =>
+              setProp((props: IIconProps) => {
+                props.height = val;
+              })
+            }
+          />
+          <TextInput
+            label="Height"
+            type="number"
+            value={height.toString()}
+            onChangeValue={(val) =>
+              setProp((props: IIconProps) => {
+                props.height = parseInt(val, 10) || 0;
+              })
+            }
+          />
+        </Item>
+      </Section>
+
+      {/* MARGIN SETTINGS */}
       <Section title="Margin" defaultExpanded={false}>
         <SpacingControl
           label="Margin"
@@ -155,6 +204,7 @@ export const IconProperties: React.FC = () => {
         />
       </Section>
 
+      {/* PADDING SETTINGS */}
       <Section title="Padding" defaultExpanded={false}>
         <SpacingControl
           label="Padding"
