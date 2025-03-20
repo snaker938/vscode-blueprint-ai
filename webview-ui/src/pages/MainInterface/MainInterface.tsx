@@ -11,6 +11,8 @@ import './MainInterface.css';
 import { Button } from '../../components/UserComponents/Button';
 import { Icon } from '../../components/UserComponents/Icon';
 import { StarRating } from '../../components/UserComponents/StarRating';
+import { Slider } from '../../components/UserComponents/Slider';
+import { Video } from '../../components/UserComponents/Video';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -68,6 +70,8 @@ const MainInterface: React.FC = () => {
         Button,
         Icon,
         StarRating,
+        Slider,
+        Video,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >

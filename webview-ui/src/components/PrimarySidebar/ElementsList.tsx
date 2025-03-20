@@ -37,6 +37,8 @@ import { Text } from '../UserComponents/Text';
 import { Button } from '../UserComponents/Button';
 import { Icon } from '../UserComponents/Icon';
 import { StarRating } from '../UserComponents/StarRating';
+import { Slider } from '../UserComponents/Slider';
+import { Video } from '../UserComponents/Video';
 
 /* ------------------ Styled Components ------------------ */
 const Wrapper = styled.div`
@@ -116,6 +118,10 @@ const elementToCreate = (key: string) => {
       return <Icon />;
     case 'starRating':
       return <StarRating />;
+    case 'slider':
+      return <Slider />;
+    case 'video':
+      return <Video />;
     default:
       return null;
   }

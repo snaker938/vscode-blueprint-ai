@@ -1,11 +1,10 @@
-import React, { FC, CSSProperties, MouseEvent, useState } from 'react';
+import React, { FC, CSSProperties, useState, MouseEvent } from 'react';
 import { useNode, Node } from '@craftjs/core';
 import { Resizer } from '../Utils/Resizer';
 import { SliderProperties } from './SliderProperties';
 
 /**
- * Define the Slider component's public props.
- * (These will also appear in SliderProperties.ts, which is not shown here.)
+ * Relevant slider props exposed in the editor.
  */
 export interface ISliderProps {
   min: number;
@@ -13,38 +12,19 @@ export interface ISliderProps {
   step: number;
   value: number;
   orientation: 'horizontal' | 'vertical';
-  width?: string;
-  height?: string;
-  backgroundColor?: string;
-  trackColor?: string;
-  thumbColor?: string;
-  /**
-   * Optional: If you'd like to handle the slider changes outside,
-   * you could add an `onValueChange` callback, for example:
-   * onValueChange?: (newValue: number) => void;
-   */
+  width: string;
+  height: string;
+  backgroundColor: string;
+  trackColor: string;
+  thumbColor: string;
 }
 
-/** Defaults for the Slider component */
-const defaultProps: Partial<ISliderProps> = {
-  min: 0,
-  max: 100,
-  step: 1,
-  value: 50,
-  orientation: 'horizontal',
-  width: '200px',
-  height: 'auto',
-  backgroundColor: '#f0f0f0',
-  trackColor: '#2196F3',
-  thumbColor: '#ffffff',
-};
-
 /**
- * We extend FC with craft so we can define `Slider.craft` for Craft.js
+ * Define the structure of craft-related configuration.
  */
 interface ISliderCraft {
   displayName: string;
-  props: Partial<ISliderProps>;
+  props: ISliderProps;
   isCanvas: boolean;
   rules: {
     canDrag: (node: Node) => boolean;
@@ -57,32 +37,34 @@ interface ISliderCraft {
   };
 }
 
-/** Slider component type with a static craft property */
-interface ISlider extends FC<ISliderProps> {
+/**
+ * Extend FC with a `craft` property.
+ */
+interface ISliderComponent extends FC {
   craft: ISliderCraft;
 }
 
 /**
  * The actual Slider component definition.
- * It leverages the Resizer, so the user can drag to resize it in the editor.
  */
-export const Slider: ISlider = (incomingProps) => {
-  const { connectors } = useNode(() => ({
-    // You could collect additional node data if needed
+export const Slider: ISliderComponent = () => {
+  const {
+    connectors: { connect },
+    props,
+  } = useNode(({ data }) => ({
+    props: data.props as ISliderProps,
   }));
 
-  // Merge default and incoming props
-  const props: ISliderProps = { ...defaultProps, ...incomingProps };
+  // Keep an internal state for the slider's current value
   const [internalValue, setInternalValue] = useState<number>(props.value);
 
   // Handler for value changes
   const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = parseFloat(evt.target.value);
     setInternalValue(newVal);
-    // If you had an external callback, you might call props.onValueChange?.(newVal);
   };
 
-  // Inline styles
+  // Inline styles for the slider container
   const containerStyle: CSSProperties = {
     display: 'flex',
     justifyContent: 'center',
@@ -90,21 +72,18 @@ export const Slider: ISlider = (incomingProps) => {
     backgroundColor: props.backgroundColor,
     width: props.width,
     height: props.height,
-    // We could add some padding or margin as well if you like
   };
 
+  // Inline styles for the input (range)
   const inputStyle: CSSProperties = {
     appearance: 'none',
     width: props.orientation === 'horizontal' ? '100%' : '5px',
     height: props.orientation === 'horizontal' ? '5px' : '100%',
     background: props.trackColor,
     outline: 'none',
-    // For a vertical slider, you typically rotate or use writing mode, but
-    // that might require more advanced styling. We'll keep it simple.
   };
 
-  // For the slider's "thumb" style (some browsers require vendor prefixes)
-  // In a real scenario, you may need to do this via CSS classes.
+  // Thumb style (inline). In production, you might keep this in a separate CSS file.
   const thumbStyle = `
     input[type=range]::-webkit-slider-thumb {
       appearance: none;
@@ -117,7 +96,7 @@ export const Slider: ISlider = (incomingProps) => {
     }
   `;
 
-  // Click handler (so it doesn't bubble to parent in the editor)
+  // Prevent clicks from bubbling up to parent
   const handleClick = (e: MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
   };
@@ -125,7 +104,7 @@ export const Slider: ISlider = (incomingProps) => {
   return (
     <Resizer
       // Connect the ref so the slider can be selected/resized in Craft
-      ref={(ref) => ref && connectors.connect(ref)}
+      ref={(ref) => ref && connect(ref)}
       // These keys link Craft's resizing to our width/height props
       propKey={{ width: 'width', height: 'height' }}
       style={containerStyle}
@@ -140,17 +119,30 @@ export const Slider: ISlider = (incomingProps) => {
         value={internalValue}
         onChange={handleChange}
         style={inputStyle}
-        // For real vertical slider usage, you often rotate the input
-        // e.g., style={{ transform: 'rotate(270deg)' }} plus some layout tweaks
       />
     </Resizer>
   );
 };
 
+/**
+ * Craft configuration for the Slider component.
+ */
 Slider.craft = {
   displayName: 'Slider',
-  props: defaultProps,
-  isCanvas: false, // Typically not a Canvas node
+  // Default props for newly created sliders
+  props: {
+    min: 0,
+    max: 100,
+    step: 1,
+    value: 50,
+    orientation: 'horizontal',
+    width: '200px',
+    height: 'auto',
+    backgroundColor: '#f0f0f0',
+    trackColor: '#2196F3',
+    thumbColor: '#ffffff',
+  },
+  isCanvas: false,
   rules: {
     canDrag: () => true,
     canMove: () => true,
@@ -158,7 +150,6 @@ Slider.craft = {
     canSelect: () => true,
   },
   related: {
-    // This references the (to-be-created) SliderProperties component
     settings: SliderProperties,
   },
 };

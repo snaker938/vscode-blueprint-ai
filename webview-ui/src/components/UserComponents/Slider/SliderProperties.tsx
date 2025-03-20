@@ -1,35 +1,85 @@
-import React from 'react';
 import { useNode } from '@craftjs/core';
-import { Grid } from '@mui/material';
+// import { Grid } from '@mui/material';
 
 import { Section } from '../../PropertiesSidebar/UI/Section';
 import { Item } from '../../PropertiesSidebar/UI/Item';
-import { Slider as SliderControl } from '../../PropertiesSidebar/UI/Slider';
-import { Dropdown } from '../../PropertiesSidebar/UI/Dropdown';
-import { ColorPicker } from '../../PropertiesSidebar/UI/ColorPicker';
 import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
+import { Radio } from '../../PropertiesSidebar/UI/Radio';
+import { ColorPicker } from '../../PropertiesSidebar/UI/ColorPicker';
+// import { Slider as UISlider } from '../../PropertiesSidebar/UI/Slider';
 
 /**
- * The interface describing the Slider node's props in the editor.
- * Must not be empty, so we fully describe the relevant fields:
+ * A small helper to display margin/padding controls with a Slider + TextInput for each side.
+ * (Include only if you need spacing-like controls for this slider; otherwise omit.)
  */
-interface ISliderNodeProps {
+// function SpacingControl({
+//   label,
+//   values,
+//   onChangeValues,
+//   max = 100,
+// }: {
+//   label: string;
+//   values?: number[];
+//   onChangeValues: (newValues: number[]) => void;
+//   max?: number;
+// }) {
+//   const safeValues = values ?? [0, 0, 0, 0];
+
+//   return (
+//     <Section title={label}>
+//       <Grid container spacing={2}>
+//         {['Top', 'Right', 'Bottom', 'Left'].map((pos, idx) => (
+//           <Grid item xs={6} key={pos}>
+//             <UISlider
+//               label={`${label} ${pos}`}
+//               value={safeValues[idx]}
+//               min={0}
+//               max={max}
+//               onChangeValue={(val) => {
+//                 const newVals = [...safeValues];
+//                 newVals[idx] = val;
+//                 onChangeValues(newVals);
+//               }}
+//               showValueInput={false}
+//             />
+//             <TextInput
+//               label={pos}
+//               type="number"
+//               value={safeValues[idx].toString()}
+//               onChangeValue={(val) => {
+//                 const num = parseInt(val, 10) || 0;
+//                 const newVals = [...safeValues];
+//                 newVals[idx] = num;
+//                 onChangeValues(newVals);
+//               }}
+//             />
+//           </Grid>
+//         ))}
+//       </Grid>
+//     </Section>
+//   );
+// }
+
+/**
+ * Props for your Slider component.
+ */
+export interface SliderProps {
   min: number;
   max: number;
   step: number;
   value: number;
   orientation: 'horizontal' | 'vertical';
-  width?: string;
-  height?: string;
-  backgroundColor?: string;
-  trackColor?: string;
-  thumbColor?: string;
+  width: string;
+  height: string;
+  backgroundColor: string;
+  trackColor: string;
+  thumbColor: string;
 }
 
 /**
- * The SliderProperties panel allows the user to edit the Slider component's props.
+ * A property panel to edit SliderProps in the Craft editor.
  */
-export const SliderProperties: React.FC = () => {
+export const SliderProperties = () => {
   const {
     min,
     max,
@@ -42,199 +92,158 @@ export const SliderProperties: React.FC = () => {
     trackColor,
     thumbColor,
     actions: { setProp },
-  } = useNode((node) => ({
-    min: node.data.props.min,
-    max: node.data.props.max,
-    step: node.data.props.step,
-    value: node.data.props.value,
-    orientation: node.data.props.orientation,
-    width: node.data.props.width,
-    height: node.data.props.height,
-    backgroundColor: node.data.props.backgroundColor,
-    trackColor: node.data.props.trackColor,
-    thumbColor: node.data.props.thumbColor,
-  }));
+  } = useNode((node) => {
+    const props = node.data.props as SliderProps;
+    return {
+      min: props.min ?? 0,
+      max: props.max ?? 100,
+      step: props.step ?? 1,
+      value: props.value ?? 50,
+      orientation: props.orientation ?? 'horizontal',
+      width: props.width ?? '300px',
+      height: props.height ?? '50px',
+      backgroundColor: props.backgroundColor ?? '#ffffff',
+      trackColor: props.trackColor ?? '#dadada',
+      thumbColor: props.thumbColor ?? '#777777',
+    };
+  });
 
   return (
-    <>
-      {/* ========== SLIDER SETTINGS SECTION ========== */}
-      <Section title="Slider Settings" defaultExpanded>
-        {/* Current value */}
-        <Item>
-          <SliderControl
-            label="Value"
-            value={value}
-            min={min}
-            max={max}
-            step={step}
-            onChangeValue={(newVal) =>
-              setProp((props: ISliderNodeProps) => {
-                props.value = newVal;
-              })
-            }
-            helperText="Adjust the current slider value"
-          />
-        </Item>
+    <Section title="Slider Properties">
+      {/* Basic numeric inputs */}
+      <Item>
+        <TextInput
+          label="Min"
+          type="number"
+          value={min.toString()}
+          onChangeValue={(val) =>
+            setProp((props: SliderProps) => {
+              props.min = parseInt(val, 10) || 0;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Max"
+          type="number"
+          value={max.toString()}
+          onChangeValue={(val) =>
+            setProp((props: SliderProps) => {
+              props.max = parseInt(val, 10) || 100;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Step"
+          type="number"
+          value={step.toString()}
+          onChangeValue={(val) =>
+            setProp((props: SliderProps) => {
+              props.step = parseInt(val, 10) || 1;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Value"
+          type="number"
+          value={value.toString()}
+          onChangeValue={(val) =>
+            setProp((props: SliderProps) => {
+              props.value = parseInt(val, 10) || 0;
+            })
+          }
+        />
+      </Item>
 
-        {/* Min, Max, Step */}
-        <Grid container spacing={2}>
-          <Grid item xs={4}>
-            <Item>
-              <SliderControl
-                label="Min"
-                value={min}
-                min={0}
-                max={1000}
-                onChangeValue={(newVal) =>
-                  setProp((props: ISliderNodeProps) => {
-                    props.min = newVal;
-                    // If value < min, also adjust value
-                    if (props.value < newVal) {
-                      props.value = newVal;
-                    }
-                  })
-                }
-                helperText="Minimum"
-              />
-            </Item>
-          </Grid>
-          <Grid item xs={4}>
-            <Item>
-              <SliderControl
-                label="Max"
-                value={max}
-                min={0}
-                max={1000}
-                onChangeValue={(newVal) =>
-                  setProp((props: ISliderNodeProps) => {
-                    props.max = newVal;
-                    // If value > max, also adjust value
-                    if (props.value > newVal) {
-                      props.value = newVal;
-                    }
-                  })
-                }
-                helperText="Maximum"
-              />
-            </Item>
-          </Grid>
-          <Grid item xs={4}>
-            <Item>
-              <SliderControl
-                label="Step"
-                value={step}
-                min={1}
-                max={100}
-                onChangeValue={(newVal) =>
-                  setProp((props: ISliderNodeProps) => {
-                    // Force step >= 1
-                    props.step = newVal < 1 ? 1 : newVal;
-                  })
-                }
-                helperText="Increment step"
-              />
-            </Item>
-          </Grid>
-        </Grid>
+      {/* Orientation as a Radio group */}
+      <Item>
+        <Radio
+          label="Orientation"
+          value={orientation}
+          onChangeValue={(newVal) =>
+            setProp((props: SliderProps) => {
+              props.orientation = newVal as SliderProps['orientation'];
+            })
+          }
+          options={[
+            { label: 'Horizontal', value: 'horizontal' },
+            { label: 'Vertical', value: 'vertical' },
+          ]}
+        />
+      </Item>
 
-        {/* Orientation */}
-        <Item>
-          <Dropdown
-            label="Orientation"
-            value={orientation}
-            onChangeValue={(newVal) =>
-              setProp((props: ISliderNodeProps) => {
-                props.orientation = newVal as 'horizontal' | 'vertical';
-              })
-            }
-            options={[
-              { label: 'Horizontal', value: 'horizontal' },
-              { label: 'Vertical', value: 'vertical' },
-            ]}
-            helperText="Slider orientation"
-          />
-        </Item>
-      </Section>
+      {/* Dimensions */}
+      <Item>
+        <TextInput
+          label="Width"
+          value={width}
+          onChangeValue={(val) =>
+            setProp((props: SliderProps) => {
+              props.width = val;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Height"
+          value={height}
+          onChangeValue={(val) =>
+            setProp((props: SliderProps) => {
+              props.height = val;
+            })
+          }
+        />
+      </Item>
 
-      {/* ========== SLIDER STYLES SECTION ========== */}
-      <Section title="Slider Styles" defaultExpanded={false}>
-        {/* Width & Height */}
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Item>
-              <TextInput
-                label="Width"
-                value={width || ''}
-                onChangeValue={(val) =>
-                  setProp((props: ISliderNodeProps) => {
-                    props.width = val;
-                  })
-                }
-                helperText="CSS width (e.g. 200px or 100%)"
-              />
-            </Item>
-          </Grid>
-          <Grid item xs={6}>
-            <Item>
-              <TextInput
-                label="Height"
-                value={height || ''}
-                onChangeValue={(val) =>
-                  setProp((props: ISliderNodeProps) => {
-                    props.height = val;
-                  })
-                }
-                helperText="CSS height (e.g. 30px or auto)"
-              />
-            </Item>
-          </Grid>
-        </Grid>
+      {/* Colors */}
+      <Item>
+        <ColorPicker
+          label="Background Color"
+          value={backgroundColor}
+          onChangeValue={(newVal) =>
+            setProp((props: SliderProps) => {
+              props.backgroundColor = newVal;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <ColorPicker
+          label="Track Color"
+          value={trackColor}
+          onChangeValue={(newVal) =>
+            setProp((props: SliderProps) => {
+              props.trackColor = newVal;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <ColorPicker
+          label="Thumb Color"
+          value={thumbColor}
+          onChangeValue={(newVal) =>
+            setProp((props: SliderProps) => {
+              props.thumbColor = newVal;
+            })
+          }
+        />
+      </Item>
 
-        {/* Background Color */}
-        <Item>
-          <ColorPicker
-            label="Background Color"
-            value={backgroundColor || '#ffffff'}
-            onChangeValue={(newHex) =>
-              setProp((props: ISliderNodeProps) => {
-                props.backgroundColor = newHex;
-              })
-            }
-            helperText="Slider container background"
-            allowTextInput
-          />
-        </Item>
-
-        {/* Track Color */}
-        <Item>
-          <ColorPicker
-            label="Track Color"
-            value={trackColor || '#2196F3'}
-            onChangeValue={(newHex) =>
-              setProp((props: ISliderNodeProps) => {
-                props.trackColor = newHex;
-              })
-            }
-            helperText="Color of the slider's track"
-            allowTextInput
-          />
-        </Item>
-
-        {/* Thumb Color */}
-        <Item>
-          <ColorPicker
-            label="Thumb Color"
-            value={thumbColor || '#ffffff'}
-            onChangeValue={(newHex) =>
-              setProp((props: ISliderNodeProps) => {
-                props.thumbColor = newHex;
-              })
-            }
-            helperText="Color of the slider's thumb/handle"
-            allowTextInput
-          />
-        </Item>
-      </Section>
-    </>
+      {/* (Optional) Spacing controls, if you need them */}
+      {/* 
+      <SpacingControl
+        label="Slider Margin"
+        values={[0, 0, 0, 0]}
+        onChangeValues={() => {}}
+      />
+      */}
+    </Section>
   );
 };
