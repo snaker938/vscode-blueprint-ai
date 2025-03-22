@@ -4,9 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'; // 1)
 import App from './App';
 import './global.css';
 
-import CreateWithImaginationPage from './pages/CreateWithImagination/CreateWithImaginationPage';
 import EditingInterface from './pages/MainInterface/MainInterface';
-// 2) Correct path: no “.tsx/EditingInterface”
 
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('root');
@@ -24,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/create" element={<CreateWithImaginationPage />} />
         <Route path="/editing" element={<EditingInterface />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

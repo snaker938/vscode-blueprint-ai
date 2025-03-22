@@ -1,12 +1,12 @@
 import React from 'react';
-import Home from './pages/Home/Home';
+import CreateWithImaginationPage from './pages/CreateWithImagination/CreateWithImaginationPage';
 
 import { initializeIcons } from '@fluentui/react';
 
 initializeIcons();
 
 const App: React.FC = () => {
-  return <Home />;
+  return <CreateWithImaginationPage />;
 };
 
 export default App;

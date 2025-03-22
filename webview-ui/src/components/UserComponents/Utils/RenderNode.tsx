@@ -13,15 +13,13 @@ interface RenderNodeProps {
 export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
   const {
     isSelected,
-    isHovered,
-    connectors: { drag, connect },
+    connectors: { drag },
     id,
     ameString,
     isRootContainer,
     dom,
   } = useNode((node) => ({
     isSelected: node.events.selected,
-    isHovered: node.events.hovered,
     ameString: node.data.props.ameString,
     isRootContainer: node.data.custom?.isRootContainer,
     dom: node.dom,
@@ -29,10 +27,10 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
 
   const { actions } = useEditor();
 
+  const [manualHovered, setManualHovered] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(ameString);
 
-  // Add or remove styling class for selected node
   useEffect(() => {
     if (!dom || isRootContainer) return;
     if (isSelected) {
@@ -42,15 +40,14 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, isSelected, isRootContainer]);
 
-  // Add or remove styling class for hovered node
   useEffect(() => {
     if (!dom || isRootContainer) return;
-    if (isHovered) {
+    if (manualHovered) {
       dom.classList.add('craft-node-hovered');
     } else {
       dom.classList.remove('craft-node-hovered');
     }
-  }, [dom, isHovered, isRootContainer]);
+  }, [dom, manualHovered, isRootContainer]);
 
   const handleNameDoubleClick = () => {
     setTempName(ameString);
@@ -76,6 +73,28 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     actions.delete(id);
   };
 
+  const handleWrapperMouseEnter = () => {
+    setManualHovered(true);
+  };
+
+  const handleWrapperMouseLeave = (e: React.MouseEvent) => {
+    const related = e.relatedTarget as HTMLElement | null;
+    if (!related || !related.closest(`[data-node-id="${id}"]`)) {
+      setManualHovered(false);
+    }
+  };
+
+  const handleIndicatorMouseEnter = () => {
+    setManualHovered(true);
+  };
+
+  const handleIndicatorMouseLeave = (e: React.MouseEvent) => {
+    const related = e.relatedTarget as HTMLElement | null;
+    if (!related || !related.closest(`[data-node-id="${id}"]`)) {
+      setManualHovered(false);
+    }
+  };
+
   const handleNodeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Only select if NOT the root container
@@ -93,16 +112,17 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     <div
       className="craft-node-wrapper"
       data-node-id={id}
-      ref={(ref) => {
-        // Connect this div to hover, but *not* drag
-        // (drag is connected to the IconButton below)
-        if (ref) connect(ref);
-      }}
+      onMouseEnter={handleWrapperMouseEnter}
+      onMouseLeave={handleWrapperMouseLeave}
       onClick={handleNodeClick}
     >
-      {/* Show indicator only if hovered or selected */}
-      {(isHovered || isSelected) && (
-        <div className="craft-node-indicator" data-node-id={id}>
+      {(isSelected || manualHovered) && (
+        <div
+          className="craft-node-indicator"
+          data-node-id={id}
+          onMouseEnter={handleIndicatorMouseEnter}
+          onMouseLeave={handleIndicatorMouseLeave}
+        >
           {editingName ? (
             <input
               className="craft-name-input"
@@ -117,14 +137,14 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
             </span>
           )}
 
-          {/* Drag handle (only the icon button is draggable) */}
+          {/* Drag handle */}
           <IconButton
             size="small"
             className="drag-handle"
             component="div"
-            ref={(dragRef) => {
-              if (dragRef) drag(dragRef);
-            }}
+            ref={(instance: HTMLDivElement | null) =>
+              instance && drag(instance)
+            }
             title="Drag this component"
           >
             <OpenWithIcon fontSize="inherit" />

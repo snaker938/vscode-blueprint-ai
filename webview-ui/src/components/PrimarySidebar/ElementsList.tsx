@@ -8,37 +8,10 @@ import {
   Separator,
 } from '@fluentui/react';
 
-// import { Button as CraftButton } from '../UserComponents/Button';
-// import { ButtonGroup as CraftButtonGroup } from '../UserComponents/ButtonGroup';
-// import { CallToAction as CraftCallToAction } from '../UserComponents/CallToAction';
-// import { Checkbox as CraftCheckbox } from '../UserComponents/Checkbox';
 import { Container as CraftContainer } from '../UserComponents/Container';
-// import { Dropdown as CraftDropdown } from '../UserComponents/Dropdown';
-// import { Footer as CraftFooter } from '../UserComponents/Footer';
-// import { Grid as CraftGrid } from '../UserComponents/Grid';
-// import { Heading as CraftHeading } from '../UserComponents/Heading';
-// import { HeroSection as CraftHeroSection } from '../UserComponents/HeroSection';
-// import { Icon as CraftIcon } from '../UserComponents/Icon';
-// import { InputBox as CraftInputBox } from '../UserComponents/InputBox';
-// import { Link as CraftLink } from '../UserComponents/Link';
-// import { Navbar as CraftNavbar } from '../UserComponents/Navbar';
-// import { RadioButtons as CraftRadioButtons } from '../UserComponents/RadioButtons';
-// import { Row as CraftRow } from '../UserComponents/Row';
-// import { SearchBox as CraftSearchBox } from '../UserComponents/SearchBox';
-// import { Section as CraftSection } from '../UserComponents/Section';
-// import { Sidebar as CraftSidebar } from '../UserComponents/Sidebar';
-// import { Slider as CraftSlider } from '../UserComponents/Slider';
-// import { StarRating as CraftStarRating } from '../UserComponents/StarRating';
-// import { Text as CraftText } from '../UserComponents/Text';
-// import { TextBox as CraftTextbox } from '../UserComponents/Textbox';
 
 import './sidebarStyles.css';
 import { Text } from '../UserComponents/Text';
-import { Button } from '../UserComponents/Button';
-import { Icon } from '../UserComponents/Icon';
-import { StarRating } from '../UserComponents/StarRating';
-import { Slider } from '../UserComponents/Slider';
-import { Video } from '../UserComponents/Video';
 
 /* ------------------ Styled Components ------------------ */
 const Wrapper = styled.div`
@@ -101,27 +74,19 @@ const ElementName = styled(FluentText)`
 const elementToCreate = (key: string) => {
   switch (key) {
     case 'container':
-      return (
-        <CraftContainer
-          background="#ffffff"
-          padding={[0, 0, 0, 0]}
-          margin={[0, 0, 0, 0]}
-          width="100%"
-          height="auto"
-        />
-      );
+      return <CraftContainer />;
     case 'text':
       return <Text />;
-    case 'button':
-      return <Button />;
-    case 'icon':
-      return <Icon />;
-    case 'starRating':
-      return <StarRating />;
-    case 'slider':
-      return <Slider />;
-    case 'video':
-      return <Video />;
+    // case 'button':
+    //   return <Button />;
+    // case 'icon':
+    //   return <Icon />;
+    // case 'starRating':
+    //   return <StarRating />;
+    // case 'slider':
+    //   return <Slider />;
+    // case 'video':
+    //   return <Video />;
     default:
       return null;
   }
