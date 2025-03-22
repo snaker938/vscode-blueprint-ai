@@ -54,9 +54,7 @@ export const DroppableCanvas: React.FC = () => {
         height="1235px"
         background="#ffffff"
         padding={[20, 20, 20, 20]}
-      >
-        <Text />
-      </Element>
+      ></Element>
     </Frame>
   );
 };
