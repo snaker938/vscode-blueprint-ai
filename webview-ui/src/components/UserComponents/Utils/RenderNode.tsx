@@ -27,10 +27,12 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
 
   const { actions } = useEditor();
 
+  // Local state for manual hovering and editing name
   const [manualHovered, setManualHovered] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(ameString);
 
+  // Add / remove selected class
   useEffect(() => {
     if (!dom || isRootContainer) return;
     if (isSelected) {
@@ -40,6 +42,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, isSelected, isRootContainer]);
 
+  // Add / remove hovered class
   useEffect(() => {
     if (!dom || isRootContainer) return;
     if (manualHovered) {
@@ -49,15 +52,19 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     }
   }, [dom, manualHovered, isRootContainer]);
 
-  const handleNameDoubleClick = () => {
+  // Begin editing name on double-click
+  const handleNameDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent double-click from bubbling
     setTempName(ameString);
     setEditingName(true);
   };
 
+  // Track changes to name while editing
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTempName(e.target.value);
   };
 
+  // Commit name changes on blur
   const handleNameBlur = () => {
     actions.setProp(id, (props: any) => {
       props.ameString = tempName;
@@ -65,45 +72,51 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     setEditingName(false);
   };
 
-  const handleHide = () => {
+  // Hide this node
+  const handleHide = (e: React.MouseEvent) => {
+    e.stopPropagation();
     actions.setHidden(id, true);
   };
 
-  const handleDelete = () => {
+  // Delete this node
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     actions.delete(id);
   };
 
-  const handleWrapperMouseEnter = () => {
+  // Mouse over/out to set hover
+  const handleWrapperMouseOver = (e: React.MouseEvent) => {
+    // Stop bubbling so parent doesn't also get hovered
+    e.stopPropagation();
     setManualHovered(true);
   };
 
-  const handleWrapperMouseLeave = (e: React.MouseEvent) => {
-    const related = e.relatedTarget as HTMLElement | null;
-    if (!related || !related.closest(`[data-node-id="${id}"]`)) {
-      setManualHovered(false);
-    }
+  const handleWrapperMouseOut = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setManualHovered(false);
   };
 
-  const handleIndicatorMouseEnter = () => {
+  // Keep the indicator hovered if we hover over it directly
+  const handleIndicatorMouseEnter = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setManualHovered(true);
   };
 
   const handleIndicatorMouseLeave = (e: React.MouseEvent) => {
-    const related = e.relatedTarget as HTMLElement | null;
-    if (!related || !related.closest(`[data-node-id="${id}"]`)) {
-      setManualHovered(false);
-    }
+    e.stopPropagation();
+    setManualHovered(false);
   };
 
+  // Selecting the node on click
   const handleNodeClick = (e: React.MouseEvent) => {
+    // Stop the click from bubbling up to parent
     e.stopPropagation();
-    // Only select if NOT the root container
     if (!isRootContainer) {
       actions.selectNode([id]);
     }
   };
 
-  // Root container: do nothing on click/hover/etc.
+  // If it's the root container, just render children with no wrapper
   if (isRootContainer) {
     return <>{render}</>;
   }
@@ -112,8 +125,8 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
     <div
       className="craft-node-wrapper"
       data-node-id={id}
-      onMouseEnter={handleWrapperMouseEnter}
-      onMouseLeave={handleWrapperMouseLeave}
+      onMouseOver={handleWrapperMouseOver}
+      onMouseOut={handleWrapperMouseOut}
       onClick={handleNodeClick}
     >
       {(isSelected || manualHovered) && (
@@ -123,6 +136,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
           onMouseEnter={handleIndicatorMouseEnter}
           onMouseLeave={handleIndicatorMouseLeave}
         >
+          {/* Display name or input for editing */}
           {editingName ? (
             <input
               className="craft-name-input"
@@ -146,11 +160,12 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
               instance && drag(instance)
             }
             title="Drag this component"
+            onMouseDown={(e) => e.stopPropagation()} // optional: stop drag mousedown from selecting parent
           >
             <OpenWithIcon fontSize="inherit" />
           </IconButton>
 
-          {/* Hide */}
+          {/* Hide node */}
           <IconButton
             size="small"
             onClick={handleHide}
@@ -159,7 +174,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
             <VisibilityOffIcon fontSize="inherit" />
           </IconButton>
 
-          {/* Delete */}
+          {/* Delete node */}
           <IconButton
             size="small"
             onClick={handleDelete}
