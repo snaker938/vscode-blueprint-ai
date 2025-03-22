@@ -1,6 +1,5 @@
 import { useNode } from '@craftjs/core';
 import { Grid } from '@mui/material';
-
 import { Section } from '../../PropertiesSidebar/UI/Section';
 import { Item } from '../../PropertiesSidebar/UI/Item';
 import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
@@ -9,12 +8,9 @@ import { SwitchInput } from '../../PropertiesSidebar/UI/SwitchInput';
 import { Slider } from '../../PropertiesSidebar/UI/Slider';
 import { ColorPicker } from '../../PropertiesSidebar/UI/ColorPicker';
 
-/**
- * Type for the Container's props within the Craft node.
- */
 interface ContainerProps {
-  width: string;
-  height: string;
+  width?: string;
+  height?: string;
   background?: string;
   margin?: number[]; // [top, right, bottom, left]
   padding?: number[]; // [top, right, bottom, left]
@@ -24,11 +20,11 @@ interface ContainerProps {
   fillSpace?: 'yes' | 'no';
   alignItems?: 'flex-start' | 'center' | 'flex-end';
   justifyContent?: 'flex-start' | 'center' | 'flex-end';
-  border?: {
-    Colour?: string;
-    style?: string;
-    width?: number;
-  };
+
+  // Top-level border props (instead of a nested object):
+  borderStyle?: string;
+  borderColor?: string;
+  borderWidth?: number;
 }
 
 /**
@@ -45,7 +41,6 @@ function SpacingControl({
   onChangeValues: (newValues: number[]) => void;
   max?: number;
 }) {
-  // Fallback to [0,0,0,0] if values is undefined
   const safeValues = values ?? [0, 0, 0, 0];
 
   return (
@@ -66,8 +61,7 @@ function SpacingControl({
               showValueInput={false}
             />
             <TextInput
-              /** Removed "(Manual)" from the label */
-              label={`${pos}`}
+              label={pos}
               type="number"
               value={safeValues[idx].toString()}
               onChangeValue={(val) => {
@@ -85,10 +79,6 @@ function SpacingControl({
 }
 
 export const ContainerProperties = () => {
-  /**
-   * Pull out props from the node via useNode.
-   * We strongly type them as ContainerProps so we can avoid `any`.
-   */
   const {
     width,
     height,
@@ -101,12 +91,14 @@ export const ContainerProperties = () => {
     fillSpace,
     alignItems,
     justifyContent,
-    border,
+    // Read the three border props directly:
+    borderStyle,
+    borderColor,
+    borderWidth,
     actions: { setProp },
   } = useNode((node) => {
     const props = node.data.props as ContainerProps;
     return {
-      // Default to pixel-based dimensions if no width/height is set
       width: props.width ?? '300px',
       height: props.height ?? '150px',
       background: props.background ?? '#ffffff',
@@ -118,7 +110,11 @@ export const ContainerProperties = () => {
       fillSpace: props.fillSpace ?? 'no',
       alignItems: props.alignItems ?? 'flex-start',
       justifyContent: props.justifyContent ?? 'flex-start',
-      border: props.border,
+
+      // Provide defaults if not set:
+      borderStyle: props.borderStyle ?? 'solid',
+      borderColor: props.borderColor ?? '#cccccc',
+      borderWidth: props.borderWidth ?? 1,
     };
   });
 
@@ -155,7 +151,7 @@ export const ContainerProperties = () => {
         <Item>
           <ColorPicker
             label="Background Colour"
-            value={background || '#ffffff'}
+            value={background}
             onChangeValue={(newVal) =>
               setProp((props: ContainerProps) => {
                 props.background = newVal;
@@ -226,11 +222,10 @@ export const ContainerProperties = () => {
         <Item>
           <ColorPicker
             label="Border Colour"
-            value={border?.Colour || '#000000'}
+            value={borderColor}
             onChangeValue={(newColour) =>
               setProp((props: ContainerProps) => {
-                props.border = props.border || {};
-                props.border.Colour = newColour;
+                props.borderColor = newColour;
               })
             }
           />
@@ -238,11 +233,10 @@ export const ContainerProperties = () => {
         <Item>
           <TextInput
             label="Border Style"
-            value={border?.style || 'solid'}
+            value={borderStyle}
             onChangeValue={(val) =>
               setProp((props: ContainerProps) => {
-                props.border = props.border || {};
-                props.border.style = val;
+                props.borderStyle = val;
               })
             }
           />
@@ -250,13 +244,13 @@ export const ContainerProperties = () => {
         <Item>
           <Slider
             label="Border Width"
-            value={border?.width ?? 0}
+            value={borderWidth}
             min={0}
             max={20}
+            step={1}
             onChangeValue={(val) =>
               setProp((props: ContainerProps) => {
-                props.border = props.border || {};
-                props.border.width = val;
+                props.borderWidth = val;
               })
             }
           />
@@ -265,7 +259,7 @@ export const ContainerProperties = () => {
 
       {/* LAYOUT / FLEX */}
       <Section title="Layout">
-        {/* First row: Flex Direction + Fill Space */}
+        {/* Flex Direction + Fill Space */}
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <Item>
@@ -274,8 +268,7 @@ export const ContainerProperties = () => {
                 value={flexDirection}
                 onChangeValue={(val) =>
                   setProp((props: ContainerProps) => {
-                    props.flexDirection =
-                      val as ContainerProps['flexDirection'];
+                    props.flexDirection = val as 'row' | 'column';
                   })
                 }
                 options={[
@@ -300,7 +293,7 @@ export const ContainerProperties = () => {
           </Grid>
         </Grid>
 
-        {/* Second row: Align Items + Justify Content side by side */}
+        {/* Align Items + Justify Content */}
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={12} sm={6}>
             <Item>
