@@ -4,6 +4,7 @@ import React, {
   MouseEvent,
   FC,
   useMemo,
+  ChangeEvent,
 } from 'react';
 import { useNode, useEditor } from '@craftjs/core';
 
@@ -20,7 +21,6 @@ type FourNumberArray = [number, number, number, number];
 
 /**
  * Possible rendering modes for our Text component
- * (Removed 'contentEditable'; only 'textbox' or 'link' remain)
  */
 export type RenderMode = 'textbox' | 'link';
 
@@ -79,6 +79,21 @@ export interface TextProps {
   linkTitle?: string; // Optional <a> title attribute
   ariaLabel?: string; // For screen-readers
   children?: React.ReactNode;
+
+  /**
+   * If true, renders a checkbox next to the text.
+   */
+  hasCheckbox?: boolean;
+
+  /**
+   * The current checked state of the checkbox (if hasCheckbox is true).
+   */
+  checked?: boolean;
+
+  /**
+   * Position of checkbox relative to text: 'left' or 'right'.
+   */
+  checkboxPosition?: 'left' | 'right';
 }
 
 /**
@@ -128,6 +143,11 @@ const defaultProps: Partial<TextProps> = {
   linkType: 'externalUrl',
   linkTitle: undefined,
   ariaLabel: undefined,
+
+  // Checkbox
+  hasCheckbox: false,
+  checked: false,
+  checkboxPosition: 'left',
 };
 
 /**
@@ -200,6 +220,10 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
     linkTitle,
     ariaLabel,
     children,
+
+    hasCheckbox,
+    checked,
+    checkboxPosition,
   } = props;
 
   // Connect to Craft Node
@@ -258,12 +282,11 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
         setGlobalSelectedPageId(pageId);
       }
     }
-    // If it's an external link, let it behave like a normal link
-    // (open in a new tab, no Ctrl/Cmd needed).
+    // If external, the browser will handle it (opens in new tab).
   };
 
   /**
-   * Container styling
+   * Container styling (OUTER border)
    */
   const safeMargin = margin || [0, 0, 0, 0];
   const safePadding = padding || [0, 0, 0, 0];
@@ -285,7 +308,7 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
   };
 
   /**
-   * Text styling
+   * Text styling (no extra border for input)
    */
   const textStyle: CSSProperties = {
     color: parseColor(textColor),
@@ -311,7 +334,7 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
   };
 
   /**
-   * Render logic
+   * Render logic for main text or link
    */
   let content: React.ReactNode;
   if (renderMode === 'textbox') {
@@ -357,7 +380,6 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
       display: 'inline-block',
     };
 
-    // Always open external links in a new tab with no user override
     content = (
       <a
         href={finalHref}
@@ -370,6 +392,45 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
       >
         {linkContent}
       </a>
+    );
+  }
+
+  /**
+   * If there's a checkbox, wrap the content with a checkbox input
+   */
+  const handleCheckboxChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setProp((draft: TextProps) => {
+        draft.checked = e.target.checked;
+      });
+    },
+    [setProp]
+  );
+
+  let finalContent = content;
+  if (hasCheckbox) {
+    finalContent = (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {checkboxPosition === 'left' && (
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={handleCheckboxChange}
+            disabled={!isEditorEnabled || disabled}
+            style={{ marginRight: '5px' }}
+          />
+        )}
+        {content}
+        {checkboxPosition === 'right' && (
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={handleCheckboxChange}
+            disabled={!isEditorEnabled || disabled}
+            style={{ marginLeft: '5px' }}
+          />
+        )}
+      </div>
     );
   }
 
@@ -388,7 +449,7 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
       propKey={{ width: 'width', height: 'height' }}
       style={containerStyle}
     >
-      {content}
+      {finalContent}
     </Resizer>
   );
 };

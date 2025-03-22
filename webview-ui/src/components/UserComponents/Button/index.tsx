@@ -1,9 +1,11 @@
-import React, { FC, useMemo, CSSProperties } from 'react';
-import { Node, useNode, useEditor, Element } from '@craftjs/core';
+import { CSSProperties, useMemo } from 'react';
+import { useNode, useEditor, UserComponent } from '@craftjs/core';
 
-import { Resizer } from '../Utils/Resizer';
-import { ButtonProperties } from './ButtonProperties';
-import { Text } from '../Text';
+import { Container } from '../Container'; // Adjust path as needed
+import { ContainerProps } from '../Container'; // Adjust path as needed
+import { Text } from '../Text'; // Adjust path as needed
+import { Resizer } from '../Utils/Resizer'; // Adjust path as needed
+import { ButtonProperties } from './ButtonProperties'; // Adjust path as needed
 
 /**
  * A helper to parse RGBA or string color into a valid CSS color.
@@ -30,22 +32,41 @@ export type ButtonStyle = 'full' | 'outline' | string;
 /**
  * Main props for the Button
  */
-export interface ButtonProps extends Record<string, unknown> {
+export interface ButtonProps {
+  /**
+   * The "background" can be RGBA object or string.
+   * If buttonStyle='full', it becomes the background color.
+   * If buttonStyle='outline', background is transparent (and we use border).
+   */
   background?: { r: number; g: number; b: number; a: number } | string;
+  /**
+   * 'full' = background is used, border is optional
+   * 'outline' = transparent background, colored border
+   */
   buttonStyle?: ButtonStyle;
 
   margin?: FourNumberArray;
   padding?: FourNumberArray;
-
   width?: number | string;
   height?: number | string;
-
   borderWidth?: number;
   borderRadius?: number;
+  /**
+   * When buttonStyle='outline', this is used for the border color.
+   */
   borderColor?: { r: number; g: number; b: number; a: number } | string;
-
+  /**
+   * Box shadow as a raw CSS string.
+   */
   boxShadow?: string;
+  /**
+   * Mouse cursor: 'pointer', etc.
+   */
   cursor?: string;
+  /**
+   * The text shown in the button.
+   */
+  text?: string;
 }
 
 /**
@@ -63,30 +84,14 @@ const defaultProps: Partial<ButtonProps> = {
   borderColor: { r: 0, g: 0, b: 0, a: 1 },
   boxShadow: '',
   cursor: 'pointer',
+  text: 'Button',
 };
 
 /**
- * Extend FC so we can attach Craft config
+ * Our Button component as a single node: it’s really just a Container + Text.
  */
-interface CraftButtonFC<
-  P extends Record<string, unknown> = Record<string, unknown>
-> extends FC<P> {
-  craft?: {
-    displayName: string;
-    props?: Partial<P>;
-    rules?: {
-      canMoveIn?: (incomingNodes: Node[]) => boolean;
-    };
-    related?: {
-      settings?: React.ComponentType<any>;
-    };
-  };
-}
-
-/**
- * The Button component
- */
-const ButtonComponent: CraftButtonFC<ButtonProps> = (incomingProps) => {
+export const Button: UserComponent<ButtonProps> = (incomingProps) => {
+  // Merge defaults + incoming
   const props = { ...defaultProps, ...incomingProps };
   const {
     background,
@@ -100,77 +105,96 @@ const ButtonComponent: CraftButtonFC<ButtonProps> = (incomingProps) => {
     borderColor,
     boxShadow,
     cursor,
+    text,
   } = props;
 
+  // Access Craft’s node/editor, typically for connecting
   const { node } = useNode((node) => ({ node }));
   const editor = useEditor();
   const { connectors } = editor;
-  const isEditorEnabled = editor.query.getOptions().enabled;
 
-  const containerStyle: CSSProperties = useMemo(() => {
+  /**
+   * Translate ButtonProps to ContainerProps
+   */
+  const containerProps: ContainerProps = useMemo(() => {
     const safeMargin = margin ?? [0, 0, 0, 0];
+    const safePadding = padding ?? [0, 0, 0, 0];
     const finalWidth = typeof width === 'number' ? `${width}px` : width;
     const finalHeight = typeof height === 'number' ? `${height}px` : height;
 
+    const isOutline = buttonStyle === 'outline';
+    const isFull = buttonStyle === 'full';
+    const finalBackground = isFull ? parseColor(background) : 'transparent';
+    const finalBorderColor = isOutline
+      ? parseColor(borderColor)
+      : 'transparent';
+    const finalBorderStyle = isOutline ? 'solid' : 'none';
+
     return {
-      position: 'relative',
-      display: 'inline-block',
+      // Layout
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fillSpace: 'no',
       width: finalWidth,
       height: finalHeight,
-      margin: `${safeMargin[0]}px ${safeMargin[1]}px ${safeMargin[2]}px ${safeMargin[3]}px`,
-      boxShadow,
-    };
-  }, [margin, width, height, boxShadow]);
 
-  const buttonStyleObj: CSSProperties = useMemo(() => {
-    const usedBorderColor = borderColor ?? background;
-    const bgColor =
-      buttonStyle === 'full' ? parseColor(background) : 'transparent';
-    const borderCol =
-      buttonStyle === 'outline' ? parseColor(usedBorderColor) : 'transparent';
-    const safePadding = padding ?? [0, 0, 0, 0];
+      // Spacing
+      margin: safeMargin,
+      padding: safePadding,
 
-    return {
-      width: '100%',
-      height: '100%',
-      background: bgColor,
-      border: `${borderWidth}px solid ${borderCol}`,
-      borderRadius: borderRadius || 0,
-      padding: `${safePadding[0]}px ${safePadding[1]}px ${safePadding[2]}px ${safePadding[3]}px`,
-      cursor: cursor || 'pointer',
+      // Border
+      borderStyle: finalBorderStyle,
+      borderColor: finalBorderColor,
+      borderWidth: borderWidth,
+      radius: borderRadius,
+
+      // Background
+      background: finalBackground,
     };
   }, [
-    buttonStyle,
     background,
     borderColor,
     borderWidth,
     borderRadius,
+    buttonStyle,
+    height,
+    margin,
     padding,
-    cursor,
+    width,
   ]);
 
+  /**
+   * Connect the outer div to Craft for dragging/resizing
+   */
   const connectRef = (dom: HTMLDivElement | null) => {
     if (!dom) return;
     connectors.connect(dom, node.id);
     connectors.drag(dom, node.id);
   };
 
+  /**
+   * Inline style for outer wrapper. We handle boxShadow + cursor here.
+   */
+  const wrapperStyle: CSSProperties = useMemo(() => {
+    return {
+      position: 'relative',
+      display: 'inline-flex',
+      boxShadow: boxShadow || undefined,
+      cursor: cursor,
+    };
+  }, [boxShadow, cursor]);
+
   return (
     <Resizer
       ref={connectRef}
       propKey={{ width: 'width', height: 'height' }}
-      style={containerStyle}
+      style={wrapperStyle}
     >
-      <Element
-        /* ↓↓↓ This ID prop is required ↓↓↓ */
-        id="button_element"
-        is="button"
-        canvas
-        style={buttonStyleObj}
-        disabled={!isEditorEnabled}
-      >
-        <Text text="Button" fontSize={16} textAlign="center" />
-      </Element>
+      <Container {...containerProps}>
+        {/* We simply render a Text component inside. */}
+        <Text text={text} fontSize={16} textAlign="center" />
+      </Container>
     </Resizer>
   );
 };
@@ -178,20 +202,18 @@ const ButtonComponent: CraftButtonFC<ButtonProps> = (incomingProps) => {
 /**
  * Attach Craft.js config
  */
-ButtonComponent.craft = {
+Button.craft = {
   displayName: 'Button',
   props: {
     ...defaultProps,
   },
+  /**
+   * No other elements can be moved into this node
+   */
   rules: {
-    canMoveIn: (incomingNodes: Node[]) => {
-      // Only allow <Text> inside
-      return incomingNodes.every((node) => node.data.type === Text);
-    },
+    canMoveIn: () => false,
   },
   related: {
     settings: ButtonProperties,
   },
 };
-
-export const Button = ButtonComponent;

@@ -12,6 +12,7 @@ import { Container as CraftContainer } from '../UserComponents/Container';
 
 import './sidebarStyles.css';
 import { Text } from '../UserComponents/Text';
+import { Button } from '../UserComponents/Button';
 
 /* ------------------ Styled Components ------------------ */
 const Wrapper = styled.div`
@@ -77,8 +78,8 @@ const elementToCreate = (key: string) => {
       return <CraftContainer />;
     case 'text':
       return <Text />;
-    // case 'button':
-    //   return <Button />;
+    case 'button':
+      return <Button />;
     // case 'icon':
     //   return <Icon />;
     // case 'starRating':

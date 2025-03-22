@@ -77,7 +77,7 @@ function SpacingControl({
 
 /**
  * A helper to show a single numeric slider + text input.
- * We’ll use it for fontWeight, but it could be reused for other single-value numeric props.
+ * We’ll use it for fontWeight, but it could be reused for other numeric props.
  */
 function SingleValueSlider({
   label,
@@ -134,6 +134,8 @@ export const TextProperties: React.FC = () => {
    */
   const {
     actions: { setProp },
+
+    // Existing props
     renderMode,
     fontSize,
     textAlign,
@@ -158,14 +160,20 @@ export const TextProperties: React.FC = () => {
     href,
     linkType,
     pageId,
-    // New props to show in the panel
+
+    // Textbox props
     maxLength,
     rows,
     cols,
     autoFocus,
     spellCheck,
+
+    // Checkbox props
+    hasCheckbox,
+    checked,
+    checkboxPosition,
   } = useNode((node) => ({
-    // Existing props
+    // Destructure node.data.props so we can display/update them
     renderMode: node.data.props.renderMode,
     fontSize: node.data.props.fontSize,
     textAlign: node.data.props.textAlign,
@@ -190,12 +198,16 @@ export const TextProperties: React.FC = () => {
     href: node.data.props.href,
     linkType: node.data.props.linkType,
     pageId: node.data.props.pageId,
-    // New text props
+
     maxLength: node.data.props.maxLength,
     rows: node.data.props.rows,
     cols: node.data.props.cols,
     autoFocus: node.data.props.autoFocus,
     spellCheck: node.data.props.spellCheck,
+
+    hasCheckbox: node.data.props.hasCheckbox,
+    checked: node.data.props.checked,
+    checkboxPosition: node.data.props.checkboxPosition,
   }));
 
   /**************************************************************************
@@ -239,9 +251,6 @@ export const TextProperties: React.FC = () => {
     { label: 'Justify', value: 'justify' },
   ];
 
-  /**
-   * Prepare options for the "Page" dropdown
-   */
   const pageDropdownOptions = useMemo(() => {
     return pages.map((p) => ({
       label: `${p.name} (ID: ${p.id})`,
@@ -449,15 +458,13 @@ export const TextProperties: React.FC = () => {
           </Item>
           {/* If externalUrl, show only the Href input */}
           {linkType === 'externalUrl' && (
-            <React.Fragment>
-              <Item>
-                <TextInput
-                  label="External URL (href)"
-                  value={href ?? ''}
-                  onChangeValue={(val) => handleChange('href', val)}
-                />
-              </Item>
-            </React.Fragment>
+            <Item>
+              <TextInput
+                label="External URL (href)"
+                value={href ?? ''}
+                onChangeValue={(val) => handleChange('href', val)}
+              />
+            </Item>
           )}
 
           {/* If page, show a dropdown of pages */}
@@ -553,6 +560,42 @@ export const TextProperties: React.FC = () => {
           </Item>
         </Section>
       )}
+
+      {/* --- Checkbox Props (applies to either mode) --- */}
+      <Section title="Checkbox" defaultExpanded={false}>
+        <Item>
+          <SwitchInput
+            label="Has Checkbox?"
+            value={!!hasCheckbox}
+            onChangeValue={(val) => handleChange('hasCheckbox', val)}
+          />
+        </Item>
+        {hasCheckbox && (
+          <>
+            <Item>
+              <SwitchInput
+                label="Checked?"
+                value={!!checked}
+                onChangeValue={(val) => handleChange('checked', val)}
+              />
+            </Item>
+            <Item>
+              <Radio
+                label="Checkbox Position"
+                options={[
+                  { label: 'Left', value: 'left' },
+                  { label: 'Right', value: 'right' },
+                ]}
+                value={checkboxPosition ?? 'left'}
+                onChangeValue={(val) =>
+                  handleChange('checkboxPosition', val as 'left' | 'right')
+                }
+                row
+              />
+            </Item>
+          </>
+        )}
+      </Section>
     </React.Fragment>
   );
 };
