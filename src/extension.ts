@@ -1,3 +1,5 @@
+// extension.ts
+
 import * as vscode from 'vscode';
 import { MainWebViewPanel } from './panels/MainWebViewPanel';
 import { setExtensionContext } from './utils/extensionContext';

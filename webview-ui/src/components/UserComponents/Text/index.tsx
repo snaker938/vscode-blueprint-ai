@@ -22,7 +22,7 @@ type FourNumberArray = [number, number, number, number];
 /**
  * Possible rendering modes for our Text component
  */
-export type RenderMode = 'textbox' | 'link';
+export type RenderMode = 'textbox' | 'link' | 'dropdown';
 
 /**
  * For link behavior
@@ -46,6 +46,7 @@ export interface TextProps {
   textColor?: { r: number; g: number; b: number; a: number } | string;
   shadow?: number;
   text?: string;
+  selectedValue?: string;
 
   // Spacing
   margin?: FourNumberArray;
@@ -371,7 +372,7 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
         />
       );
     }
-  } else {
+  } else if (renderMode === 'link') {
     // LINK MODE
     const linkContent = children || text;
     const linkStyle: CSSProperties = {
@@ -392,6 +393,27 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
       >
         {linkContent}
       </a>
+    );
+  } else if (renderMode === 'dropdown') {
+    const items = text?.split('||') || [];
+    content = (
+      <select
+        style={textStyle}
+        disabled={!isEditorEnabled || disabled || readOnly}
+        value={props.selectedValue ?? items[0] ?? ''}
+        onChange={(e) => {
+          setProp((draft: TextProps) => {
+            // Only update the selectedValue, not text
+            draft.selectedValue = e.target.value;
+          });
+        }}
+      >
+        {items.map((item, idx) => (
+          <option key={idx} value={item.trim()}>
+            {item.trim()}
+          </option>
+        ))}
+      </select>
     );
   }
 

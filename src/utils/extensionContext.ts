@@ -1,3 +1,5 @@
+// extensionContext.ts
+
 import * as vscode from 'vscode';
 
 let _ctx: vscode.ExtensionContext | undefined;

@@ -1,3 +1,5 @@
+// MainWebViewPanel.ts
+
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { getBlueprintLayout } from '../ai/BlueprintAiService';
@@ -81,11 +83,10 @@ export class MainWebViewPanel {
 
     /**
      * Listen for messages from the webview.
-     * This file should act purely as a middleman according to the setup guide:
+     * This file acts purely as a middleman:
      *  - We take userText + raw screenshot bytes
      *  - Pass them to getBlueprintLayout (in BlueprintAiService)
      *  - Return the AI result or an error to the webview
-     *  - No advanced processing is done here
      */
     this._panel.webview.onDidReceiveMessage(async (message) => {
       const { command, payload } = message;
@@ -97,10 +98,10 @@ export class MainWebViewPanel {
             const arrayOfBytes: number[] = payload.arrayBuffer || [];
             const buffer = Buffer.from(arrayOfBytes);
 
-            // Call getBlueprintLayout for all Sharp / Tesseract / AI logic
+            // The main AI call: get CraftJS layout from text + screenshot
             const layoutJson = await getBlueprintLayout({
               userText: payload.userText,
-              rawScreenshot: buffer, // rename or add any extra fields as needed
+              rawScreenshot: buffer, // rename/add fields as needed
             });
 
             // Return the final layout JSON to the webview
@@ -113,7 +114,7 @@ export class MainWebViewPanel {
 
             const errorMsg = error.message || String(error);
 
-            // Handle API key errors or other exceptions
+            // Handle missing/invalid key or general error
             if (errorMsg.includes('OpenAI API key not found')) {
               await this._handleTwoButtonError(
                 'You have not set an API key for Blueprint AI. AI features will not work until you do so.',
@@ -150,7 +151,7 @@ export class MainWebViewPanel {
     // Additional message handling if needed
     this._panel.webview.onDidReceiveMessage(
       (message) => {
-        // No extra commands needed for now
+        // No extra commands at this time
       },
       null,
       this._disposables
@@ -295,7 +296,6 @@ export class MainWebViewPanel {
 
   /**
    * Two-button error popup for missing or invalid API keys.
-   * The first label is on the left, second label is on the right.
    */
   private async _handleTwoButtonError(
     errorMessage: string,

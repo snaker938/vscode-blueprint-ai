@@ -9,6 +9,7 @@ import { Text } from '../../components/UserComponents/Text';
 
 import './MainInterface.css';
 import { Button } from '../../components/UserComponents/Button';
+import { Navigation } from '../../components/UserComponents/Navigation';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -62,6 +63,7 @@ const MainInterface: React.FC = () => {
         Container,
         Text,
         Button,
+        Navigation,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >

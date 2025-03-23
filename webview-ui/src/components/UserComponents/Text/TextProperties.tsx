@@ -271,6 +271,7 @@ export const TextProperties: React.FC = () => {
             options={[
               { label: 'Textbox', value: 'textbox' },
               { label: 'Link', value: 'link' },
+              { label: 'Dropdown', value: 'dropdown' },
             ]}
             value={renderMode || 'textbox'}
             onChangeValue={(val) =>
@@ -285,7 +286,11 @@ export const TextProperties: React.FC = () => {
       <Section title="Text Content" defaultExpanded={false}>
         <Item>
           <TextInput
-            label="Text"
+            label={
+              renderMode === 'dropdown'
+                ? 'Dropdown Items (use "||" as separator)'
+                : 'Text'
+            }
             value={text ?? ''}
             onChangeValue={(val) => handleChange('text', val)}
           />

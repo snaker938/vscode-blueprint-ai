@@ -13,6 +13,7 @@ import { Container as CraftContainer } from '../UserComponents/Container';
 import './sidebarStyles.css';
 import { Text } from '../UserComponents/Text';
 import { Button } from '../UserComponents/Button';
+import { Navigation } from '../UserComponents/Navigation';
 
 /* ------------------ Styled Components ------------------ */
 const Wrapper = styled.div`
@@ -80,6 +81,8 @@ const elementToCreate = (key: string) => {
       return <Text />;
     case 'button':
       return <Button />;
+    case 'navigation':
+      return <Navigation />;
     // case 'icon':
     //   return <Icon />;
     // case 'starRating':
@@ -97,24 +100,13 @@ export const ElementsList: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const { connectors } = useEditor();
 
-  /* ----- BASIC ITEMS (Container, Button, Text, Heading, etc.) ----- */
-  const basicItems = [
+  /* ----- SMART ITEMS (Container, Button, Text, Heading, etc.) ----- */
+  const smartItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
     { key: 'button', icon: 'ButtonControl', name: 'Button' },
     { key: 'text', icon: 'AlignLeft', name: 'Text' },
     { key: 'icon', icon: 'Emoji2', name: 'Icon' },
-  ];
-
-  /* ----- LAYOUT ITEMS (Row, Section, Grid) ----- */
-  const layoutItems = [
-    { key: 'row', icon: 'ArrangeBringForward', name: 'Row' },
-    { key: 'section', icon: 'GroupedList', name: 'Section' },
-    { key: 'grid', icon: 'GridViewSmall', name: 'Grid' },
-  ];
-
-  const navigationItems = [
-    { key: 'navbar', icon: 'GlobalNavButton', name: 'Navbar' },
-    { key: 'sidebar', icon: 'CollapseMenu', name: 'Sidebar' },
+    { key: 'navigation', icon: 'NavigateForward', name: 'Navigation' },
   ];
 
   const mediaItems = [
@@ -124,9 +116,7 @@ export const ElementsList: React.FC = () => {
   ];
 
   const formItems = [
-    { key: 'checkbox', icon: 'CheckboxComposite', name: 'Checkbox' },
     { key: 'radioButtons', icon: 'RadioBtnOn', name: 'Radio Button' },
-    { key: 'dropdown', icon: 'Dropdown', name: 'Dropdown' },
     { key: 'slider', icon: 'Slider', name: 'Slider' },
     { key: 'starRating', icon: 'FavoriteStar', name: 'Star Rating' },
     { key: 'searchBox', icon: 'Search', name: 'Search Box' },
@@ -136,9 +126,8 @@ export const ElementsList: React.FC = () => {
   const filterBySearch = (item: { name: string }) =>
     item.name.toLowerCase().includes(searchText.toLowerCase());
 
-  const filteredBasic = basicItems.filter(filterBySearch);
-  const filteredLayout = layoutItems.filter(filterBySearch);
-  const filteredNavigation = navigationItems.filter(filterBySearch);
+  const filteredSmart = smartItems.filter(filterBySearch);
+
   const filteredMedia = mediaItems.filter(filterBySearch);
   const filteredForm = formItems.filter(filterBySearch);
 
@@ -161,84 +150,10 @@ export const ElementsList: React.FC = () => {
         variant="xLarge"
         styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
       >
-        Basic Elements
+        Smart Elements
       </FluentText>
       <GridArea>
-        {filteredBasic.map((item) => {
-          const draggableElement = elementToCreate(item.key);
-          const isDraggable = !!draggableElement;
-
-          return (
-            <ElementCard
-              key={item.key}
-              $draggable={isDraggable}
-              ref={
-                isDraggable
-                  ? (ref) => {
-                      if (ref) {
-                        connectors.create(ref, draggableElement!);
-                      }
-                    }
-                  : undefined
-              }
-            >
-              <ElementIcon iconName={item.icon} />
-              <ElementName>{item.name}</ElementName>
-            </ElementCard>
-          );
-        })}
-      </GridArea>
-
-      <Separator
-        styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
-      />
-
-      {/* ----- LAYOUT ELEMENTS ----- */}
-      <FluentText
-        variant="xLarge"
-        styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
-      >
-        Layout Elements
-      </FluentText>
-      <GridArea>
-        {filteredLayout.map((item) => {
-          const draggableElement = elementToCreate(item.key);
-          const isDraggable = !!draggableElement;
-
-          return (
-            <ElementCard
-              key={item.key}
-              $draggable={isDraggable}
-              ref={
-                isDraggable
-                  ? (ref) => {
-                      if (ref) {
-                        connectors.create(ref, draggableElement!);
-                      }
-                    }
-                  : undefined
-              }
-            >
-              <ElementIcon iconName={item.icon} />
-              <ElementName>{item.name}</ElementName>
-            </ElementCard>
-          );
-        })}
-      </GridArea>
-
-      <Separator
-        styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
-      />
-
-      {/* ----- NAVIGATION ELEMENTS  ----- */}
-      <FluentText
-        variant="xLarge"
-        styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
-      >
-        Navigation Elements
-      </FluentText>
-      <GridArea>
-        {filteredNavigation.map((item) => {
+        {filteredSmart.map((item) => {
           const draggableElement = elementToCreate(item.key);
           const isDraggable = !!draggableElement;
 

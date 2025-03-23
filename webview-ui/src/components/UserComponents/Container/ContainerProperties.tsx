@@ -8,7 +8,12 @@ import { SwitchInput } from '../../PropertiesSidebar/UI/SwitchInput';
 import { Slider } from '../../PropertiesSidebar/UI/Slider';
 import { ColorPicker } from '../../PropertiesSidebar/UI/ColorPicker';
 
+/** A helper interface so we can unify all layout types in one component. */
 interface ContainerProps {
+  /** The chosen layout type: 'container' | 'row' | 'section' | 'grid' */
+  layoutType?: 'container' | 'row' | 'section' | 'grid';
+
+  /** Common dimension/appearance properties */
   width?: string;
   height?: string;
   background?: string;
@@ -16,15 +21,48 @@ interface ContainerProps {
   padding?: number[]; // [top, right, bottom, left]
   radius?: number;
   shadow?: number;
-  flexDirection?: 'row' | 'column';
   fillSpace?: 'yes' | 'no';
-  alignItems?: 'flex-start' | 'center' | 'flex-end';
-  justifyContent?: 'flex-start' | 'center' | 'flex-end';
 
-  // Top-level border props (instead of a nested object):
+  /** Generic border props (flattened) */
   borderStyle?: string;
   borderColor?: string;
   borderWidth?: number;
+
+  /**
+   * Props for Container/Section (flex) layouts
+   * (Row uses these too, though 'row' typically implies a forced 'row' direction.)
+   */
+  flexDirection?: 'row' | 'column';
+  alignItems?:
+    | 'flex-start'
+    | 'flex-end'
+    | 'center'
+    | 'baseline'
+    | 'stretch'
+    | 'start'
+    | 'end';
+  justifyContent?:
+    | 'flex-start'
+    | 'flex-end'
+    | 'center'
+    | 'space-between'
+    | 'space-around';
+
+  /**
+   * Row-specific props
+   */
+  gap?: number;
+  flexWrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
+
+  /**
+   * Grid-specific props
+   */
+  columns?: number;
+  rows?: number;
+  rowGap?: number;
+  columnGap?: number;
+  justifyItems?: 'start' | 'center' | 'end' | 'stretch';
+  alignGridItems?: 'start' | 'center' | 'end' | 'stretch';
 }
 
 /**
@@ -80,6 +118,10 @@ function SpacingControl({
 
 export const ContainerProperties = () => {
   const {
+    // Layout type
+    layoutType,
+
+    // Common dimension/appearance
     width,
     height,
     background,
@@ -87,18 +129,38 @@ export const ContainerProperties = () => {
     padding,
     radius,
     shadow,
-    flexDirection,
     fillSpace,
-    alignItems,
-    justifyContent,
-    // Read the three border props directly:
+
+    // Border
     borderStyle,
     borderColor,
     borderWidth,
+
+    // Flex/Row/Section
+    flexDirection,
+    alignItems,
+    justifyContent,
+
+    // Row
+    gap,
+    flexWrap,
+
+    // Grid
+    columns,
+    rows,
+    rowGap,
+    columnGap,
+    justifyItems,
+    alignGridItems,
+
     actions: { setProp },
   } = useNode((node) => {
     const props = node.data.props as ContainerProps;
+
     return {
+      layoutType: props.layoutType ?? 'container',
+
+      // Dimensions / colors
       width: props.width ?? '300px',
       height: props.height ?? '150px',
       background: props.background ?? '#ffffff',
@@ -106,20 +168,55 @@ export const ContainerProperties = () => {
       padding: props.padding,
       radius: props.radius ?? 0,
       shadow: props.shadow ?? 0,
-      flexDirection: props.flexDirection ?? 'row',
       fillSpace: props.fillSpace ?? 'no',
-      alignItems: props.alignItems ?? 'flex-start',
-      justifyContent: props.justifyContent ?? 'flex-start',
 
-      // Provide defaults if not set:
+      // Border
       borderStyle: props.borderStyle ?? 'solid',
       borderColor: props.borderColor ?? '#cccccc',
       borderWidth: props.borderWidth ?? 1,
+
+      // Flex
+      flexDirection: props.flexDirection ?? 'row',
+      alignItems: props.alignItems ?? 'flex-start',
+      justifyContent: props.justifyContent ?? 'flex-start',
+
+      // Row
+      gap: props.gap ?? 0,
+      flexWrap: props.flexWrap ?? 'nowrap',
+
+      // Grid
+      columns: props.columns ?? 2,
+      rows: props.rows ?? 2,
+      rowGap: props.rowGap ?? 10,
+      columnGap: props.columnGap ?? 10,
+      justifyItems: props.justifyItems ?? 'stretch',
+      alignGridItems: props.alignGridItems ?? 'stretch',
     };
   });
 
   return (
     <>
+      {/* LAYOUT TYPE */}
+      <Section title="Layout Type">
+        <Item>
+          <Radio
+            label="Layout Type"
+            value={layoutType}
+            onChangeValue={(val) =>
+              setProp((props: ContainerProps) => {
+                props.layoutType = val as ContainerProps['layoutType'];
+              })
+            }
+            options={[
+              { label: 'Container', value: 'container' },
+              { label: 'Row', value: 'row' },
+              { label: 'Section', value: 'section' },
+              { label: 'Grid', value: 'grid' },
+            ]}
+          />
+        </Item>
+      </Section>
+
       {/* DIMENSIONS */}
       <Section title="Dimensions">
         <Item>
@@ -146,7 +243,7 @@ export const ContainerProperties = () => {
         </Item>
       </Section>
 
-      {/* COLOURS */}
+      {/* COLORS */}
       <Section title="Colours">
         <Item>
           <ColorPicker
@@ -158,12 +255,12 @@ export const ContainerProperties = () => {
               })
             }
             allowTextInput
-            helperText="Pick or enter background Colour"
+            helperText="Pick or enter background colour"
           />
         </Item>
       </Section>
 
-      {/* MARGIN */}
+      {/* SPACING: MARGIN/PADDING */}
       <SpacingControl
         label="Margin"
         values={margin}
@@ -173,8 +270,6 @@ export const ContainerProperties = () => {
           })
         }
       />
-
-      {/* PADDING */}
       <SpacingControl
         label="Padding"
         values={padding}
@@ -257,82 +352,297 @@ export const ContainerProperties = () => {
         </Item>
       </Section>
 
-      {/* LAYOUT / FLEX */}
-      <Section title="Layout">
-        {/* Flex Direction + Fill Space */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Item>
-              <Radio
-                label="Flex Direction"
-                value={flexDirection}
-                onChangeValue={(val) =>
-                  setProp((props: ContainerProps) => {
-                    props.flexDirection = val as 'row' | 'column';
-                  })
-                }
-                options={[
-                  { label: 'Row', value: 'row' },
-                  { label: 'Column', value: 'column' },
-                ]}
-              />
-            </Item>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Item>
-              <SwitchInput
-                label="Fill Space"
-                value={fillSpace === 'yes'}
-                onChangeValue={(checked) =>
-                  setProp((props: ContainerProps) => {
-                    props.fillSpace = checked ? 'yes' : 'no';
-                  })
-                }
-              />
-            </Item>
-          </Grid>
-        </Grid>
+      {/* LAYOUT SETTINGS */}
+      <Section title="Layout Settings">
+        {/* Fill Space is universal; show it for all layout types */}
+        <Item>
+          <SwitchInput
+            label="Fill Space"
+            value={fillSpace === 'yes'}
+            onChangeValue={(checked) =>
+              setProp((props: ContainerProps) => {
+                props.fillSpace = checked ? 'yes' : 'no';
+              })
+            }
+          />
+        </Item>
 
-        {/* Align Items + Justify Content */}
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid item xs={12} sm={6}>
-            <Item>
-              <Radio
-                label="Align Items"
-                value={alignItems}
-                onChangeValue={(val) =>
-                  setProp((props: ContainerProps) => {
-                    props.alignItems = val as ContainerProps['alignItems'];
-                  })
-                }
-                options={[
-                  { label: 'Flex start', value: 'flex-start' },
-                  { label: 'Center', value: 'center' },
-                  { label: 'Flex end', value: 'flex-end' },
-                ]}
-              />
-            </Item>
+        {/**
+         * container / section / row -> flex-based
+         * grid -> grid-based
+         */}
+
+        {/* If layoutType is "container" or "section", show flex controls: flexDirection, alignItems, justifyContent */}
+        {(layoutType === 'container' || layoutType === 'section') && (
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} sm={6}>
+              <Item>
+                <Radio
+                  label="Flex Direction"
+                  value={flexDirection}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.flexDirection = val as 'row' | 'column';
+                    })
+                  }
+                  options={[
+                    { label: 'Row', value: 'row' },
+                    { label: 'Column', value: 'column' },
+                  ]}
+                />
+              </Item>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Item>
+                <Radio
+                  label="Align Items"
+                  value={alignItems}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.alignItems = val as ContainerProps['alignItems'];
+                    })
+                  }
+                  options={[
+                    { label: 'Start', value: 'flex-start' },
+                    { label: 'Center', value: 'center' },
+                    { label: 'End', value: 'flex-end' },
+                  ]}
+                />
+              </Item>
+            </Grid>
+            <Grid item xs={12}>
+              <Item>
+                <Radio
+                  label="Justify Content"
+                  value={justifyContent}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.justifyContent =
+                        val as ContainerProps['justifyContent'];
+                    })
+                  }
+                  options={[
+                    { label: 'Start', value: 'flex-start' },
+                    { label: 'Center', value: 'center' },
+                    { label: 'End', value: 'flex-end' },
+                    { label: 'Space Between', value: 'space-between' },
+                    { label: 'Space Around', value: 'space-around' },
+                  ]}
+                />
+              </Item>
+            </Grid>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Item>
-              <Radio
-                label="Justify Content"
-                value={justifyContent}
-                onChangeValue={(val) =>
-                  setProp((props: ContainerProps) => {
-                    props.justifyContent =
-                      val as ContainerProps['justifyContent'];
-                  })
-                }
-                options={[
-                  { label: 'Flex start', value: 'flex-start' },
-                  { label: 'Center', value: 'center' },
-                  { label: 'Flex end', value: 'flex-end' },
-                ]}
-              />
-            </Item>
+        )}
+
+        {/* If layoutType is "row", forcibly flex-direction: row, plus gap & wrap */}
+        {layoutType === 'row' && (
+          <>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={6}>
+                <Item>
+                  <Slider
+                    label="Gap"
+                    value={gap}
+                    min={0}
+                    max={50}
+                    step={1}
+                    onChangeValue={(val) =>
+                      setProp((props: ContainerProps) => {
+                        props.gap = val;
+                      })
+                    }
+                  />
+                </Item>
+              </Grid>
+              <Grid item xs={6}>
+                <Item>
+                  <Radio
+                    label="Flex Wrap"
+                    value={flexWrap}
+                    onChangeValue={(val) =>
+                      setProp((props: ContainerProps) => {
+                        props.flexWrap = val as
+                          | 'nowrap'
+                          | 'wrap'
+                          | 'wrap-reverse';
+                      })
+                    }
+                    options={[
+                      { label: 'No wrap', value: 'nowrap' },
+                      { label: 'Wrap', value: 'wrap' },
+                      { label: 'Wrap Reverse', value: 'wrap-reverse' },
+                    ]}
+                  />
+                </Item>
+              </Grid>
+            </Grid>
+
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={6}>
+                <Item>
+                  <Radio
+                    label="Align Items"
+                    value={alignItems}
+                    onChangeValue={(val) =>
+                      setProp((props: ContainerProps) => {
+                        props.alignItems = val as ContainerProps['alignItems'];
+                      })
+                    }
+                    options={[
+                      { label: 'Start', value: 'flex-start' },
+                      { label: 'Center', value: 'center' },
+                      { label: 'End', value: 'flex-end' },
+                      { label: 'Stretch', value: 'stretch' },
+                      { label: 'Baseline', value: 'baseline' },
+                    ]}
+                  />
+                </Item>
+              </Grid>
+              <Grid item xs={6}>
+                <Item>
+                  <Radio
+                    label="Justify Content"
+                    value={justifyContent}
+                    onChangeValue={(val) =>
+                      setProp((props: ContainerProps) => {
+                        props.justifyContent =
+                          val as ContainerProps['justifyContent'];
+                      })
+                    }
+                    options={[
+                      { label: 'Start', value: 'flex-start' },
+                      { label: 'Center', value: 'center' },
+                      { label: 'End', value: 'flex-end' },
+                      { label: 'Space Between', value: 'space-between' },
+                      { label: 'Space Around', value: 'space-around' },
+                    ]}
+                  />
+                </Item>
+              </Grid>
+            </Grid>
+          </>
+        )}
+
+        {/* If layoutType is "grid", show grid controls */}
+        {layoutType === 'grid' && (
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            {/* Columns & Rows */}
+            <Grid item xs={6}>
+              <Item>
+                <Slider
+                  label="Columns"
+                  value={columns}
+                  min={1}
+                  max={12}
+                  step={1}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.columns = val;
+                    })
+                  }
+                />
+              </Item>
+            </Grid>
+            <Grid item xs={6}>
+              <Item>
+                <Slider
+                  label="Rows"
+                  value={rows}
+                  min={1}
+                  max={12}
+                  step={1}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.rows = val;
+                    })
+                  }
+                />
+              </Item>
+            </Grid>
+
+            {/* Row Gap & Column Gap */}
+            <Grid item xs={6}>
+              <Item>
+                <Slider
+                  label="Row Gap"
+                  value={rowGap}
+                  min={0}
+                  max={50}
+                  step={1}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.rowGap = val;
+                    })
+                  }
+                />
+              </Item>
+            </Grid>
+            <Grid item xs={6}>
+              <Item>
+                <Slider
+                  label="Column Gap"
+                  value={columnGap}
+                  min={0}
+                  max={50}
+                  step={1}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.columnGap = val;
+                    })
+                  }
+                />
+              </Item>
+            </Grid>
+
+            {/* Justify Items & Align Grid Items */}
+            <Grid item xs={6}>
+              <Item>
+                <Radio
+                  label="Justify Items"
+                  value={justifyItems}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.justifyItems = val as
+                        | 'start'
+                        | 'center'
+                        | 'end'
+                        | 'stretch';
+                    })
+                  }
+                  options={[
+                    { label: 'Start', value: 'start' },
+                    { label: 'Center', value: 'center' },
+                    { label: 'End', value: 'end' },
+                    { label: 'Stretch', value: 'stretch' },
+                  ]}
+                />
+              </Item>
+            </Grid>
+            <Grid item xs={6}>
+              <Item>
+                <Radio
+                  label="Align Items"
+                  value={alignGridItems}
+                  onChangeValue={(val) =>
+                    setProp((props: ContainerProps) => {
+                      props.alignGridItems = val as
+                        | 'start'
+                        | 'center'
+                        | 'end'
+                        | 'stretch';
+                    })
+                  }
+                  options={[
+                    { label: 'Start', value: 'start' },
+                    { label: 'Center', value: 'center' },
+                    { label: 'End', value: 'end' },
+                    { label: 'Stretch', value: 'stretch' },
+                  ]}
+                />
+              </Item>
+            </Grid>
           </Grid>
-        </Grid>
+        )}
       </Section>
     </>
   );
