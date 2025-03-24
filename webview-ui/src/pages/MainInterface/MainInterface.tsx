@@ -54,6 +54,7 @@ export const DroppableCanvas: React.FC = () => {
         width="800px"
         height="1235px"
         background="#ffffff"
+        margin={[0, 0, 0, 0]}
         padding={[20, 20, 20, 20]}
       ></Element>
     </Frame>

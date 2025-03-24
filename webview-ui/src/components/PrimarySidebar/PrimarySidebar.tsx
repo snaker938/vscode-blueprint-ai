@@ -4,7 +4,8 @@ import { SidebarIconsBar } from './SidebarIconsBar';
 // import { ElementsList } from './ElementsList';
 import PagesTab from './PagesTab/PagesTab';
 import './sidebarStyles.css';
-import LayoutTab from './LayoutTab/LayoutTab';
+
+import { LayoutTab } from './LayoutTab/LayoutTab';
 
 import { ElementsList } from './ElementsList';
 

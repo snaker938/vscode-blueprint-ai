@@ -1,10 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import './LayoutTab.css';
-import { CustomLayers } from './LayersComponent/CustomLayers';
 import { useEditor } from '@craftjs/core';
+import { ROOT_NODE } from '@craftjs/utils';
+import { CustomLayers } from './LayersComponent/CustomLayers';
 
-import { Toggle, Dropdown, TextField, Slider, Text } from '@fluentui/react';
+import {
+  TextField,
+  Dropdown,
+  IDropdownOption,
+  Toggle,
+  Slider,
+  Text,
+} from '@fluentui/react';
+
+/** The container props interface. */
+interface ContainerProps {
+  layoutType?: 'container' | 'row' | 'section' | 'grid';
+
+  width?: string;
+  height?: string;
+  background?: string;
+  margin?: number[]; // [top, right, bottom, left]
+  padding?: number[]; // [top, right, bottom, left]
+  radius?: number;
+  shadow?: number;
+  fillSpace?: 'yes' | 'no';
+
+  borderStyle?: string;
+  borderColor?: string;
+  borderWidth?: number;
+
+  flexDirection?: 'row' | 'column';
+  alignItems?:
+    | 'flex-start'
+    | 'flex-end'
+    | 'center'
+    | 'baseline'
+    | 'stretch'
+    | 'start'
+    | 'end';
+  justifyContent?:
+    | 'flex-start'
+    | 'flex-end'
+    | 'center'
+    | 'space-between'
+    | 'space-around';
+
+  gap?: number;
+  flexWrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
+
+  columns?: number;
+  rows?: number;
+  rowGap?: number;
+  columnGap?: number;
+  justifyItems?: 'start' | 'center' | 'end' | 'stretch';
+  alignGridItems?: 'start' | 'center' | 'end' | 'stretch';
+}
 
 const Wrapper = styled.div`
   width: 300px;
@@ -16,92 +68,223 @@ const Wrapper = styled.div`
   flex-direction: column;
 `;
 
-const alignmentOptions = [
-  { key: 'start', text: 'Start' },
-  { key: 'center', text: 'Center' },
-  { key: 'end', text: 'End' },
-];
-
-const LayoutTab: React.FC = () => {
-  // Hook into the Craft editor to access actions and query
+export const LayoutTab: React.FC = () => {
   const { actions, query } = useEditor();
 
-  // Grab any initial Root node props if they've been set;
-  // fallback to some defaults if undefined:
-  const rootNode = query.node('ROOT').get();
-  const initialProps = rootNode.data.props || {};
-
-  // State for all layout-related props that we want to sync with the root node
-  const [rows, setRows] = useState(String(initialProps.rows ?? '1'));
-  const [columns, setColumns] = useState(String(initialProps.columns ?? '1'));
-  const [alignment, setAlignment] = useState(initialProps.alignment ?? 'start');
-  const [gapSize, setGapSize] = useState(initialProps.gapSize ?? 3);
-
-  const [paddingTop, setPaddingTop] = useState(
-    String(initialProps.paddingTop ?? '1')
-  );
-  const [paddingRight, setPaddingRight] = useState(
-    String(initialProps.paddingRight ?? '1')
-  );
-  const [paddingBottom, setPaddingBottom] = useState(
-    String(initialProps.paddingBottom ?? '1')
-  );
-  const [paddingLeft, setPaddingLeft] = useState(
-    String(initialProps.paddingLeft ?? '1')
-  );
-
-  const [marginTop, setMarginTop] = useState(
-    String(initialProps.marginTop ?? '1')
-  );
-  const [marginRight, setMarginRight] = useState(
-    String(initialProps.marginRight ?? '1')
-  );
-  const [marginBottom, setMarginBottom] = useState(
-    String(initialProps.marginBottom ?? '1')
-  );
-  const [marginLeft, setMarginLeft] = useState(
-    String(initialProps.marginLeft ?? '1')
-  );
-
-  // "Grid Visible" is local-only (not sent to the Root node)
-  const [gridVisible, setGridVisible] = useState(true);
+  // Fetch the ROOT node and its current props.
+  const rootNode = query.node(ROOT_NODE).get();
+  const initialProps = (rootNode.data.props || {}) as ContainerProps;
 
   /**
-   * Whenever any of our layout states change, we update the Root node props.
-   * This ensures that the Root node (and thus the rendered grid) reflects our inputs.
+   * We use fallback defaults (the `??` operator) to ensure state cannot be `undefined`.
+   */
+
+  // Layout type
+  const [layoutType, setLayoutType] = useState<
+    'container' | 'row' | 'section' | 'grid'
+  >(initialProps.layoutType ?? 'container');
+
+  // Dimensions & background
+  const [width, setWidth] = useState(initialProps.width ?? '300px');
+  const [height, setHeight] = useState(initialProps.height ?? '150px');
+  const [background, setBackground] = useState(
+    initialProps.background ?? '#ffffff'
+  );
+
+  // Margin [top, right, bottom, left]
+  const [marginTop, setMarginTop] = useState(initialProps.margin?.[0] ?? 0);
+  const [marginRight, setMarginRight] = useState(initialProps.margin?.[1] ?? 0);
+  const [marginBottom, setMarginBottom] = useState(
+    initialProps.margin?.[2] ?? 0
+  );
+  const [marginLeft, setMarginLeft] = useState(initialProps.margin?.[3] ?? 0);
+
+  // Padding [top, right, bottom, left]
+  const [paddingTop, setPaddingTop] = useState(initialProps.padding?.[0] ?? 0);
+  const [paddingRight, setPaddingRight] = useState(
+    initialProps.padding?.[1] ?? 0
+  );
+  const [paddingBottom, setPaddingBottom] = useState(
+    initialProps.padding?.[2] ?? 0
+  );
+  const [paddingLeft, setPaddingLeft] = useState(
+    initialProps.padding?.[3] ?? 0
+  );
+
+  // Decoration
+  const [radius, setRadius] = useState(initialProps.radius ?? 0);
+  const [shadow, setShadow] = useState(initialProps.shadow ?? 0);
+
+  // Fill space toggle
+  const [fillSpace, setFillSpace] = useState<'yes' | 'no'>(
+    initialProps.fillSpace ?? 'no'
+  );
+
+  // Border
+  const [borderStyle, setBorderStyle] = useState(
+    initialProps.borderStyle ?? 'solid'
+  );
+  const [borderColor, setBorderColor] = useState(
+    initialProps.borderColor ?? '#cccccc'
+  );
+  const [borderWidth, setBorderWidth] = useState(initialProps.borderWidth ?? 1);
+
+  // Flex / row / section
+  const [flexDirection, setFlexDirection] = useState<'row' | 'column'>(
+    initialProps.flexDirection ?? 'row'
+  );
+  const [alignItems, setAlignItems] = useState<
+    | 'flex-start'
+    | 'flex-end'
+    | 'center'
+    | 'baseline'
+    | 'stretch'
+    | 'start'
+    | 'end'
+  >(initialProps.alignItems ?? 'flex-start');
+  const [justifyContent, setJustifyContent] = useState<
+    'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around'
+  >(initialProps.justifyContent ?? 'flex-start');
+
+  // Row
+  const [gap, setGap] = useState(initialProps.gap ?? 0);
+  const [flexWrap, setFlexWrap] = useState<'nowrap' | 'wrap' | 'wrap-reverse'>(
+    initialProps.flexWrap ?? 'nowrap'
+  );
+
+  // Grid
+  const [columns, setColumns] = useState(initialProps.columns ?? 2);
+  const [rows, setRows] = useState(initialProps.rows ?? 2);
+  const [rowGap, setRowGap] = useState(initialProps.rowGap ?? 10);
+  const [columnGap, setColumnGap] = useState(initialProps.columnGap ?? 10);
+  const [justifyItems, setJustifyItems] = useState<
+    'start' | 'center' | 'end' | 'stretch'
+  >(initialProps.justifyItems ?? 'stretch');
+  const [alignGridItems, setAlignGridItems] = useState<
+    'start' | 'center' | 'end' | 'stretch'
+  >(initialProps.alignGridItems ?? 'stretch');
+
+  /**
+   * Sync local state -> Root node whenever values change.
    */
   useEffect(() => {
-    actions.setProp('ROOT', (props: any) => {
-      props.rows = rows;
+    actions.setProp(ROOT_NODE, (props: ContainerProps) => {
+      props.layoutType = layoutType;
+
+      props.width = width;
+      props.height = height;
+      props.background = background;
+
+      props.margin = [marginTop, marginRight, marginBottom, marginLeft];
+      props.padding = [paddingTop, paddingRight, paddingBottom, paddingLeft];
+
+      props.radius = radius;
+      props.shadow = shadow;
+      props.fillSpace = fillSpace;
+
+      props.borderStyle = borderStyle;
+      props.borderColor = borderColor;
+      props.borderWidth = borderWidth;
+
+      props.flexDirection = flexDirection;
+      props.alignItems = alignItems;
+      props.justifyContent = justifyContent;
+
+      props.gap = gap;
+      props.flexWrap = flexWrap;
+
       props.columns = columns;
-      props.alignment = alignment;
-      props.gapSize = gapSize;
-
-      props.paddingTop = paddingTop;
-      props.paddingRight = paddingRight;
-      props.paddingBottom = paddingBottom;
-      props.paddingLeft = paddingLeft;
-
-      props.marginTop = marginTop;
-      props.marginRight = marginRight;
-      props.marginBottom = marginBottom;
-      props.marginLeft = marginLeft;
+      props.rows = rows;
+      props.rowGap = rowGap;
+      props.columnGap = columnGap;
+      props.justifyItems = justifyItems;
+      props.alignGridItems = alignGridItems;
     });
   }, [
     actions,
-    rows,
-    columns,
-    alignment,
-    gapSize,
-    paddingTop,
-    paddingRight,
-    paddingBottom,
-    paddingLeft,
+    layoutType,
+    width,
+    height,
+    background,
     marginTop,
     marginRight,
     marginBottom,
     marginLeft,
+    paddingTop,
+    paddingRight,
+    paddingBottom,
+    paddingLeft,
+    radius,
+    shadow,
+    fillSpace,
+    borderStyle,
+    borderColor,
+    borderWidth,
+    flexDirection,
+    alignItems,
+    justifyContent,
+    gap,
+    flexWrap,
+    columns,
+    rows,
+    rowGap,
+    columnGap,
+    justifyItems,
+    alignGridItems,
   ]);
+
+  /**
+   * Options for your dropdowns.
+   */
+  const layoutTypeOptions: IDropdownOption[] = [
+    { key: 'container', text: 'Container' },
+    { key: 'row', text: 'Row' },
+    { key: 'section', text: 'Section' },
+    { key: 'grid', text: 'Grid' },
+  ];
+
+  const borderStyleOptions: IDropdownOption[] = [
+    { key: 'solid', text: 'Solid' },
+    { key: 'dashed', text: 'Dashed' },
+    { key: 'dotted', text: 'Dotted' },
+    { key: 'double', text: 'Double' },
+  ];
+
+  const alignItemsOptions: IDropdownOption[] = [
+    { key: 'flex-start', text: 'Start' },
+    { key: 'center', text: 'Center' },
+    { key: 'flex-end', text: 'End' },
+    { key: 'stretch', text: 'Stretch' },
+    { key: 'baseline', text: 'Baseline' },
+  ];
+
+  const justifyContentOptions: IDropdownOption[] = [
+    { key: 'flex-start', text: 'Start' },
+    { key: 'center', text: 'Center' },
+    { key: 'flex-end', text: 'End' },
+    { key: 'space-between', text: 'Space Between' },
+    { key: 'space-around', text: 'Space Around' },
+  ];
+
+  const flexWrapOptions: IDropdownOption[] = [
+    { key: 'nowrap', text: 'No Wrap' },
+    { key: 'wrap', text: 'Wrap' },
+    { key: 'wrap-reverse', text: 'Wrap Reverse' },
+  ];
+
+  const justifyItemsOptions: IDropdownOption[] = [
+    { key: 'start', text: 'Start' },
+    { key: 'center', text: 'Center' },
+    { key: 'end', text: 'End' },
+    { key: 'stretch', text: 'Stretch' },
+  ];
+
+  const alignGridItemsOptions: IDropdownOption[] = [
+    { key: 'start', text: 'Start' },
+    { key: 'center', text: 'Center' },
+    { key: 'end', text: 'End' },
+    { key: 'stretch', text: 'Stretch' },
+  ];
 
   return (
     <Wrapper>
@@ -114,144 +297,400 @@ const LayoutTab: React.FC = () => {
         Layout
       </Text>
 
-      <div className="layout-tab-section layout-tab-top-section">
-        <div className="layout-grid-row">
-          <div className="grid-input-pair">
-            <label>Rows</label>
+      {/* Layout Type */}
+      <div className="layout-tab-section">
+        <label className="section-label">Layout Type</label>
+        <Dropdown
+          options={layoutTypeOptions}
+          selectedKey={layoutType}
+          onChange={(_, option) => {
+            if (!option) return;
+            setLayoutType(
+              option.key as 'container' | 'row' | 'section' | 'grid'
+            );
+          }}
+        />
+      </div>
+
+      {/* Dimensions */}
+      <div className="layout-tab-section">
+        <label className="section-label">Dimensions</label>
+        <div className="dimension-row">
+          <div className="dimension-input">
+            <label>Width</label>
             <TextField
-              value={rows}
-              onChange={(_, v) => setRows(v ?? '')}
+              value={width}
+              onChange={(_, val) => setWidth(val ?? '')}
+            />
+          </div>
+          <div className="dimension-input">
+            <label>Height</label>
+            <TextField
+              value={height}
+              onChange={(_, val) => setHeight(val ?? '')}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Background */}
+      <div className="layout-tab-section">
+        <label className="section-label">Background</label>
+        <TextField
+          label="Background Color"
+          value={background}
+          onChange={(_, val) => setBackground(val ?? '')}
+        />
+      </div>
+
+      {/* Margin */}
+      <div className="layout-tab-section">
+        <label className="section-label">Margin</label>
+        <div className="padding-row">
+          <div className="input-small">
+            <label>Top</label>
+            <TextField
+              value={String(marginTop)}
+              onChange={(_, val) => setMarginTop(Number(val) || 0)}
               type="number"
             />
           </div>
-          <div className="grid-input-pair">
-            <label>Columns</label>
+          <div className="input-small">
+            <label>Right</label>
             <TextField
-              value={columns}
-              onChange={(_, v) => setColumns(v ?? '')}
+              value={String(marginRight)}
+              onChange={(_, val) => setMarginRight(Number(val) || 0)}
               type="number"
             />
           </div>
         </div>
-
-        <div className="layout-alignment-row">
-          <Dropdown
-            label="Alignment"
-            selectedKey={alignment}
-            options={alignmentOptions}
-            onChange={(_, option) => {
-              if (option) setAlignment(option.key as string);
-            }}
-          />
-          <div className="grid-toggle">
-            <label className="toggle-label">Grid Visible</label>
-            <Toggle
-              checked={gridVisible}
-              onChange={(_, checked) => setGridVisible(!!checked)}
+        <div className="padding-row">
+          <div className="input-small">
+            <label>Bottom</label>
+            <TextField
+              value={String(marginBottom)}
+              onChange={(_, val) => setMarginBottom(Number(val) || 0)}
+              type="number"
+            />
+          </div>
+          <div className="input-small">
+            <label>Left</label>
+            <TextField
+              value={String(marginLeft)}
+              onChange={(_, val) => setMarginLeft(Number(val) || 0)}
+              type="number"
             />
           </div>
         </div>
+      </div>
 
-        <div
-          className="layout-gap-row"
-          style={{ display: 'flex', alignItems: 'center', width: '100%' }}
-        >
-          <label
-            className="gap-label"
-            style={{ whiteSpace: 'nowrap', marginRight: 10 }}
-          >
-            Gap Size
-          </label>
+      {/* Padding */}
+      <div className="layout-tab-section">
+        <label className="section-label">Padding</label>
+        <div className="padding-row">
+          <div className="input-small">
+            <label>Top</label>
+            <TextField
+              value={String(paddingTop)}
+              onChange={(_, val) => setPaddingTop(Number(val) || 0)}
+              type="number"
+            />
+          </div>
+          <div className="input-small">
+            <label>Right</label>
+            <TextField
+              value={String(paddingRight)}
+              onChange={(_, val) => setPaddingRight(Number(val) || 0)}
+              type="number"
+            />
+          </div>
+        </div>
+        <div className="padding-row">
+          <div className="input-small">
+            <label>Bottom</label>
+            <TextField
+              value={String(paddingBottom)}
+              onChange={(_, val) => setPaddingBottom(Number(val) || 0)}
+              type="number"
+            />
+          </div>
+          <div className="input-small">
+            <label>Left</label>
+            <TextField
+              value={String(paddingLeft)}
+              onChange={(_, val) => setPaddingLeft(Number(val) || 0)}
+              type="number"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Decoration: Radius & Shadow */}
+      <div className="layout-tab-section">
+        <label className="section-label">Decoration</label>
+        <div className="slider-pair">
+          <label>Corner Radius: {radius}px</label>
           <Slider
             min={0}
-            max={10}
+            max={50}
             step={1}
-            value={gapSize}
-            showValue
-            onChange={(val) => setGapSize(val)}
-            styles={{ root: { flexGrow: 1 } }}
+            value={radius}
+            showValue={false}
+            onChange={(val) => setRadius(val)}
+          />
+        </div>
+
+        <div className="slider-pair">
+          <label>Shadow: {shadow}px</label>
+          <Slider
+            min={0}
+            max={50}
+            step={1}
+            value={shadow}
+            showValue={false}
+            onChange={(val) => setShadow(val)}
           />
         </div>
       </div>
 
-      <div className="layout-tab-section padding-section">
-        <h3>Padding</h3>
-        <div className="padding-row">
-          <div className="input-small">
-            <label>Top</label>
-            <TextField
-              value={paddingTop}
-              onChange={(_, v) => setPaddingTop(v ?? '')}
-              type="number"
-            />
-          </div>
-          <div className="input-small">
-            <label>Right</label>
-            <TextField
-              value={paddingRight}
-              onChange={(_, v) => setPaddingRight(v ?? '')}
-              type="number"
-            />
-          </div>
-        </div>
-        <div className="padding-row">
-          <div className="input-small">
-            <label>Bottom</label>
-            <TextField
-              value={paddingBottom}
-              onChange={(_, v) => setPaddingBottom(v ?? '')}
-              type="number"
-            />
-          </div>
-          <div className="input-small">
-            <label>Left</label>
-            <TextField
-              value={paddingLeft}
-              onChange={(_, v) => setPaddingLeft(v ?? '')}
-              type="number"
-            />
-          </div>
+      {/* Border */}
+      <div className="layout-tab-section">
+        <label className="section-label">Border</label>
+        <TextField
+          label="Border Color"
+          value={borderColor}
+          onChange={(_, val) => setBorderColor(val ?? '')}
+        />
+
+        <Dropdown
+          label="Border Style"
+          options={borderStyleOptions}
+          selectedKey={borderStyle}
+          onChange={(_, option) => {
+            if (!option) return;
+            setBorderStyle(option.key as string);
+          }}
+        />
+
+        <div className="slider-pair">
+          <label>Border Width: {borderWidth}px</label>
+          <Slider
+            min={0}
+            max={20}
+            step={1}
+            value={borderWidth}
+            showValue={false}
+            onChange={(val) => setBorderWidth(val)}
+          />
         </div>
       </div>
 
-      <div className="layout-tab-section margin-section">
-        <h3>Margin</h3>
-        <div className="padding-row">
-          <div className="input-small">
-            <label>Top</label>
-            <TextField
-              value={marginTop}
-              onChange={(_, v) => setMarginTop(v ?? '')}
-              type="number"
-            />
-          </div>
-          <div className="input-small">
-            <label>Right</label>
-            <TextField
-              value={marginRight}
-              onChange={(_, v) => setMarginRight(v ?? '')}
-              type="number"
-            />
-          </div>
+      {/* Layout Settings */}
+      <div className="layout-tab-section">
+        <label className="section-label">Layout Settings</label>
+        <div className="toggle-row">
+          <label>Fill Space</label>
+          <Toggle
+            checked={fillSpace === 'yes'}
+            onChange={(_, checked) => {
+              setFillSpace(checked ? 'yes' : 'no');
+            }}
+          />
         </div>
-        <div className="padding-row">
-          <div className="input-small">
-            <label>Bottom</label>
-            <TextField
-              value={marginBottom}
-              onChange={(_, v) => setMarginBottom(v ?? '')}
-              type="number"
+
+        {/* container / section => flexDirection, alignItems, justifyContent */}
+        {(layoutType === 'container' || layoutType === 'section') && (
+          <>
+            <Dropdown
+              label="Flex Direction"
+              selectedKey={flexDirection}
+              options={[
+                { key: 'row', text: 'Row' },
+                { key: 'column', text: 'Column' },
+              ]}
+              onChange={(_, option) => {
+                if (!option) return;
+                setFlexDirection(option.key as 'row' | 'column');
+              }}
             />
-          </div>
-          <div className="input-small">
-            <label>Left</label>
-            <TextField
-              value={marginLeft}
-              onChange={(_, v) => setMarginLeft(v ?? '')}
-              type="number"
+
+            <Dropdown
+              label="Align Items"
+              selectedKey={alignItems}
+              options={alignItemsOptions}
+              onChange={(_, option) => {
+                if (!option) return;
+                setAlignItems(
+                  option.key as
+                    | 'flex-start'
+                    | 'flex-end'
+                    | 'center'
+                    | 'baseline'
+                    | 'stretch'
+                    | 'start'
+                    | 'end'
+                );
+              }}
             />
-          </div>
-        </div>
+
+            <Dropdown
+              label="Justify Content"
+              selectedKey={justifyContent}
+              options={justifyContentOptions}
+              onChange={(_, option) => {
+                if (!option) return;
+                setJustifyContent(
+                  option.key as
+                    | 'flex-start'
+                    | 'flex-end'
+                    | 'center'
+                    | 'space-between'
+                    | 'space-around'
+                );
+              }}
+            />
+          </>
+        )}
+
+        {/* Row => forced flex-direction: row, plus gap, flexWrap, alignItems, justifyContent */}
+        {layoutType === 'row' && (
+          <>
+            <div className="slider-pair">
+              <label>Gap: {gap}px</label>
+              <Slider
+                min={0}
+                max={50}
+                step={1}
+                value={gap}
+                showValue={false}
+                onChange={(val) => setGap(val)}
+              />
+            </div>
+
+            <Dropdown
+              label="Flex Wrap"
+              selectedKey={flexWrap}
+              options={flexWrapOptions}
+              onChange={(_, option) => {
+                if (!option) return;
+                setFlexWrap(option.key as 'nowrap' | 'wrap' | 'wrap-reverse');
+              }}
+            />
+
+            <Dropdown
+              label="Align Items"
+              selectedKey={alignItems}
+              options={alignItemsOptions}
+              onChange={(_, option) => {
+                if (!option) return;
+                setAlignItems(
+                  option.key as
+                    | 'flex-start'
+                    | 'flex-end'
+                    | 'center'
+                    | 'baseline'
+                    | 'stretch'
+                    | 'start'
+                    | 'end'
+                );
+              }}
+            />
+
+            <Dropdown
+              label="Justify Content"
+              selectedKey={justifyContent}
+              options={justifyContentOptions}
+              onChange={(_, option) => {
+                if (!option) return;
+                setJustifyContent(
+                  option.key as
+                    | 'flex-start'
+                    | 'flex-end'
+                    | 'center'
+                    | 'space-between'
+                    | 'space-around'
+                );
+              }}
+            />
+          </>
+        )}
+
+        {/* Grid => columns, rows, rowGap, columnGap, justifyItems, alignGridItems */}
+        {layoutType === 'grid' && (
+          <>
+            <div className="slider-pair">
+              <label>Columns: {columns}</label>
+              <Slider
+                min={1}
+                max={12}
+                step={1}
+                value={columns}
+                showValue={false}
+                onChange={(val) => setColumns(val)}
+              />
+            </div>
+
+            <div className="slider-pair">
+              <label>Rows: {rows}</label>
+              <Slider
+                min={1}
+                max={12}
+                step={1}
+                value={rows}
+                showValue={false}
+                onChange={(val) => setRows(val)}
+              />
+            </div>
+
+            <div className="slider-pair">
+              <label>Row Gap: {rowGap}px</label>
+              <Slider
+                min={0}
+                max={50}
+                step={1}
+                value={rowGap}
+                showValue={false}
+                onChange={(val) => setRowGap(val)}
+              />
+            </div>
+
+            <div className="slider-pair">
+              <label>Column Gap: {columnGap}px</label>
+              <Slider
+                min={0}
+                max={50}
+                step={1}
+                value={columnGap}
+                showValue={false}
+                onChange={(val) => setColumnGap(val)}
+              />
+            </div>
+
+            <Dropdown
+              label="Justify Items"
+              selectedKey={justifyItems}
+              options={justifyItemsOptions}
+              onChange={(_, option) => {
+                if (!option) return;
+                setJustifyItems(
+                  option.key as 'start' | 'center' | 'end' | 'stretch'
+                );
+              }}
+            />
+
+            <Dropdown
+              label="Align Grid Items"
+              selectedKey={alignGridItems}
+              options={alignGridItemsOptions}
+              onChange={(_, option) => {
+                if (!option) return;
+                setAlignGridItems(
+                  option.key as 'start' | 'center' | 'end' | 'stretch'
+                );
+              }}
+            />
+          </>
+        )}
       </div>
 
       <div className="big-separator" />
@@ -274,5 +713,3 @@ const LayoutTab: React.FC = () => {
     </Wrapper>
   );
 };
-
-export default LayoutTab;
