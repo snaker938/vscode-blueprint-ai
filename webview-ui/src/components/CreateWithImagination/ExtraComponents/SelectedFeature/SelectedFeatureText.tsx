@@ -7,10 +7,7 @@ import {
   PrimaryButton,
   Spinner,
 } from '@fluentui/react';
-import {
-  GetBlueprintLayoutClientSide,
-  parseBlueprintAIResult,
-} from '../../../../AI/Parser';
+import { GetBlueprintLayoutClientSide } from '../../../../AI/Parser';
 import './SelectedFeatureText.css';
 
 interface SelectedFeatureTextProps {
@@ -108,10 +105,10 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
       );
 
       // Once the AI responds, parse the data
-      const parsedResult = parseBlueprintAIResult(layoutJson);
+      // const parsedResult = parseBlueprintAIResult(layoutJson);
 
       // For demo, just log it. In a real app, you might store this in state or do further processing.
-      console.log('Parsed Blueprint AI result:', parsedResult);
+      // console.log('Parsed Blueprint AI result:', parsedResult);
     } catch (err: any) {
       console.error('Error generating layout:', err);
       alert(`Error generating layout: ${err.message ?? String(err)}`);
