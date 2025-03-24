@@ -1,5 +1,3 @@
-// MainWebViewPanel.ts
-
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { getBlueprintLayout } from '../ai/BlueprintAiService';
@@ -101,7 +99,7 @@ export class MainWebViewPanel {
             // The main AI call: get CraftJS layout from text + screenshot
             const layoutJson = await getBlueprintLayout({
               userText: payload.userText,
-              rawScreenshot: buffer, // rename/add fields as needed
+              rawScreenshot: buffer,
             });
 
             // Return the final layout JSON to the webview

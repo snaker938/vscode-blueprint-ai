@@ -1,105 +1,107 @@
-import { CSSProperties, FC } from 'react';
-import { useNode, Node } from '@craftjs/core';
-import ReactPlayer from 'react-player';
-import { Resizer } from '../Utils/Resizer';
-import { VideoProperties } from './VideoProperties';
+import { useNode, useEditor } from '@craftjs/core';
+import YouTube from 'react-youtube';
+import { styled } from 'styled-components';
 
-export interface IVideoProps {
-  videoId?: string;
-  width?: string;
-  height?: string;
-  autoplay?: boolean;
-  controls?: boolean;
-  /** When true, allows the video to be interacted with while editing */
-  interactable?: boolean;
-}
-
-const defaultProps: Partial<IVideoProps> = {
-  videoId: '91_ZULhScRc',
-  width: '400px',
-  height: '225px',
-  autoplay: false,
-  controls: true,
-  interactable: false,
-};
-
-export const Video: FC<IVideoProps> & { craft?: any } = (incomingProps) => {
-  const props = { ...defaultProps, ...incomingProps };
-  const { videoId, width, height, autoplay, controls, interactable } = props;
-
+//
+// Inline Settings Component
+//
+const VideoProperties = () => {
+  // Access the props and setProp() function from the current node
   const {
-    connectors: { connect },
     actions: { setProp },
-  } = useNode((node: Node) => ({
-    id: node.id,
+    videoId,
+  } = useNode((node) => ({
+    videoId: node.data.props.videoId,
   }));
 
-  const containerStyle: CSSProperties = {
-    position: 'relative',
-    width: width ?? 'auto',
-    height: height ?? 'auto',
-  };
-
-  const overlayStyle: CSSProperties = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    zIndex: 1,
-    background: 'transparent',
-    pointerEvents: interactable ? 'none' : 'auto',
-  };
-
-  const handleToggleClick = () => {
-    setProp((props: IVideoProps) => {
-      props.interactable = false;
-    });
-  };
-
   return (
-    <div>
-      {interactable && (
-        <div style={{ marginBottom: '8px' }}>
-          <button
-            onClick={handleToggleClick}
-            style={{ padding: '4px 8px', fontSize: '12px' }}
-          >
-            Disable Interactivity
-          </button>
-        </div>
-      )}
-      <Resizer
-        ref={(ref) => ref && connect(ref)}
-        propKey={{ width: 'width', height: 'height' }}
-        style={containerStyle}
+    <div style={{ padding: '10px' }}>
+      <label
+        htmlFor="videoId"
+        style={{ display: 'block', marginBottom: '5px' }}
       >
-        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-          <ReactPlayer
-            url={`https://www.youtube.com/watch?v=${videoId}`}
-            playing={autoplay}
-            controls={controls}
-            width="100%"
-            height="100%"
-          />
-          <div style={overlayStyle} />
-        </div>
-      </Resizer>
+        YouTube Video ID
+      </label>
+      <input
+        id="videoId"
+        type="text"
+        value={videoId}
+        style={{ width: '100%' }}
+        onChange={(e) => {
+          const value = e.target.value;
+          // Update the prop via setProp
+          setProp((props: any) => {
+            props.videoId = value;
+          });
+        }}
+      />
     </div>
   );
 };
 
+//
+// Styled Container
+//
+const YoutubeDiv = styled.div<{ $enabled: boolean }>`
+  width: 100%;
+  height: 100%;
+
+  > div {
+    height: 100%;
+  }
+
+  iframe {
+    pointer-events: ${(props) => (props.$enabled ? 'none' : 'auto')};
+  }
+`;
+
+//
+// Main Video Component
+//
+export const Video = (props: any) => {
+  const { enabled } = useEditor((state) => ({
+    enabled: state.options.enabled,
+  }));
+
+  const {
+    connectors: { connect },
+  } = useNode((node) => ({
+    selected: node.events.selected,
+  }));
+
+  const { videoId } = props;
+
+  return (
+    <YoutubeDiv
+      ref={(dom) => {
+        // Ensure `dom` is not null before connecting
+        if (dom) {
+          connect(dom);
+        }
+      }}
+      $enabled={enabled}
+    >
+      <YouTube
+        videoId={videoId}
+        opts={{
+          width: '100%',
+          height: '100%',
+        }}
+      />
+    </YoutubeDiv>
+  );
+};
+
+//
+// Craft.js configuration
+//
 Video.craft = {
   displayName: 'Video',
-  props: defaultProps,
-  isCanvas: false,
-  rules: {
-    canDrag: () => true,
-    canMove: () => true,
-    canDelete: () => true,
-    canSelect: () => true,
+  props: {
+    videoId: 'IwzUs1IMdyQ', // default video
   },
   related: {
-    settings: VideoProperties,
+    // Link the inline settings component:
+    toolbar: VideoProperties,
   },
 };
