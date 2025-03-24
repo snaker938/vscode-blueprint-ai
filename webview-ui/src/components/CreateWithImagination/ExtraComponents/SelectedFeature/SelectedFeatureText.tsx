@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Text,
   TextField,
@@ -7,8 +7,8 @@ import {
   PrimaryButton,
   Spinner,
 } from '@fluentui/react';
-import { GetBlueprintLayoutClientSide } from '../../../../AI/Parser';
 import './SelectedFeatureText.css';
+import { getVsCodeApi } from './utils/vscodeApi';
 
 interface SelectedFeatureTextProps {
   openModal: () => void;
@@ -17,15 +17,39 @@ interface SelectedFeatureTextProps {
 const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   openModal,
 }) => {
-  // State for the uploaded image and preview
+  // State: user’s text prompt
+  const [textValue, setTextValue] = useState<string>('');
+
+  // State: image file & local preview
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
-  // Text input from the user
-  const [textValue, setTextValue] = useState<string>('');
-
-  // Loading state for spinner feedback
+  // UI loading indicator
   const [loading, setLoading] = useState<boolean>(false);
+
+  /**
+   * Listen for messages from the VS Code extension backend.
+   * Specifically, we look for 'blueprintAI.result' messages.
+   */
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { command, payload } = event.data || {};
+      if (command === 'blueprintAI.result') {
+        // We got a response from the extension for the "generateLayout" call
+        setLoading(false); // stop the spinner
+        if (payload.error) {
+          console.error('AI error:', payload.error);
+        } else if (payload.layoutJson) {
+          console.log('AI result (layout JSON):', payload.layoutJson);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
 
   /**
    * Trigger hidden file input to choose an image
@@ -48,7 +72,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds the 5MB limit.');
+        alert('File size exceeds 5MB limit.');
         return;
       }
 
@@ -82,38 +106,46 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   };
 
   /**
-   * Called when user clicks "Generate"
+   * Handle "Generate" click
+   *   1) Convert the image to an ArrayBuffer
+   *   2) Post a message to the VS Code extension
+   *   3) Wait for the extension's response and log to console
    */
   const handleGenerateClick = async () => {
-    if (!uploadedImage) {
-      alert('Please select an image before generating.');
+    // If no prompt and no image, possibly warn user?
+    if (!textValue && !uploadedImage) {
+      alert('Please enter text or select an image first.');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Convert the File to an ArrayBuffer
-      const arrayBuffer = await uploadedImage.arrayBuffer();
-      // Convert arrayBuffer to a typed array, then to a normal array
-      const rawBytes = Array.from(new Uint8Array(arrayBuffer));
+      // If there's an image, convert it to raw bytes
+      let rawBytes: number[] | null = null;
+      if (uploadedImage) {
+        const arrayBuffer = await uploadedImage.arrayBuffer();
+        rawBytes = Array.from(new Uint8Array(arrayBuffer));
+      }
 
-      // Call local AI function
-      const layoutJson = await GetBlueprintLayoutClientSide(
-        textValue,
-        rawBytes
-      );
-
-      // Once the AI responds, parse the data
-      // const parsedResult = parseBlueprintAIResult(layoutJson);
-
-      // For demo, just log it. In a real app, you might store this in state or do further processing.
-      // console.log('Parsed Blueprint AI result:', parsedResult);
+      // Send the data to the extension
+      const vsCode = getVsCodeApi();
+      if (!vsCode) {
+        console.error('VSCode API is not available.');
+        setLoading(false);
+        return;
+      }
+      vsCode.postMessage({
+        command: 'blueprintAI.generateLayout',
+        payload: {
+          userText: textValue,
+          arrayBuffer: rawBytes, // could be null if no image
+        },
+      });
     } catch (err: any) {
-      console.error('Error generating layout:', err);
-      alert(`Error generating layout: ${err.message ?? String(err)}`);
-    } finally {
       setLoading(false);
+      console.error('Error preparing data for AI:', err);
+      alert(`Error preparing data for AI: ${err.message ?? String(err)}`);
     }
   };
 
@@ -194,7 +226,6 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         </PrimaryButton>
       </div>
 
-      {/* Show a spinner if in loading state */}
       {loading && (
         <div className="loading-section">
           <Spinner

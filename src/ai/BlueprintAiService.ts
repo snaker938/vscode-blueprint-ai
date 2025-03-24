@@ -1,4 +1,4 @@
-// BlueprintAiService.ts
+// ai/blueprintAiService.ts
 
 import { getSummariesFromScreenshot } from './getSummariesFromScreenshot';
 import { getFinalCraftJsLayout } from './blueprintAiClient';
@@ -12,17 +12,22 @@ import { getFinalCraftJsLayout } from './blueprintAiClient';
 export async function getBlueprintLayout(params: {
   userText: string;
   rawScreenshot?: Buffer; // Mark optional if needed
+  openAiKey: string; // <-- your in-memory key here
 }): Promise<string> {
+  const { userText, rawScreenshot, openAiKey } = params;
+
   // 1) Gather UI + GUI summaries
   const { uiSummary, guiSummary } = await getSummariesFromScreenshot({
-    rawScreenshot: params.rawScreenshot,
+    rawScreenshot,
+    openAiKey,
   });
 
-  // 2) Ask ChatGPT to combine them (and userText) into a CraftJS layout
+  // 2) Ask ChatGPT (or GPT-4) to combine them (and userText) into a CraftJS layout
   const craftJsJson = await getFinalCraftJsLayout({
-    userText: params.userText,
-    uiSummary,
-    guiSummary,
+    userText, // same as userText: userText
+    uiSummary, // same as uiSummary: uiSummary
+    guiSummary, // same as guiSummary: guiSummary
+    openAiKey, // pass the key along
   });
 
   return craftJsJson;

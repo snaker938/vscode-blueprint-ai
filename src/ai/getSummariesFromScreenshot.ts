@@ -1,73 +1,45 @@
-// getSummariesFromScreenshot.tsx
+// ai/getSummariesFromScreenshot.ts
 
-import { runPythonOcr } from './pythonBridge';
 import { getUiSummary, getGuiSummary } from './blueprintAiClient';
 
-interface OcrResult {
-  text: string;
-  confidence: number;
-  bbox: [number, number, number, number];
-}
-
-interface SummariesRequest {
-  // The screenshot is optional.
-  rawScreenshot?: Buffer;
-}
-
-interface SummariesResponse {
-  uiSummary: string;
-  guiSummary: string;
-}
-
 /**
- * Main exported function for producing summaries from a screenshot.
+ * Runs OCR + summarization on the screenshot, returning:
+ *   - uiSummary
+ *   - guiSummary
  *
- * - If a screenshot is provided:
- *    1. Runs OCR to extract text.
- *    2. Calls UI extraction with both the recognized text and the screenshot.
- *    3. Calls GUI extraction with the screenshot only.
- *
- * - If no screenshot is provided:
- *    1. UI extraction is still performed using the (possibly empty) recognized text.
- *    2. GUI extraction is skipped.
+ * Replace the OCR logic with your actual code if needed.
  */
-export async function getSummariesFromScreenshot(
-  request: SummariesRequest
-): Promise<SummariesResponse> {
-  const { rawScreenshot } = request;
+export async function getSummariesFromScreenshot(params: {
+  rawScreenshot?: Buffer;
+  openAiKey: string;
+}): Promise<{ uiSummary: string; guiSummary: string }> {
+  const { rawScreenshot, openAiKey } = params;
+  let uiSummary = '';
+  let guiSummary = '';
 
-  try {
-    let recognizedText = '';
-
-    // If a screenshot is provided, perform OCR.
-    if (rawScreenshot) {
-      const ocrResults: OcrResult[] = await runPythonOcr(rawScreenshot);
-      recognizedText = ocrResults
-        .map((item) => item.text)
-        .filter(Boolean)
-        .join('\n');
-    }
-
-    // UI extraction needs both text and the screenshot (if available).
-    const uiSummary = await getUiSummary({
-      text: recognizedText,
-      screenshot: rawScreenshot,
-    });
-
-    // GUI extraction requires a screenshot only. Skip if not available.
-    let guiSummary = '';
-    if (rawScreenshot) {
-      guiSummary = await getGuiSummary({ screenshot: rawScreenshot });
-    }
-
-    return { uiSummary, guiSummary };
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error('BlueprintAiService error:', errorMsg);
-
-    return {
-      uiSummary: `Error producing UI summary: ${errorMsg}`,
-      guiSummary: `Error producing GUI summary: ${errorMsg}`,
-    };
+  // EXAMPLE: do your OCR here. We'll just pretend:
+  let recognizedText = '';
+  if (rawScreenshot) {
+    // ... call your OCR library or something ...
+    recognizedText = 'Detected text from screenshot here.';
+  } else {
+    recognizedText = '[No screenshot provided]';
   }
+
+  // 1) UI summary (requires recognized text + optional screenshot)
+  uiSummary = await getUiSummary({
+    text: recognizedText,
+    screenshot: rawScreenshot,
+    openAiKey,
+  });
+
+  // 2) GUI summary (only if we have a screenshot)
+  if (rawScreenshot) {
+    guiSummary = await getGuiSummary({
+      screenshot: rawScreenshot,
+      openAiKey,
+    });
+  }
+
+  return { uiSummary, guiSummary };
 }

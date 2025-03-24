@@ -19,17 +19,7 @@
         "command": "blueprint-ai.openWebview",
         "title": "Open Blueprint AI"
       }
-    ],
-    "configuration": {
-      "type": "object",
-      "title": "Blueprint AI",
-      "properties": {
-        "blueprintAI.openaiApiKey": {
-          "type": "string",
-          "description": "OpenAI API key used by the Blueprint AI extension."
-        }
-      }
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

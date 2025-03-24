@@ -1,4 +1,4 @@
-// File: src/ai/pythonBridge.ts
+// ai/pythonBridge.ts
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';

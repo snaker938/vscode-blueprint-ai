@@ -1,12 +1,14 @@
+// panels/MainWebViewPanel.ts
+
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { getBlueprintLayout } from '../ai/BlueprintAiService';
+import { getOpenAiApiKey, setOpenAiApiKey } from '../utils/extensionContext';
 
 /**
- * Helper function to prompt the user to set/update the OpenAI API key.
+ * Helper function to prompt the user to set or update the OpenAI API key in memory.
  */
 async function promptUserToSetApiKey(): Promise<void> {
-  const config = vscode.workspace.getConfiguration('blueprintAI');
   const enteredKey = await vscode.window.showInputBox({
     prompt: 'Enter your OpenAI API Key',
     placeHolder: 'sk-...',
@@ -14,13 +16,10 @@ async function promptUserToSetApiKey(): Promise<void> {
   });
 
   if (enteredKey) {
-    await config.update(
-      'openaiApiKey',
-      enteredKey,
-      vscode.ConfigurationTarget.Global
-    );
+    // Store the key in memory only
+    setOpenAiApiKey(enteredKey);
     vscode.window.showInformationMessage(
-      'OpenAI API key saved. You can now use Blueprint AI features.'
+      'OpenAI API key set in memory. It will be cleared when VS Code is closed.'
     );
   } else {
     vscode.window.showWarningMessage(
@@ -92,6 +91,25 @@ export class MainWebViewPanel {
       switch (command) {
         case 'blueprintAI.generateLayout':
           try {
+            // Check if we have an API key in memory
+            let openAiKey = getOpenAiApiKey();
+            if (!openAiKey) {
+              // Prompt user to set the key
+              await this._handleTwoButtonError(
+                'You have not set an API key for Blueprint AI. AI features will not work until you do so.',
+                'Close',
+                'Set API Key',
+                promptUserToSetApiKey
+              );
+
+              // After prompting, check again
+              openAiKey = getOpenAiApiKey();
+              if (!openAiKey) {
+                // If still no key, stop here
+                throw new Error('OpenAI API key not found. Cannot continue.');
+              }
+            }
+
             // Convert raw array of bytes to a Node Buffer
             const arrayOfBytes: number[] = payload.arrayBuffer || [];
             const buffer = Buffer.from(arrayOfBytes);
@@ -100,6 +118,7 @@ export class MainWebViewPanel {
             const layoutJson = await getBlueprintLayout({
               userText: payload.userText,
               rawScreenshot: buffer,
+              openAiKey, // Pass the in-memory key to the AI call
             });
 
             // Return the final layout JSON to the webview
@@ -113,16 +132,12 @@ export class MainWebViewPanel {
             const errorMsg = error.message || String(error);
 
             // Handle missing/invalid key or general error
-            if (errorMsg.includes('OpenAI API key not found')) {
+            if (
+              errorMsg.includes('not set') ||
+              errorMsg.includes('not found')
+            ) {
               await this._handleTwoButtonError(
-                'You have not set an API key for Blueprint AI. AI features will not work until you do so.',
-                'Close',
-                'Set API Key',
-                promptUserToSetApiKey
-              );
-            } else if (errorMsg.includes('Invalid OpenAI API key')) {
-              await this._handleTwoButtonError(
-                'Your OpenAI API key appears to be invalid. Please set a valid key.',
+                'OpenAI API key is missing or invalid. Please set a valid key.',
                 'Close',
                 'Set API Key',
                 promptUserToSetApiKey
