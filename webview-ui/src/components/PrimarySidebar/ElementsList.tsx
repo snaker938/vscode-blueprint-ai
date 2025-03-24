@@ -12,7 +12,7 @@ import { Container as CraftContainer } from '../UserComponents/Container';
 
 import './sidebarStyles.css';
 import { Text } from '../UserComponents/Text';
-// import { Button } from '../UserComponents/Button';
+import { Button } from '../UserComponents/Button';
 import { Navigation } from '../UserComponents/Navigation';
 import { Video } from '../UserComponents/Video';
 import { StarRating } from '../UserComponents/StarRating';
@@ -93,6 +93,8 @@ const elementToCreate = (key: string) => {
       return <Slider />;
     case 'video':
       return <Video />;
+    case 'button':
+      return <Button />;
     default:
       return null;
   }
@@ -108,6 +110,7 @@ export const ElementsList: React.FC = () => {
     { key: 'text', icon: 'AlignLeft', name: 'Text' },
     { key: 'icon', icon: 'Emoji2', name: 'Icon' },
     { key: 'navigation', icon: 'NavigateForward', name: 'Navigation' },
+    { key: 'button', icon: 'ButtonControl', name: 'Button' },
   ];
 
   const mediaItems = [

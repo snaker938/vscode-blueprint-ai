@@ -153,19 +153,27 @@ export const ContainerProperties = () => {
     justifyItems,
     alignGridItems,
 
+    // Whether this node is the root container
+    isRoot,
+
     actions: { setProp },
   } = useNode((node) => {
     const props = node.data.props as ContainerProps;
 
     return {
+      // Layout
       layoutType: props.layoutType ?? 'container',
 
       // Dimensions / colors
       width: props.width ?? '300px',
       height: props.height ?? '150px',
       background: props.background ?? '#ffffff',
+
+      // Spacing
       margin: props.margin,
       padding: props.padding,
+
+      // Other appearance
       radius: props.radius ?? 0,
       shadow: props.shadow ?? 0,
       fillSpace: props.fillSpace ?? 'no',
@@ -191,31 +199,36 @@ export const ContainerProperties = () => {
       columnGap: props.columnGap ?? 10,
       justifyItems: props.justifyItems ?? 'stretch',
       alignGridItems: props.alignGridItems ?? 'stretch',
+
+      // Check if this node is the root container
+      isRoot: node.data.custom?.isRootContainer === true,
     };
   });
 
   return (
     <>
-      {/* LAYOUT TYPE */}
-      <Section title="Layout Type">
-        <Item>
-          <Radio
-            label="Layout Type"
-            value={layoutType}
-            onChangeValue={(val) =>
-              setProp((props: ContainerProps) => {
-                props.layoutType = val as ContainerProps['layoutType'];
-              })
-            }
-            options={[
-              { label: 'Container', value: 'container' },
-              { label: 'Row', value: 'row' },
-              { label: 'Section', value: 'section' },
-              { label: 'Grid', value: 'grid' },
-            ]}
-          />
-        </Item>
-      </Section>
+      {/* LAYOUT TYPE (hidden if root) */}
+      {!isRoot && (
+        <Section title="Layout Type">
+          <Item>
+            <Radio
+              label="Layout Type"
+              value={layoutType}
+              onChangeValue={(val) =>
+                setProp((props: ContainerProps) => {
+                  props.layoutType = val as ContainerProps['layoutType'];
+                })
+              }
+              options={[
+                { label: 'Container', value: 'container' },
+                { label: 'Row', value: 'row' },
+                { label: 'Section', value: 'section' },
+                { label: 'Grid', value: 'grid' },
+              ]}
+            />
+          </Item>
+        </Section>
+      )}
 
       {/* DIMENSIONS */}
       <Section title="Dimensions">
@@ -243,7 +256,7 @@ export const ContainerProperties = () => {
         </Item>
       </Section>
 
-      {/* COLORS */}
+      {/* COLOURS */}
       <Section title="Colours">
         <Item>
           <ColorPicker
@@ -260,16 +273,20 @@ export const ContainerProperties = () => {
         </Item>
       </Section>
 
-      {/* SPACING: MARGIN/PADDING */}
-      <SpacingControl
-        label="Margin"
-        values={margin}
-        onChangeValues={(vals) =>
-          setProp((props: ContainerProps) => {
-            props.margin = vals;
-          })
-        }
-      />
+      {/* MARGIN (hidden if root) */}
+      {!isRoot && (
+        <SpacingControl
+          label="Margin"
+          values={margin}
+          onChangeValues={(vals) =>
+            setProp((props: ContainerProps) => {
+              props.margin = vals;
+            })
+          }
+        />
+      )}
+
+      {/* PADDING (always shown) */}
       <SpacingControl
         label="Padding"
         values={padding}
@@ -354,25 +371,27 @@ export const ContainerProperties = () => {
 
       {/* LAYOUT SETTINGS */}
       <Section title="Layout Settings">
-        {/* Fill Space is universal; show it for all layout types */}
-        <Item>
-          <SwitchInput
-            label="Fill Space"
-            value={fillSpace === 'yes'}
-            onChangeValue={(checked) =>
-              setProp((props: ContainerProps) => {
-                props.fillSpace = checked ? 'yes' : 'no';
-              })
-            }
-          />
-        </Item>
+        {/* Fill Space (hidden if root) */}
+        {!isRoot && (
+          <Item>
+            <SwitchInput
+              label="Fill Space"
+              value={fillSpace === 'yes'}
+              onChangeValue={(checked) =>
+                setProp((props: ContainerProps) => {
+                  props.fillSpace = checked ? 'yes' : 'no';
+                })
+              }
+            />
+          </Item>
+        )}
 
-        {/**
+        {/*
          * container / section / row -> flex-based
          * grid -> grid-based
          */}
 
-        {/* If layoutType is "container" or "section", show flex controls: flexDirection, alignItems, justifyContent */}
+        {/* If layoutType is "container" or "section", show flex controls */}
         {(layoutType === 'container' || layoutType === 'section') && (
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6}>

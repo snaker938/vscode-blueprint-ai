@@ -99,7 +99,6 @@ export interface ContainerProps {
 
 /**
  * Default property values for all layout types.
- * (You can tweak these as needed or break them into separate defaults if desired.)
  */
 const defaultProps: Partial<ContainerProps> = {
   layoutType: 'container',
@@ -144,10 +143,20 @@ export const Container: FC<ContainerProps> & { craft?: any } = (
     data: node.data,
   }));
 
-  // Merge with defaults
-  const props = { ...defaultProps, ...incomingProps };
-
   const isRoot = data.custom?.isRootContainer === true;
+
+  // 1. Merge default + incoming props
+  const mergedProps = { ...defaultProps, ...incomingProps };
+
+  // 2. If this is the root node, remove these props so they don't appear in the settings panel
+  if (isRoot) {
+    delete mergedProps.layoutType;
+    delete mergedProps.margin;
+    delete mergedProps.fillSpace;
+  }
+
+  // Final, sanitized props
+  const props = mergedProps as ContainerProps;
 
   // Safely handle margin & padding arrays
   const safeMargin: FourNumberArray = Array.isArray(props.margin)

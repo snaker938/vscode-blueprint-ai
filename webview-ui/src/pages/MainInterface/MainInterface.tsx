@@ -4,11 +4,10 @@ import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
 import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
 import { RenderNode } from '../../components/UserComponents/Utils/RenderNode';
 
+import './MainInterface.css';
+import { Button } from '../../components/UserComponents/Button';
 import { Container } from '../../components/UserComponents/Container';
 import { Text } from '../../components/UserComponents/Text';
-
-import './MainInterface.css';
-// import { Button } from '../../components/UserComponents/Button';
 import { Navigation } from '../../components/UserComponents/Navigation';
 import { Video } from '../../components/UserComponents/Video';
 import { StarRating } from '../../components/UserComponents/StarRating';
@@ -72,6 +71,7 @@ const MainInterface: React.FC = () => {
         StarRating,
         SearchBox,
         Slider,
+        Button,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >
