@@ -8,8 +8,12 @@ import { Container } from '../../components/UserComponents/Container';
 import { Text } from '../../components/UserComponents/Text';
 
 import './MainInterface.css';
-import { Button } from '../../components/UserComponents/Button';
+// import { Button } from '../../components/UserComponents/Button';
 import { Navigation } from '../../components/UserComponents/Navigation';
+import { Video } from '../../components/UserComponents/Video';
+import { StarRating } from '../../components/UserComponents/StarRating';
+import { SearchBox } from '../../components/UserComponents/SearchBox';
+import { Slider } from '../../components/UserComponents/Slider';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -62,8 +66,11 @@ const MainInterface: React.FC = () => {
       resolver={{
         Container,
         Text,
-        Button,
         Navigation,
+        Video,
+        StarRating,
+        SearchBox,
+        Slider,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >

@@ -172,6 +172,9 @@ export const TextProperties: React.FC = () => {
     hasCheckbox,
     checked,
     checkboxPosition,
+
+    // NEW RESIZER PROP
+    enableResizer,
   } = useNode((node) => ({
     // Destructure node.data.props so we can display/update them
     renderMode: node.data.props.renderMode,
@@ -208,6 +211,8 @@ export const TextProperties: React.FC = () => {
     hasCheckbox: node.data.props.hasCheckbox,
     checked: node.data.props.checked,
     checkboxPosition: node.data.props.checkboxPosition,
+
+    enableResizer: node.data.props.enableResizer,
   }));
 
   /**************************************************************************
@@ -448,6 +453,14 @@ export const TextProperties: React.FC = () => {
             helperText="Use CSS units (e.g. 40px, auto)"
           />
         </Item>
+        {/* NEW SWITCH FOR ENABLING / DISABLING RESIZER */}
+        <Item>
+          <SwitchInput
+            label="Enable Resizer"
+            value={!!enableResizer}
+            onChangeValue={(val) => handleChange('enableResizer', val)}
+          />
+        </Item>
       </Section>
 
       {/* --- Link Section (only relevant if renderMode === 'link') --- */}
@@ -566,7 +579,7 @@ export const TextProperties: React.FC = () => {
         </Section>
       )}
 
-      {/* --- Checkbox Props (applies to either mode) --- */}
+      {/* --- Checkbox Props (applies to any renderMode) --- */}
       <Section title="Checkbox" defaultExpanded={false}>
         <Item>
           <SwitchInput

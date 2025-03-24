@@ -25,13 +25,17 @@ function expandShortHex(hex: string): string {
 }
 
 /**
- * Parse user-entered string (which might be Hex or RGBA).
- * Return a **valid hex** (e.g. #aabbcc) or null if invalid.
- * This is a lightweight parser, so advanced formats won't be recognized.
+ * Parse user-entered string (which might be Hex, "transparent", or RGBA).
+ * Return either a valid hex (#rrggbb), the string "transparent", or null if invalid.
  */
 function parseToHex(input: string): string | null {
   const trimmed = input.trim().toLowerCase();
   if (!trimmed) return null;
+
+  // --- NEW: Allow exact "transparent"
+  if (trimmed === 'transparent') {
+    return 'transparent';
+  }
 
   // Check short/long hex (#abc or #aabbcc)
   const hexPattern = /^#[0-9a-f]{3}$|^#[0-9a-f]{6}$/;
@@ -40,16 +44,22 @@ function parseToHex(input: string): string | null {
   }
 
   // Basic RGBA pattern: rgb(...) or rgba(...)
-  // Example: rgba(255, 0, 0, 0.5) => #ff0000 after dropping alpha
-  // We are ignoring alpha to produce a single #rrggbb hex
+  // We'll ignore alpha for the final hex—unless alpha is 0, in which case we treat it as "transparent".
   const rgbaPattern =
-    /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(\s*,\s*[\d.]+)?\)$/;
+    /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(\s*,\s*([\d.]+))?\)$/;
   const match = trimmed.match(rgbaPattern);
   if (match) {
     const r = Math.max(0, Math.min(255, parseInt(match[1], 10)));
     const g = Math.max(0, Math.min(255, parseInt(match[2], 10)));
     const b = Math.max(0, Math.min(255, parseInt(match[3], 10)));
-    // Convert to #rrggbb
+    // If there's an alpha group and it's 0 or less, treat as transparent
+    if (match[5]) {
+      const alphaVal = parseFloat(match[5]);
+      if (!isNaN(alphaVal) && alphaVal <= 0) {
+        return 'transparent';
+      }
+    }
+    // Convert RGB to #rrggbb
     const hex = ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
     return `#${hex}`;
   }
@@ -61,13 +71,12 @@ interface ColorPickerProps {
   /** A label for the color field. */
   label: string;
   /**
-   * Incoming color value from outside. This can be anything,
-   * but we'll always store a valid hex string internally.
+   * Incoming color value (could be a string like "#ffffff", "transparent", etc.).
    */
   value: unknown;
 
-  /** Called with the final chosen hex (e.g. #ff0000). */
-  onChangeValue(newHex: string): void;
+  /** Called with the final chosen color (either #rrggbb or "transparent"). */
+  onChangeValue(newColor: string): void;
 
   helperText?: string;
   error?: boolean;
@@ -81,10 +90,8 @@ interface ColorPickerProps {
 }
 
 /**
- * A no-lag color picker powered by react-colorful:
- *  - Color wheel input (for #rrggbb)
- *  - Optional text input to enter either #rrggbb or rgb/rgba(...).
- * The final value is always stored/passed as a hex string.
+ * A color picker with a wheel + optional text input.
+ * The final value is always stored/passed as a hex string or "transparent".
  */
 export const ColorPicker: React.FC<ColorPickerProps> = ({
   label,
@@ -96,7 +103,8 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   allowTextInput = true,
 }) => {
   /**
-   * Convert the incoming value to a valid hex, or #000000 if not parseable.
+   * Convert the incoming value to a valid color ("transparent" or #rrggbb),
+   * or fallback to #000000 if invalid.
    */
   const parseInitial = useCallback(() => {
     if (typeof value === 'string') {
@@ -107,60 +115,59 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
     return '#000000';
   }, [value]);
 
-  // The "source of truth" for the color wheel
-  const [internalHex, setInternalHex] = useState<string>(parseInitial);
+  // The "source of truth" for the color wheel & text field
+  const [internalColor, setInternalColor] = useState<string>(parseInitial);
 
-  // The text input (if allowed) also needs local state
+  // Keep text field in sync
   const [textValue, setTextValue] = useState<string>(parseInitial);
 
-  // If `value` changes from the outside, sync everything
+  // If `value` changes from outside, sync everything
   useEffect(() => {
-    const newHex = parseInitial();
-    setInternalHex(newHex);
-    setTextValue(newHex);
+    const newColor = parseInitial();
+    setInternalColor(newColor);
+    setTextValue(newColor);
   }, [value, parseInitial]);
 
   /**
-   * When the user moves the color wheel, update local states
-   * and pass the new hex to onChangeValue.
+   * When user changes the color wheel, we store that color in state
+   * (unless it was "transparent", which is not directly representable on the wheel).
    */
   const handleColorWheelChange = (newHex: string) => {
-    setInternalHex(newHex);
+    setInternalColor(newHex);
     setTextValue(newHex);
     onChangeValue(newHex);
   };
 
   /**
-   * If we show the text input, on each keystroke we just store the typed text.
-   * We'll wait for blur (or Enter key, if you prefer) to parse/validate fully.
+   * For the text input changes, we'll parse on blur.
    */
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTextValue(e.target.value);
   };
 
-  /**
-   * On blur, parse the typed string. If valid, pass to color wheel + onChange.
-   * If invalid, revert to the last known internalHex.
-   */
   const handleTextBlur = () => {
     const parsed = parseToHex(textValue);
     if (parsed) {
-      setInternalHex(parsed);
+      setInternalColor(parsed);
       setTextValue(parsed);
       onChangeValue(parsed);
     } else {
-      // Revert
-      setTextValue(internalHex);
+      // If invalid, revert
+      setTextValue(internalColor);
     }
   };
+
+  // For the color wheel, if we have "transparent", fallback to #000000 visually.
+  const wheelColor =
+    internalColor === 'transparent' ? '#000000' : internalColor;
 
   return (
     <FormControl margin="normal" error={error} disabled={disabled} fullWidth>
       <FormLabel component="legend">{label}</FormLabel>
       <Box mt={1}>
-        {/* The color wheel from react-colorful (always uses #rrggbb) */}
+        {/* The color wheel from react-colorful (cannot directly show transparency) */}
         <HexColorPicker
-          color={internalHex}
+          color={wheelColor}
           onChange={handleColorWheelChange}
           style={{
             width: '100%',
@@ -170,7 +177,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           }}
         />
 
-        {/* Optional text input for manual editing */}
+        {/* Optional text input for manual editing (supports "transparent") */}
         {allowTextInput && (
           <Box mt={2}>
             <TextField
@@ -181,7 +188,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               onChange={handleTextChange}
               onBlur={handleTextBlur}
               disabled={disabled}
-              placeholder="Type #hex or rgb(...)"
+              placeholder="Type #hex, rgb(...), or 'transparent'"
             />
           </Box>
         )}

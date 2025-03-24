@@ -95,6 +95,11 @@ export interface TextProps {
    * Position of checkbox relative to text: 'left' or 'right'.
    */
   checkboxPosition?: 'left' | 'right';
+
+  /**
+   * If true, wraps the component in the Resizer for manual resizing.
+   */
+  enableResizer?: boolean;
 }
 
 /**
@@ -125,8 +130,8 @@ const defaultProps: Partial<TextProps> = {
   borderWidth: 1,
 
   // Sizing
-  width: '200px',
-  height: '40px',
+  width: 'auto',
+  height: 'auto',
 
   // Textbox-specific
   placeholder: 'Enter text...',
@@ -225,6 +230,8 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
     hasCheckbox,
     checked,
     checkboxPosition,
+
+    enableResizer,
   } = props;
 
   // Connect to Craft Node
@@ -295,8 +302,8 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
   const containerStyle: CSSProperties = {
     position: 'relative',
     display: 'inline-block',
-    width: width || 'auto',
-    height: height || 'auto',
+    width: width === 'auto' ? undefined : width,
+    height: height === 'auto' ? undefined : height,
     margin: `${safeMargin[0]}px ${safeMargin[1]}px ${safeMargin[2]}px ${safeMargin[3]}px`,
     padding: `${safePadding[0]}px ${safePadding[1]}px ${safePadding[2]}px ${safePadding[3]}px`,
     background: background || 'transparent',
@@ -319,8 +326,6 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
     textAlign: textAlign as CSSProperties['textAlign'],
     textShadow:
       shadow && shadow > 0 ? `0px 0px 2px rgba(0,0,0,${shadow / 100})` : 'none',
-    width: '100%',
-    height: '100%',
     boxSizing: 'border-box',
     outline: 'none',
     border: 'none',
@@ -465,14 +470,22 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
     }
   };
 
-  return (
+  // Conditionally render <Resizer> or plain <div>
+  return enableResizer ? (
     <Resizer
       ref={connectRef}
-      propKey={{ width: 'width', height: 'height' }}
+      propKey={{
+        width: width === 'auto' ? undefined : 'width',
+        height: height === 'auto' ? undefined : 'height',
+      }}
       style={containerStyle}
     >
       {finalContent}
     </Resizer>
+  ) : (
+    <div ref={connectRef} style={containerStyle}>
+      {finalContent}
+    </div>
   );
 };
 

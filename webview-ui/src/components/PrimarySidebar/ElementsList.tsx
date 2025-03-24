@@ -12,8 +12,12 @@ import { Container as CraftContainer } from '../UserComponents/Container';
 
 import './sidebarStyles.css';
 import { Text } from '../UserComponents/Text';
-import { Button } from '../UserComponents/Button';
+// import { Button } from '../UserComponents/Button';
 import { Navigation } from '../UserComponents/Navigation';
+import { Video } from '../UserComponents/Video';
+import { StarRating } from '../UserComponents/StarRating';
+import { SearchBox } from '../UserComponents/SearchBox';
+import { Slider } from '../UserComponents/Slider';
 
 /* ------------------ Styled Components ------------------ */
 const Wrapper = styled.div`
@@ -79,18 +83,16 @@ const elementToCreate = (key: string) => {
       return <CraftContainer />;
     case 'text':
       return <Text />;
-    case 'button':
-      return <Button />;
     case 'navigation':
       return <Navigation />;
-    // case 'icon':
-    //   return <Icon />;
-    // case 'starRating':
-    //   return <StarRating />;
-    // case 'slider':
-    //   return <Slider />;
-    // case 'video':
-    //   return <Video />;
+    case 'searchBox':
+      return <SearchBox />;
+    case 'starRating':
+      return <StarRating />;
+    case 'slider':
+      return <Slider />;
+    case 'video':
+      return <Video />;
     default:
       return null;
   }
@@ -103,7 +105,6 @@ export const ElementsList: React.FC = () => {
   /* ----- SMART ITEMS (Container, Button, Text, Heading, etc.) ----- */
   const smartItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
-    { key: 'button', icon: 'ButtonControl', name: 'Button' },
     { key: 'text', icon: 'AlignLeft', name: 'Text' },
     { key: 'icon', icon: 'Emoji2', name: 'Icon' },
     { key: 'navigation', icon: 'NavigateForward', name: 'Navigation' },
@@ -112,11 +113,9 @@ export const ElementsList: React.FC = () => {
   const mediaItems = [
     { key: 'image', icon: 'FileImage', name: 'Image' },
     { key: 'video', icon: 'Video', name: 'Video' },
-    { key: 'audio', icon: 'MusicInCollection', name: 'Audio' },
   ];
 
   const formItems = [
-    { key: 'radioButtons', icon: 'RadioBtnOn', name: 'Radio Button' },
     { key: 'slider', icon: 'Slider', name: 'Slider' },
     { key: 'starRating', icon: 'FavoriteStar', name: 'Star Rating' },
     { key: 'searchBox', icon: 'Search', name: 'Search Box' },

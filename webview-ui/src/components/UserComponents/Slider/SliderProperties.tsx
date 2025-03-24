@@ -1,123 +1,119 @@
 import { useNode } from '@craftjs/core';
-// import { Grid } from '@mui/material';
-
 import { Section } from '../../PropertiesSidebar/UI/Section';
 import { Item } from '../../PropertiesSidebar/UI/Item';
 import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
 import { Radio } from '../../PropertiesSidebar/UI/Radio';
 import { ColorPicker } from '../../PropertiesSidebar/UI/ColorPicker';
-// import { Slider as UISlider } from '../../PropertiesSidebar/UI/Slider';
 
 /**
- * A small helper to display margin/padding controls with a Slider + TextInput for each side.
- * (Include only if you need spacing-like controls for this slider; otherwise omit.)
+ * Matches the updated ISliderProps from the new Slider component.
  */
-// function SpacingControl({
-//   label,
-//   values,
-//   onChangeValues,
-//   max = 100,
-// }: {
-//   label: string;
-//   values?: number[];
-//   onChangeValues: (newValues: number[]) => void;
-//   max?: number;
-// }) {
-//   const safeValues = values ?? [0, 0, 0, 0];
-
-//   return (
-//     <Section title={label}>
-//       <Grid container spacing={2}>
-//         {['Top', 'Right', 'Bottom', 'Left'].map((pos, idx) => (
-//           <Grid item xs={6} key={pos}>
-//             <UISlider
-//               label={`${label} ${pos}`}
-//               value={safeValues[idx]}
-//               min={0}
-//               max={max}
-//               onChangeValue={(val) => {
-//                 const newVals = [...safeValues];
-//                 newVals[idx] = val;
-//                 onChangeValues(newVals);
-//               }}
-//               showValueInput={false}
-//             />
-//             <TextInput
-//               label={pos}
-//               type="number"
-//               value={safeValues[idx].toString()}
-//               onChangeValue={(val) => {
-//                 const num = parseInt(val, 10) || 0;
-//                 const newVals = [...safeValues];
-//                 newVals[idx] = num;
-//                 onChangeValues(newVals);
-//               }}
-//             />
-//           </Grid>
-//         ))}
-//       </Grid>
-//     </Section>
-//   );
-// }
-
-/**
- * Props for your Slider component.
- */
-export interface SliderProps {
+export interface ISliderProps {
   min: number;
   max: number;
   step: number;
-  value: number;
+  currentValue: number;
   orientation: 'horizontal' | 'vertical';
   width: string;
   height: string;
-  backgroundColor: string;
-  trackColor: string;
   thumbColor: string;
+  trackColor: string;
+
+  // Individual margins
+  marginTop: string;
+  marginRight: string;
+  marginBottom: string;
+  marginLeft: string;
+
+  // Individual paddings
+  paddingTop: string;
+  paddingRight: string;
+  paddingBottom: string;
+  paddingLeft: string;
+
+  trackThickness?: number;
+
+  // Show/hide numeric value
+  showValue: boolean;
+  // Numeric value styling
+  valueColor?: string;
+  valueFontSize?: string;
+  valueFontWeight?: string;
 }
 
 /**
- * A property panel to edit SliderProps in the Craft editor.
+ * A property panel to edit the new Slider props in the Craft editor.
  */
 export const SliderProperties = () => {
   const {
     min,
     max,
     step,
-    value,
+    currentValue,
     orientation,
     width,
     height,
-    backgroundColor,
-    trackColor,
     thumbColor,
+    trackColor,
+
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
+
+    paddingTop,
+    paddingRight,
+    paddingBottom,
+    paddingLeft,
+
+    trackThickness,
+    showValue,
+    valueColor,
+    valueFontSize,
+    valueFontWeight,
+
     actions: { setProp },
   } = useNode((node) => {
-    const props = node.data.props as SliderProps;
+    const props = node.data.props as ISliderProps;
     return {
       min: props.min ?? 0,
       max: props.max ?? 100,
       step: props.step ?? 1,
-      value: props.value ?? 50,
+      currentValue: props.currentValue ?? 50,
       orientation: props.orientation ?? 'horizontal',
       width: props.width ?? '300px',
-      height: props.height ?? '50px',
-      backgroundColor: props.backgroundColor ?? '#ffffff',
-      trackColor: props.trackColor ?? '#dadada',
-      thumbColor: props.thumbColor ?? '#777777',
+      height: props.height ?? '40px',
+      thumbColor: props.thumbColor ?? '#ffffff',
+      trackColor: props.trackColor ?? '#0078d4',
+
+      marginTop: props.marginTop ?? '0px',
+      marginRight: props.marginRight ?? '0px',
+      marginBottom: props.marginBottom ?? '0px',
+      marginLeft: props.marginLeft ?? '0px',
+
+      paddingTop: props.paddingTop ?? '0px',
+      paddingRight: props.paddingRight ?? '0px',
+      paddingBottom: props.paddingBottom ?? '0px',
+      paddingLeft: props.paddingLeft ?? '0px',
+
+      trackThickness: props.trackThickness ?? 8,
+      showValue: props.showValue ?? true,
+      valueColor: props.valueColor ?? '#000000',
+      valueFontSize: props.valueFontSize ?? '14px',
+      valueFontWeight: props.valueFontWeight ?? 'normal',
     };
   });
 
   return (
     <Section title="Slider Properties">
-      {/* Basic numeric inputs */}
+      {/* Range constraints */}
       <Item>
         <TextInput
           label="Min"
           type="number"
           value={min.toString()}
           onChangeValue={(val) =>
-            setProp((props: SliderProps) => {
+            setProp((props: ISliderProps) => {
               props.min = parseInt(val, 10) || 0;
             })
           }
@@ -129,7 +125,7 @@ export const SliderProperties = () => {
           type="number"
           value={max.toString()}
           onChangeValue={(val) =>
-            setProp((props: SliderProps) => {
+            setProp((props: ISliderProps) => {
               props.max = parseInt(val, 10) || 100;
             })
           }
@@ -141,33 +137,35 @@ export const SliderProperties = () => {
           type="number"
           value={step.toString()}
           onChangeValue={(val) =>
-            setProp((props: SliderProps) => {
+            setProp((props: ISliderProps) => {
               props.step = parseInt(val, 10) || 1;
             })
           }
         />
       </Item>
+
+      {/* Controlled value */}
       <Item>
         <TextInput
-          label="Value"
+          label="Current Value"
           type="number"
-          value={value.toString()}
+          value={currentValue.toString()}
           onChangeValue={(val) =>
-            setProp((props: SliderProps) => {
-              props.value = parseInt(val, 10) || 0;
+            setProp((props: ISliderProps) => {
+              props.currentValue = parseInt(val, 10) || 0;
             })
           }
         />
       </Item>
 
-      {/* Orientation as a Radio group */}
+      {/* Orientation */}
       <Item>
         <Radio
           label="Orientation"
           value={orientation}
           onChangeValue={(newVal) =>
-            setProp((props: SliderProps) => {
-              props.orientation = newVal as SliderProps['orientation'];
+            setProp((props: ISliderProps) => {
+              props.orientation = newVal as ISliderProps['orientation'];
             })
           }
           options={[
@@ -177,13 +175,13 @@ export const SliderProperties = () => {
         />
       </Item>
 
-      {/* Dimensions */}
+      {/* Width / Height */}
       <Item>
         <TextInput
           label="Width"
           value={width}
           onChangeValue={(val) =>
-            setProp((props: SliderProps) => {
+            setProp((props: ISliderProps) => {
               props.width = val;
             })
           }
@@ -194,21 +192,91 @@ export const SliderProperties = () => {
           label="Height"
           value={height}
           onChangeValue={(val) =>
-            setProp((props: SliderProps) => {
+            setProp((props: ISliderProps) => {
               props.height = val;
             })
           }
         />
       </Item>
 
+      {/* Track thickness */}
+      <Item>
+        <TextInput
+          label="Track Thickness"
+          type="number"
+          value={trackThickness.toString()}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.trackThickness = parseInt(val, 10) || 8;
+            })
+          }
+        />
+      </Item>
+
+      {/* Toggle show/hide value (could be checkbox or radio) */}
+      <Item>
+        <Radio
+          label="Show Value?"
+          value={showValue ? 'yes' : 'no'}
+          onChangeValue={(newVal) =>
+            setProp((props: ISliderProps) => {
+              props.showValue = newVal === 'yes';
+            })
+          }
+          options={[
+            { label: 'Yes', value: 'yes' },
+            { label: 'No', value: 'no' },
+          ]}
+        />
+      </Item>
+
+      {/* Value label styling */}
+      {showValue && (
+        <>
+          <Item>
+            <ColorPicker
+              label="Value Label Color"
+              value={valueColor || '#000000'}
+              onChangeValue={(newVal) =>
+                setProp((props: ISliderProps) => {
+                  props.valueColor = newVal;
+                })
+              }
+            />
+          </Item>
+          <Item>
+            <TextInput
+              label="Value Label Font Size"
+              value={valueFontSize || ''}
+              onChangeValue={(val) =>
+                setProp((props: ISliderProps) => {
+                  props.valueFontSize = val || '14px';
+                })
+              }
+            />
+          </Item>
+          <Item>
+            <TextInput
+              label="Value Label Font Weight"
+              value={valueFontWeight || ''}
+              onChangeValue={(val) =>
+                setProp((props: ISliderProps) => {
+                  props.valueFontWeight = val || 'normal';
+                })
+              }
+            />
+          </Item>
+        </>
+      )}
+
       {/* Colors */}
       <Item>
         <ColorPicker
-          label="Background Color"
-          value={backgroundColor}
+          label="Thumb Color"
+          value={thumbColor}
           onChangeValue={(newVal) =>
-            setProp((props: SliderProps) => {
-              props.backgroundColor = newVal;
+            setProp((props: ISliderProps) => {
+              props.thumbColor = newVal;
             })
           }
         />
@@ -218,32 +286,104 @@ export const SliderProperties = () => {
           label="Track Color"
           value={trackColor}
           onChangeValue={(newVal) =>
-            setProp((props: SliderProps) => {
+            setProp((props: ISliderProps) => {
               props.trackColor = newVal;
             })
           }
         />
       </Item>
+
+      {/* Margins */}
       <Item>
-        <ColorPicker
-          label="Thumb Color"
-          value={thumbColor}
-          onChangeValue={(newVal) =>
-            setProp((props: SliderProps) => {
-              props.thumbColor = newVal;
+        <TextInput
+          label="Margin Top"
+          value={marginTop}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.marginTop = val;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Margin Right"
+          value={marginRight}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.marginRight = val;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Margin Bottom"
+          value={marginBottom}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.marginBottom = val;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Margin Left"
+          value={marginLeft}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.marginLeft = val;
             })
           }
         />
       </Item>
 
-      {/* (Optional) Spacing controls, if you need them */}
-      {/* 
-      <SpacingControl
-        label="Slider Margin"
-        values={[0, 0, 0, 0]}
-        onChangeValues={() => {}}
-      />
-      */}
+      {/* Paddings */}
+      <Item>
+        <TextInput
+          label="Padding Top"
+          value={paddingTop}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.paddingTop = val;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Padding Right"
+          value={paddingRight}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.paddingRight = val;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Padding Bottom"
+          value={paddingBottom}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.paddingBottom = val;
+            })
+          }
+        />
+      </Item>
+      <Item>
+        <TextInput
+          label="Padding Left"
+          value={paddingLeft}
+          onChangeValue={(val) =>
+            setProp((props: ISliderProps) => {
+              props.paddingLeft = val;
+            })
+          }
+        />
+      </Item>
     </Section>
   );
 };
