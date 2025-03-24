@@ -7,15 +7,11 @@ import {
   PrimaryButton,
   Spinner,
 } from '@fluentui/react';
+import {
+  GetBlueprintLayoutClientSide,
+  parseBlueprintAIResult,
+} from '../../../../AI/Parser';
 import './SelectedFeatureText.css';
-
-declare global {
-  interface Window {
-    vscode: {
-      postMessage: (msg: any) => void;
-    };
-  }
-}
 
 interface SelectedFeatureTextProps {
   openModal: () => void;
@@ -51,17 +47,11 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
       // Basic validation
       if (!file.type.startsWith('image/')) {
-        window.vscode.postMessage({
-          command: 'alert',
-          text: 'Please upload a valid image file.',
-        });
+        alert('Please upload a valid image file.');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        window.vscode.postMessage({
-          command: 'alert',
-          text: 'File size exceeds the 5MB limit.',
-        });
+        alert('File size exceeds the 5MB limit.');
         return;
       }
 
@@ -96,15 +86,10 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
   /**
    * Called when user clicks "Generate"
-   * - Reads image as ArrayBuffer
-   * - Sends { userText, arrayBuffer } to the extension
    */
   const handleGenerateClick = async () => {
     if (!uploadedImage) {
-      window.vscode.postMessage({
-        command: 'alert',
-        text: 'Please select an image before generating.',
-      });
+      alert('Please select an image before generating.');
       return;
     }
 
@@ -116,21 +101,22 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
       // Convert arrayBuffer to a typed array, then to a normal array
       const rawBytes = Array.from(new Uint8Array(arrayBuffer));
 
-      // Post everything to the extension backend
-      window.vscode.postMessage({
-        command: 'blueprintAI.generateLayout',
-        payload: {
-          userText: textValue,
-          arrayBuffer: rawBytes,
-        },
-      });
+      // Call local AI function
+      const layoutJson = await GetBlueprintLayoutClientSide(
+        textValue,
+        rawBytes
+      );
+
+      // Once the AI responds, parse the data
+      const parsedResult = parseBlueprintAIResult(layoutJson);
+
+      // For demo, just log it. In a real app, you might store this in state or do further processing.
+      console.log('Parsed Blueprint AI result:', parsedResult);
     } catch (err: any) {
-      window.vscode.postMessage({
-        command: 'alert',
-        text: `Error reading image file: ${err?.message || String(err)}`,
-      });
+      console.error('Error generating layout:', err);
+      alert(`Error generating layout: ${err.message ?? String(err)}`);
+    } finally {
       setLoading(false);
-      return;
     }
   };
 
