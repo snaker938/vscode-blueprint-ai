@@ -116,7 +116,6 @@ OBJECTIVE:
 Produce a SINGLE-PAGE layout for CraftJS as **strictly valid JSON** using only the following components (exact names):
   - Button
   - Container
-  - Icon
   - Navigation
   - SearchBox
   - Slider
@@ -260,18 +259,8 @@ DETAILED COMPONENT REFERENCE (use exactly these component names):
      - For layoutType="grid", columns/rows define the grid.  
      - For layoutType="row", gap/flexWrap apply.
 
-3) Icon
-   Props:
-     iconName: string (default "AiFillSmile")
-     color: string (CSS color, default "#000000")
-     margin: [number, number, number, number] (default [0, 0, 0, 0])
-     padding: [number, number, number, number] (default [0, 0, 0, 0])
-     width: number (default 50)
-     height: number (default 50)
-   Notes:
-     - Uses react-icons/ai for the actual icon.
 
-4) Navigation
+3) Navigation
    Props:
      navType: "navbar" | "sidebar" (default "navbar")
      displayName: string (default "MySite")
@@ -292,7 +281,7 @@ DETAILED COMPONENT REFERENCE (use exactly these component names):
      - If sidebar + collapsible=true, toggles between collapsed/expanded widths.  
      - Do not reference multiple pages in the final layout JSON.
 
-5) SearchBox
+4) SearchBox
    Props:
      placeholder: string (default "Search...")
      searchText: string (default "")
@@ -310,7 +299,7 @@ DETAILED COMPONENT REFERENCE (use exactly these component names):
    Notes:
      - Renders an <input> inside a styled container.
 
-6) Slider
+5) Slider
    Props:
      min: number (default 0)
      max: number (default 100)
@@ -337,7 +326,7 @@ DETAILED COMPONENT REFERENCE (use exactly these component names):
    Notes:
      - A simple Fluent UI-based slider.
 
-7) StarRating
+6) StarRating
    Props:
      rating: number (default 3)
      maxRating: number (default 5)
@@ -352,7 +341,7 @@ DETAILED COMPONENT REFERENCE (use exactly these component names):
      - Displays filled vs. empty stars.  
      - Not interactive in the given code snippet.
 
-8) Text
+7) Text
    Props:
      renderMode: "textbox" | "link" | "dropdown" (default "textbox")
      fontSize: number (default 15)
@@ -396,7 +385,7 @@ DETAILED COMPONENT REFERENCE (use exactly these component names):
      - renderMode="dropdown" => <select> from items in text split by "||".  
      - If hasCheckbox=true, a checkbox is shown next to the text.
 
-9) Video
+8) Video
    Props:
      videoId: string (default "91_ZULhScRc")
      width: string (default "400px")

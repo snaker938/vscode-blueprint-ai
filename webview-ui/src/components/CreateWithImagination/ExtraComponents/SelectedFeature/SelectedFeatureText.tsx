@@ -9,6 +9,7 @@ import {
   PrimaryButton,
   Spinner,
 } from '@fluentui/react';
+import { useNavigate } from 'react-router-dom';
 import './SelectedFeatureText.css';
 import { getVsCodeApi } from './utils/vscodeApi';
 
@@ -19,7 +20,7 @@ interface SelectedFeatureTextProps {
 const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   openModal,
 }) => {
-  // State: user’s text prompt
+  // State: user's text prompt
   const [textValue, setTextValue] = useState<string>('');
 
   // State: image file & local preview
@@ -28,6 +29,9 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
   // UI loading indicator
   const [loading, setLoading] = useState<boolean>(false);
+
+  // React Router navigate hook
+  const navigate = useNavigate();
 
   /**
    * Listen for messages from the VS Code extension backend.
@@ -43,6 +47,13 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
           console.error('AI error:', payload.error);
         } else if (payload.layoutJson) {
           console.log('AI result (layout JSON):', payload.layoutJson);
+
+          // Navigate to the /editing page, passing data via location state
+          navigate('/editing', {
+            state: {
+              layoutJson: payload.layoutJson,
+            },
+          });
         }
       }
     };
@@ -51,7 +62,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, []);
+  }, [navigate]);
 
   /**
    * Trigger hidden file input to choose an image
@@ -137,6 +148,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         setLoading(false);
         return;
       }
+
       vsCode.postMessage({
         command: 'blueprintAI.generateLayout',
         payload: {
