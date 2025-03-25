@@ -1,3 +1,5 @@
+// CustomLayer.tsx
+
 import React, { useState } from 'react';
 import { useLayer } from '@craftjs/layers';
 import { useEditor, NodeId } from '@craftjs/core';

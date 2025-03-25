@@ -1,3 +1,5 @@
+// ChildLayerItem.tsx
+
 import React, { useState } from 'react';
 import { useEditor, NodeId } from '@craftjs/core';
 import { ROOT_NODE } from '@craftjs/utils';

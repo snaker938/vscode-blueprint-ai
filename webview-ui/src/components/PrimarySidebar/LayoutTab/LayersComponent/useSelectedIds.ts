@@ -1,3 +1,5 @@
+// useSelectedIds.ts
+
 import { useEditor, NodeId, EditorState } from '@craftjs/core';
 
 /**
