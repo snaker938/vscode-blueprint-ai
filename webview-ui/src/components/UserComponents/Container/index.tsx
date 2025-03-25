@@ -249,6 +249,13 @@ export const Container: FC<ContainerProps> & { craft?: any } = (
     containerStyle.borderColor = 'rgba(0,0,0,0.2)';
     containerStyle.borderWidth = '2px';
     containerStyle.boxShadow = '0 3px 10px rgba(0, 0, 0, 0.07)';
+  } else {
+    /**
+     * Non-root containers should never exceed the parent's size,
+     * so we add maxWidth / maxHeight of 100%.
+     */
+    containerStyle.maxWidth = '100%';
+    containerStyle.maxHeight = '100%';
   }
 
   const dropRef = (ref: HTMLDivElement | null) => {
@@ -270,7 +277,8 @@ export const Container: FC<ContainerProps> & { craft?: any } = (
     );
   }
 
-  // Otherwise, wrap in Resizer (so user can drag to resize width/height)
+  // Otherwise, wrap in Resizer (so user can drag to resize width/height),
+  // and ensure it cannot exceed the parent's bounding box
   return (
     <Resizer
       ref={(ref) => ref && connectors.connect(ref)}
