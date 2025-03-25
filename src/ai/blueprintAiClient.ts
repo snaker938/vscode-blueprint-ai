@@ -1,88 +1,80 @@
-import axios from 'axios';
+// blueprintAiClient.tsx
+import OpenAI from 'openai';
 import {
   UI_SUMMARY_META_PROMPT,
   GUI_SUMMARY_META_PROMPT,
   FINAL_CRAFTJS_META_PROMPT,
 } from './blueprintAiPrompts';
 
-/**
- * Core helper to call OpenAI ChatGPT with Axios.
- * Expects an `openAiKey` param rather than relying on environment variables.
- * The optional parameter `useImageModel` determines which model and settings to use.
- */
-async function callChatGPT(
-  systemPrompt: string,
-  userPrompt: string,
-  openAiKey: string,
-  useImageModel: boolean = false
-): Promise<string> {
-  if (!openAiKey) {
-    throw new Error('OpenAI API key not provided.');
-  }
-
-  // Choose model based on whether an image is included:
-  const model = useImageModel ? 'gpt-4o-2024-08-06' : 'o3-mini-2025-01-31';
-
-  // Build the request body. Only include temperature for image-based requests.
-  const requestBody: any = {
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-  };
-
-  if (useImageModel) {
-    requestBody.temperature = 0.7;
-  }
-
-  try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      requestBody,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openAiKey}`,
-        },
-      }
-    );
-
-    const rawText = response.data.choices?.[0]?.message?.content;
-    return rawText ? rawText.trim() : '';
-  } catch (error: any) {
-    console.error('Error calling ChatGPT:', error?.response?.data || error);
-    throw new Error(
-      `OpenAI API error: ${
-        error?.response?.data?.error?.message || error.message
-      }`
-    );
-  }
-}
-
-/**
- * Converts the screenshot to a truncated base64 string (if provided)
- * to avoid huge prompts that might exceed token limits.
- */
-function maybeBase64EncodeScreenshot(screenshot?: Buffer): string | undefined {
-  if (!screenshot) {
+/** Truncates a base64 string if it's too large. */
+function maybeTruncateBase64(base64?: string): string | undefined {
+  if (!base64) {
     return undefined;
   }
-  const base64 = screenshot.toString('base64');
-
-  // Example: limit to 100k characters (arbitrary).
-  const maxLength = 100_000;
+  const maxLength = 25_000; // ~25k characters
   if (base64.length > maxLength) {
     return base64.slice(0, maxLength) + '...[TRUNCATED BASE64]';
   }
-
   return base64;
+}
+
+/** Converts a screenshot Buffer to a data URL (truncated) for the prompt. */
+function screenshotToDataUrl(screenshot?: Buffer): string | undefined {
+  if (!screenshot) {
+    return undefined;
+  }
+  const truncatedBase64 = maybeTruncateBase64(screenshot.toString('base64'));
+  return truncatedBase64
+    ? `data:image/png;base64,${truncatedBase64}`
+    : undefined;
+}
+
+/**
+ * Low-level function to call OpenAI chat completions.
+ * Uses different models depending on whether we have a screenshot or not.
+ */
+async function callOpenAiChat(params: {
+  systemPrompt: string;
+  userContent: string;
+  openAiKey: string;
+  hasScreenshot: boolean;
+}): Promise<string> {
+  const { systemPrompt, userContent, openAiKey, hasScreenshot } = params;
+
+  // Instantiate the OpenAI client
+  const openai = new OpenAI({ apiKey: openAiKey });
+
+  // Model selection
+  // "gpt-4o" if we have a screenshot, otherwise "o3-mini-2025-01-31"
+  const model = hasScreenshot ? 'gpt-4o' : 'o3-mini-2025-01-31';
+
+  // Build the messages (must be ChatCompletionMessageParam)
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    {
+      role: 'system',
+      content: systemPrompt,
+    },
+    {
+      role: 'user',
+      content: userContent,
+    },
+  ];
+
+  // Make the request
+  const response = await openai.chat.completions.create({
+    model,
+    messages,
+    // "store" is not officially documented in the new library; remove or keep if needed
+    // store: !hasScreenshot,
+  });
+
+  // Return the text of the first choice
+  return response.choices?.[0]?.message?.content?.trim() ?? '';
 }
 
 /**
  * Summarizes OCR text as a short, structured list of UI lines.
- * Uses the UI_SUMMARY_META_PROMPT plus optional screenshot data.
- * If a screenshot is provided, the image model is used.
+ * If a screenshot is provided, we use the "gpt-4o" model.
  */
 export async function getUiSummary(params: {
   text: string;
@@ -90,52 +82,57 @@ export async function getUiSummary(params: {
   openAiKey: string;
 }): Promise<string> {
   const { text, screenshot, openAiKey } = params;
-  const base64Screenshot = maybeBase64EncodeScreenshot(screenshot);
 
-  const systemPrompt = UI_SUMMARY_META_PROMPT;
-  const userPrompt = `
-Screenshot (base64, optional): 
-${base64Screenshot ? base64Screenshot : '[No screenshot provided]'}
+  const dataUrl = screenshotToDataUrl(screenshot);
+  const hasScreenshot = Boolean(dataUrl);
 
-=== RAW OCR TEXT ===
-${text}
-`;
+  // Build a single string for the user's content
+  let userContent = `Below is the recognized text:\n\n${text}\n`;
 
-  // If a screenshot is provided, use the image model (GPT‑4o); otherwise, the text-only model.
-  const useImageModel = Boolean(screenshot);
-  return await callChatGPT(systemPrompt, userPrompt, openAiKey, useImageModel);
+  if (hasScreenshot) {
+    userContent += `\n[Image data (base64)]:\n${dataUrl}\n`;
+  }
+
+  return callOpenAiChat({
+    systemPrompt: UI_SUMMARY_META_PROMPT,
+    userContent,
+    openAiKey,
+    hasScreenshot,
+  });
 }
 
 /**
- * Extracts or summarizes the GUI structure from a screenshot only.
- * Uses the GUI_SUMMARY_META_PROMPT plus the screenshot in base64 form.
+ * Extracts or summarizes the GUI structure from a screenshot.
+ * If no screenshot is provided, it returns a minimal text response.
  */
 export async function getGuiSummary(params: {
-  screenshot: Buffer;
+  screenshot?: Buffer;
   openAiKey: string;
 }): Promise<string> {
   const { screenshot, openAiKey } = params;
-  const base64Screenshot = maybeBase64EncodeScreenshot(screenshot);
 
-  const systemPrompt = GUI_SUMMARY_META_PROMPT;
-  const userPrompt = `
-Screenshot (base64):
-${base64Screenshot}
+  const dataUrl = screenshotToDataUrl(screenshot);
+  const hasScreenshot = Boolean(dataUrl);
 
-[No OCR text provided for GUI extraction—just the screenshot structure.]
-`;
+  let userContent: string;
 
-  // This function always includes a screenshot; use the GPT‑4o model.
-  return await callChatGPT(systemPrompt, userPrompt, openAiKey, true);
+  if (hasScreenshot) {
+    userContent = `Please analyze the GUI in this screenshot:\n${dataUrl}`;
+  } else {
+    userContent = 'No screenshot provided for GUI analysis.';
+  }
+
+  return callOpenAiChat({
+    systemPrompt: GUI_SUMMARY_META_PROMPT,
+    userContent,
+    openAiKey,
+    hasScreenshot,
+  });
 }
 
 /**
  * Generates a single-page CraftJS layout JSON using the final meta prompt.
- * Combines user instructions with the extracted UI & GUI summaries (if any).
- *
- *  - userText: the user's own instructions
- *  - uiSummary: result from getUiSummary (possibly empty)
- *  - guiSummary: result from getGuiSummary (possibly empty)
+ * Typically no screenshot is passed here => uses the "o3-mini-2025-01-31" model.
  */
 export async function getFinalCraftJsLayout(params: {
   userText: string;
@@ -145,18 +142,23 @@ export async function getFinalCraftJsLayout(params: {
 }): Promise<string> {
   const { userText, uiSummary, guiSummary, openAiKey } = params;
 
-  const systemPrompt = FINAL_CRAFTJS_META_PROMPT;
-  const userPrompt = `
-USER’S TEXTUAL INSTRUCTIONS:
-"${userText}"
+  // Combine the user instructions with any UI/GUI summaries
+  const userContent = `
+USER INSTRUCTIONS:
+${userText}
 
 GUI SUMMARY (IF ANY):
 ${guiSummary}
 
-OCR TEXT SUMMARY (IF ANY):
+UI / OCR TEXT SUMMARY (IF ANY):
 ${uiSummary}
 `;
 
-  // No screenshot here, so use the text-only model.
-  return await callChatGPT(systemPrompt, userPrompt, openAiKey, false);
+  // No screenshot => text-only model
+  return callOpenAiChat({
+    systemPrompt: FINAL_CRAFTJS_META_PROMPT,
+    userContent,
+    openAiKey,
+    hasScreenshot: false,
+  });
 }
