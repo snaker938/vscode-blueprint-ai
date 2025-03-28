@@ -1,11 +1,17 @@
+// pageStore.ts
+
 export interface Page {
   id: number;
   name: string;
   thumbnail?: string;
+  // New property to store a CraftJS layout:
+  layout?: any; // Typically a JSON object representing the CraftJS node tree
 }
 
-// Default "global" pages:
-let globalPages: Page[] = [{ id: 1, name: 'Page 1', thumbnail: '' }];
+// Default "global" pages with an empty layout by default:
+let globalPages: Page[] = [
+  { id: 1, name: 'Page 1', thumbnail: '', layout: {} },
+];
 
 // Keep track of which page is currently selected:
 let globalSelectedPageId: number = 1;
@@ -13,7 +19,7 @@ let globalSelectedPageId: number = 1;
 // Listeners for changes in the *selected page*:
 let listeners: Array<() => void> = [];
 
-/** New: listeners for changes in the globalPages array itself. */
+/** Listeners for changes in the globalPages array itself. */
 let pagesListeners: Array<() => void> = [];
 
 /** Retrieve the entire list of global pages. */
@@ -31,17 +37,33 @@ export const getGlobalSelectedPage = (): Page | undefined => {
   return globalPages.find((p) => p.id === globalSelectedPageId);
 };
 
+/** Retrieve the CraftJS layout for a specific page by its ID. */
+export const getPageLayout = (id: number): any | undefined => {
+  const page = globalPages.find((p) => p.id === id);
+  return page ? page.layout : undefined;
+};
+
+/** Set the CraftJS layout for a specific page by its ID. */
+export const setPageLayout = (id: number, layout: any) => {
+  const page = globalPages.find((p) => p.id === id);
+  if (page) {
+    page.layout = layout;
+    // Notify subscribers that the pages have changed.
+    pagesListeners.forEach((fn) => fn());
+  }
+};
+
 /** Set the entire list of global pages. */
 export const setGlobalPages = (newPages: Page[]) => {
   globalPages = newPages;
-  // Notify all subscribers that pages changed
+  // Notify all subscribers that pages changed.
   pagesListeners.forEach((fn) => fn());
 };
 
 /** Set which page is currently selected and notify subscribers. */
 export const setGlobalSelectedPageId = (id: number) => {
   globalSelectedPageId = id;
-  // Notify all 'selected page' subscribers
+  // Notify all 'selected page' subscribers.
   listeners.forEach((fn) => fn());
 };
 
@@ -55,7 +77,9 @@ export const subscribeSelectedPageChange = (listener: () => void) => {
   };
 };
 
-/** NEW: Subscribe to changes in the global pages array. */
+/** Subscribe to changes in the global pages array.
+ *  Returns an unsubscribe function.
+ */
 export const subscribeGlobalPagesChange = (listener: () => void) => {
   pagesListeners.push(listener);
   return () => {

@@ -17,7 +17,7 @@ import { Video } from '../../components/UserComponents/Video';
 import { StarRating } from '../../components/UserComponents/StarRating';
 import { SearchBox } from '../../components/UserComponents/SearchBox';
 import { Slider } from '../../components/UserComponents/Slider';
-import SuggestedPages from '../../components/SuggestedPages/SuggestedPages';
+// import SuggestedPages from '../../components/SuggestedPages/SuggestedPages';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -167,14 +167,14 @@ const MainInterface: React.FC = () => {
         </aside>
 
         {/* Conditionally render the SuggestedPages if present */}
-        {suggestedPageNames && suggestedPageNames.length > 0 && (
+        {/* {suggestedPageNames && suggestedPageNames.length > 0 && (
           <SuggestedPages
             isOpen={true}
             onClose={() => {
               // implement your close logic if necessary
             }}
           />
-        )}
+        )} */}
       </div>
     </Editor>
   );

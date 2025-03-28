@@ -1,3 +1,5 @@
+// PagesTab.tsx
+
 import React, { useState } from 'react';
 import {
   IconButton,
@@ -17,6 +19,7 @@ import {
   setGlobalSelectedPageId,
 } from './pageStore';
 import SuggestedPages from '../../SuggestedPages/SuggestedPages';
+import { getSuggestedPages } from './suggestedPageStore';
 
 /* ------------------ Styled Components ------------------ */
 
@@ -110,7 +113,7 @@ const PagesTab: React.FC = () => {
   const [addPageName, setAddPageName] = useState('');
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [newPageName, setNewPageName] = useState('');
-  const [showSuggested, setShowSuggested] = useState(false);
+  const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
   // Helper: update global & local page list
   const updatePages = (newPages: Page[]) => {
@@ -128,17 +131,14 @@ const PagesTab: React.FC = () => {
    * Add a new page. If no name given, default to "Page {pages.length + 1}".
    */
   const handleAddPage = () => {
-    // Prepare the page name (if user left it blank => default name)
     let finalName = addPageName.trim();
     if (!finalName) {
       finalName = `Page ${pages.length + 1}`;
     }
 
-    // Determine a new page's ID
     const maxId = pages.reduce((acc, p) => Math.max(acc, p.id), 0);
     const newId = maxId + 1;
 
-    // Create and add the new page
     const newPage: Page = {
       id: newId,
       name: finalName,
@@ -148,31 +148,26 @@ const PagesTab: React.FC = () => {
     updatePages(newPages);
     updateSelectedPageId(newId);
 
-    // Reset local states and close modal
     setAddPageName('');
     setIsAddModalOpen(false);
   };
 
   /**
-   * Rename the currently selected page. If user left it blank => just cancel/close.
+   * Rename the currently selected page.
    */
   const handleRenamePage = () => {
     const finalName = newPageName.trim();
-
-    // If no name was entered, just cancel (close modal)
     if (!finalName) {
       setIsRenameModalOpen(false);
       setNewPageName('');
       return;
     }
 
-    // Otherwise, rename selected page
     const updated = pages.map((p) =>
       p.id === selectedPageId ? { ...p, name: finalName } : p
     );
     updatePages(updated);
 
-    // Clean up
     setNewPageName('');
     setIsRenameModalOpen(false);
   };
@@ -181,7 +176,6 @@ const PagesTab: React.FC = () => {
     if (pages.length <= 1) return;
     const updated = pages.filter((p) => p.id !== selectedPageId);
     updatePages(updated);
-    // pick a new valid selected page
     if (updated.length) {
       updateSelectedPageId(updated[0].id);
     } else {
@@ -199,10 +193,26 @@ const PagesTab: React.FC = () => {
     updateSelectedPageId(id);
   };
 
+  // When a suggestion is selected from SuggestedPages,
+  // create a new page using the suggestion's name.
+  const handleSuggestionSelect = (suggestion: {
+    name?: string;
+    title?: string;
+  }) => {
+    const suggestionName = suggestion.name || suggestion.title || '';
+    if (!suggestionName.trim()) return;
+
+    const maxId = pages.reduce((acc, p) => Math.max(acc, p.id), 0);
+    const newId = maxId + 1;
+    const newPage: Page = { id: newId, name: suggestionName, thumbnail: '' };
+    updatePages([...pages, newPage]);
+    updateSelectedPageId(newId);
+    setIsSuggestedOpen(false);
+  };
+
   return (
     <Wrapper>
       <TabTitle>Pages</TabTitle>
-
       <ActionIconsRow>
         <IconButton
           iconProps={{ iconName: 'Add' }}
@@ -234,10 +244,9 @@ const PagesTab: React.FC = () => {
           iconProps={{ iconName: 'Lightbulb' }}
           title="Show Suggested"
           ariaLabel="Show Suggested"
-          onClick={() => setShowSuggested(true)}
+          onClick={() => setIsSuggestedOpen(true)}
         />
       </ActionIconsRow>
-
       <GridArea>
         {pages.map((page) => (
           <PageCard
@@ -258,7 +267,6 @@ const PagesTab: React.FC = () => {
           </PageCard>
         ))}
       </GridArea>
-
       {/* --- Add Page Modal --- */}
       <Modal
         isOpen={isAddModalOpen}
@@ -290,7 +298,6 @@ const PagesTab: React.FC = () => {
           </div>
         </div>
       </Modal>
-
       {/* --- Rename Page Modal --- */}
       <Modal
         isOpen={isRenameModalOpen}
@@ -322,12 +329,14 @@ const PagesTab: React.FC = () => {
           </div>
         </div>
       </Modal>
-
-      {/* Suggested Pages Modal */}
-      <SuggestedPages
-        isOpen={showSuggested}
-        onClose={() => setShowSuggested(false)}
-      />
+      {/* --- Suggested Pages Modal --- */}
+      {isSuggestedOpen && (
+        <SuggestedPages
+          suggestions={getSuggestedPages().map((name) => ({ name }))}
+          onSelect={handleSuggestionSelect}
+          onClose={() => setIsSuggestedOpen(false)}
+        />
+      )}
     </Wrapper>
   );
 };
