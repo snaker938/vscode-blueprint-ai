@@ -92,7 +92,8 @@ export const Image: React.FC<IImageProps> & { craft?: any } = (props) => {
               display: 'block',
               width: '100%',
               height: '100%',
-              objectFit: 'contain',
+              // Use 'fill' to stretch the image, ignoring aspect ratio
+              objectFit: 'fill',
             }}
           />
           {/* Child elements overlay */}

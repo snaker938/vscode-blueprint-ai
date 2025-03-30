@@ -297,11 +297,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
         <ExportMenu onClose={() => setShowExportMenu(false)} />
       </Modal>
 
-      {/* 
-        Remove the extra <Modal> wrapper for SaveModal because SaveModal
-        itself already renders a Fluent UI <Modal> inside. 
-        Just conditionally render <SaveModal /> instead.
-      */}
       {showSaveModal && (
         <SaveModal isOpen={true} onClose={() => setShowSaveModal(false)} />
       )}
