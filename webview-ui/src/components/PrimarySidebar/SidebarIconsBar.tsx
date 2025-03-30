@@ -1,5 +1,3 @@
-// SidebarIconsBar.tsx
-
 import React, { useState } from 'react';
 import { useEditor } from '@craftjs/core';
 import {
@@ -224,9 +222,10 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
                     <IconButton
                       iconProps={{
                         iconName: tab.icon,
+                        // Removed title to prevent default browser tooltip
+                        // Keep ariaLabel for accessibility
                         styles: { root: { fontSize: 30 } },
                       }}
-                      title={tab.title}
                       ariaLabel={tab.title}
                     />
                   </div>
@@ -275,9 +274,10 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
                     <IconButton
                       iconProps={{
                         iconName: act.icon,
+                        // Removed title to prevent default browser tooltip
+                        // Keep ariaLabel for accessibility
                         styles: getIconStyles(isDimmed),
                       }}
-                      title={act.title}
                       ariaLabel={act.title}
                     />
                   </div>
