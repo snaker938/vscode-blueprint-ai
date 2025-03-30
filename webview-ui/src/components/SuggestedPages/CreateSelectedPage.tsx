@@ -17,29 +17,63 @@ const CreateSelectedPage: FC<CreateSelectedPageProps> = ({
   pageName,
   onClose,
 }) => {
+  // Prompt / text description
   const [prompt, setPrompt] = useState<string>('');
+
+  // Image file selection + preview
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [visible, setVisible] = useState(false);
 
-  // Optional: track a "loading" state if you want feedback while sending
+  // UI states
   const [loading, setLoading] = useState<boolean>(false);
+  const [visible, setVisible] = useState<boolean>(false);
 
-  // Fade-in animation on mount
+  // Fade in on mount
   useEffect(() => {
     setVisible(true);
   }, []);
 
-  // Handle cover image (screenshot) selection + preview
+  // Helper: Truncate a long filename, e.g. "my_super_long_filename.png" -> "my_super_lo...png"
+  const truncateFileName = (name: string, maxLength: number) => {
+    if (name.length <= maxLength) return name;
+    const extension = name.slice(name.lastIndexOf('.'));
+    const truncatedName = name.slice(0, maxLength - extension.length - 3);
+    return `${truncatedName}...${extension}`;
+  };
+
+  // Handle uploading an image (with basic validation)
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    } else {
-      setImageFile(null);
-      setImagePreview(null);
+    if (!file) {
+      return;
     }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image file (PNG, JPG, etc.).');
+      return;
+    }
+    // Validate file size (e.g. 5 MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setImageFile(file);
+
+    // Preview the image
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Remove the selected image
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   /**
@@ -48,7 +82,6 @@ const CreateSelectedPage: FC<CreateSelectedPageProps> = ({
    * or to the VS Code extension (via postMessage).
    */
   const handleSubmit = async () => {
-    // Enforce at least a prompt or an image
     if (!prompt && !imageFile) {
       alert(
         'Please enter a prompt or select an image before creating the page.'
@@ -68,22 +101,21 @@ const CreateSelectedPage: FC<CreateSelectedPageProps> = ({
       }
 
       // Example: Sending data to a VS Code extension
-      // If you have a real backend API, you could do a `fetch` POST request instead.
       const vsCode = getVsCodeApi();
       if (vsCode) {
         vsCode.postMessage({
           command: 'blueprintAI.generateLayoutSuggested',
           payload: {
             pageName, // the selected page name
-            userText: prompt, // the user-entered prompt
-            arrayBuffer: rawBytes, // raw bytes of the image (or null)
+            userText: prompt,
+            arrayBuffer: rawBytes, // raw bytes or null
           },
         });
       } else {
         console.error('VS Code API is not available.');
       }
 
-      // Optionally, you might close after success:
+      // Optionally close after success
       onClose();
     } catch (error: any) {
       console.error('Error sending data:', error);
@@ -93,32 +125,11 @@ const CreateSelectedPage: FC<CreateSelectedPageProps> = ({
     }
   };
 
-  // Overlay/backdrop styling
-  const overlayStyle: CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  };
-
-  // Modal content box styling
-  const modalStyle: CSSProperties = {
-    position: 'relative',
-    background: '#fff',
-    color: '#000',
-    borderRadius: '8px',
-    width: '90%',
-    maxWidth: '600px',
-    maxHeight: '80vh',
-    overflowY: 'auto',
-    padding: '24px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+  /**
+   * Container style for the single, parent-based "modal" content.
+   * The parent (SuggestedPages) is responsible for the backdrop & centering.
+   */
+  const containerStyle: CSSProperties = {
     opacity: visible ? 1 : 0,
     transform: visible ? 'scale(1)' : 'scale(0.95)',
     transition: 'opacity 0.2s ease-out, transform 0.2s ease-out',
@@ -140,7 +151,7 @@ const CreateSelectedPage: FC<CreateSelectedPageProps> = ({
 
   const buttonBarStyle: CSSProperties = {
     marginTop: '24px',
-    textAlign: 'right',
+    textAlign: 'right' as const,
   };
 
   const cancelBtnStyle: CSSProperties = {
@@ -162,94 +173,128 @@ const CreateSelectedPage: FC<CreateSelectedPageProps> = ({
   };
 
   return (
-    <div style={overlayStyle}>
-      <div
-        style={modalStyle}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="createPageTitle"
+    <div style={containerStyle}>
+      {/* Close (X) button */}
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          background: 'none',
+          border: 'none',
+          fontSize: '1.25rem',
+          cursor: 'pointer',
+        }}
+        aria-label="Close"
       >
-        {/* Close (X) button */}
-        <button
-          onClick={onClose}
+        &times;
+      </button>
+
+      <h2 id="createPageTitle" style={{ margin: '0 0 8px' }}>
+        Create Page
+      </h2>
+
+      {/* Display the selected page name */}
+      <p style={{ margin: '0 0 16px', color: '#555' }}>
+        You are creating a page for: <strong>{pageName}</strong>
+      </p>
+
+      {/* Prompt/Text input field */}
+      <label htmlFor="pagePrompt" style={labelStyle}>
+        Prompt:
+      </label>
+      <input
+        id="pagePrompt"
+        type="text"
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder="Enter a description..."
+        style={inputStyle}
+        disabled={loading}
+      />
+
+      {/* If image is selected, show preview container + remove button */}
+      {imageFile ? (
+        <div
           style={{
-            position: 'absolute',
-            top: '16px',
-            right: '16px',
-            background: 'none',
-            border: 'none',
-            fontSize: '1.25rem',
-            cursor: 'pointer',
+            display: 'flex',
+            marginBottom: '16px',
+            alignItems: 'center',
           }}
-          aria-label="Close"
         >
-          &times;
-        </button>
-
-        <h2 id="createPageTitle" style={{ margin: '0 0 8px' }}>
-          Create Page
-        </h2>
-
-        {/* Display the selected page name */}
-        <p style={{ margin: '0 0 16px', color: '#555' }}>
-          You are creating a page for: <strong>{pageName}</strong>
-        </p>
-
-        {/* Prompt/Text input field */}
-        <label htmlFor="pagePrompt" style={labelStyle}>
-          Page Title or Prompt:
-        </label>
-        <input
-          id="pagePrompt"
-          type="text"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Enter page title or brief description..."
-          style={inputStyle}
-          disabled={loading}
-        />
-
-        {/* Image upload field */}
-        <label
-          htmlFor="imageUpload"
-          style={{ ...labelStyle, marginTop: '8px' }}
-        >
-          Cover Image (optional):
-        </label>
-        <input
-          id="imageUpload"
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          style={{ marginBottom: '8px' }}
-          disabled={loading}
-        />
-
-        {/* Preview of the selected image */}
-        {imagePreview && (
-          <div style={{ marginBottom: '16px' }}>
+          {/* Preview Thumbnail */}
+          {imagePreview && (
             <img
               src={imagePreview}
-              alt="Image Preview"
-              style={{ maxWidth: '100%', borderRadius: '4px' }}
+              alt="Preview"
+              style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '4px',
+                objectFit: 'cover',
+                marginRight: '8px',
+              }}
             />
+          )}
+
+          {/* File Info + Remove Button */}
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: '#333',
+                  marginRight: '8px',
+                }}
+              >
+                Referencing {truncateFileName(imageFile.name, 20)}
+              </span>
+              <button
+                onClick={removeImage}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#777',
+                  fontSize: '14px',
+                }}
+                title="Remove image"
+              >
+                &times;
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Action buttons */}
-        <div style={buttonBarStyle}>
-          <button onClick={onClose} style={cancelBtnStyle} disabled={loading}>
-            Cancel
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            style={createBtnStyle}
-            disabled={loading}
-          >
-            {loading ? 'Creating...' : 'Create Page'}
-          </button>
         </div>
+      ) : (
+        <>
+          {/* Image upload label & input (only shown if no image selected) */}
+          <label htmlFor="imageUpload" style={labelStyle}>
+            Reference Image:
+          </label>
+          <input
+            id="imageUpload"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            style={{ marginBottom: '16px' }}
+            disabled={loading}
+          />
+        </>
+      )}
+
+      {/* Action buttons */}
+      <div style={buttonBarStyle}>
+        <button onClick={onClose} style={cancelBtnStyle} disabled={loading}>
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          style={createBtnStyle}
+          disabled={loading}
+        >
+          {loading ? 'Creating...' : 'Create Page'}
+        </button>
       </div>
     </div>
   );

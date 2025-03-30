@@ -1,6 +1,6 @@
 // PagesTab.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IconButton,
   TextField,
@@ -9,17 +9,20 @@ import {
   DefaultButton,
 } from '@fluentui/react';
 import styled from 'styled-components';
-import './PagesTab.css';
 
+import './PagesTab.css';
+import SuggestedPages from '../../SuggestedPages/SuggestedPages';
+
+// Import everything you need from the new store
 import {
   Page,
-  getGlobalPages,
-  setGlobalPages,
-  getGlobalSelectedPageId,
-  setGlobalSelectedPageId,
-} from './pageStore';
-import SuggestedPages from '../../SuggestedPages/SuggestedPages';
-import { getSuggestedPages } from './suggestedPageStore';
+  getPages,
+  getSelectedPageId,
+  setPages,
+  setSelectedPageId,
+  subscribePageChange,
+  subscribeSelectedPageChange,
+} from '../../../store/store';
 
 /* ------------------ Styled Components ------------------ */
 
@@ -104,28 +107,40 @@ const PageName = styled.div`
 /* ------------------ Component ------------------ */
 
 const PagesTab: React.FC = () => {
-  // Initialize from global store
-  const [pages, setPages] = useState<Page[]>(() => getGlobalPages());
-  const [selectedPageId, setSelectedPageId] = useState<number>(() =>
-    getGlobalSelectedPageId()
+  // Local state that mirrors the store
+  const [pages, setPagesState] = useState<Page[]>(() => getPages());
+  const [selectedPageId, setSelectedPageIdState] = useState<number>(() =>
+    getSelectedPageId()
   );
+
+  // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addPageName, setAddPageName] = useState('');
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [newPageName, setNewPageName] = useState('');
   const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
-  // Helper: update global & local page list
-  const updatePages = (newPages: Page[]) => {
-    setPages(newPages);
-    setGlobalPages(newPages);
-  };
+  /**
+   * Subscribe to store changes so we can update our local state
+   * whenever pages or the selected page changes.
+   */
+  useEffect(() => {
+    const unsubscribePages = subscribePageChange(() => {
+      // When pages or suggestedPages change, update local state
+      setPagesState(getPages());
+    });
 
-  // Helper: update both local + global selected page
-  const updateSelectedPageId = (id: number) => {
-    setSelectedPageId(id);
-    setGlobalSelectedPageId(id);
-  };
+    const unsubscribeSelected = subscribeSelectedPageChange(() => {
+      // When the selected page changes, update local state
+      setSelectedPageIdState(getSelectedPageId());
+    });
+
+    // Clean up subscriptions on unmount
+    return () => {
+      unsubscribePages();
+      unsubscribeSelected();
+    };
+  }, []);
 
   /**
    * Add a new page. If no name given, default to "Page {pages.length + 1}".
@@ -136,18 +151,23 @@ const PagesTab: React.FC = () => {
       finalName = `Page ${pages.length + 1}`;
     }
 
+    // Determine a new ID
     const maxId = pages.reduce((acc, p) => Math.max(acc, p.id), 0);
     const newId = maxId + 1;
 
+    // Create the new page
     const newPage: Page = {
       id: newId,
       name: finalName,
       thumbnail: '',
     };
-    const newPages = [...pages, newPage];
-    updatePages(newPages);
-    updateSelectedPageId(newId);
 
+    // Update the store
+    const newPages = [...pages, newPage];
+    setPages(newPages);
+    setSelectedPageId(newId);
+
+    // Reset local state & close modal
     setAddPageName('');
     setIsAddModalOpen(false);
   };
@@ -163,56 +183,53 @@ const PagesTab: React.FC = () => {
       return;
     }
 
-    const updated = pages.map((p) =>
+    // Update the page in the store
+    const updatedPages = pages.map((p) =>
       p.id === selectedPageId ? { ...p, name: finalName } : p
     );
-    updatePages(updated);
+    setPages(updatedPages);
 
+    // Reset local state & close modal
     setNewPageName('');
     setIsRenameModalOpen(false);
   };
 
+  /**
+   * Delete the currently selected page, but don't allow if there's only one page left.
+   */
   const handleDeletePage = () => {
     if (pages.length <= 1) return;
     const updated = pages.filter((p) => p.id !== selectedPageId);
-    updatePages(updated);
+    setPages(updated);
+
     if (updated.length) {
-      updateSelectedPageId(updated[0].id);
+      setSelectedPageId(updated[0].id);
     } else {
-      updateSelectedPageId(1);
+      // If nothing left, re-add a default page
+      setSelectedPageId(1);
     }
   };
 
+  /**
+   * Reset to a single default page.
+   */
   const handleResetPages = () => {
     const defaultPages: Page[] = [{ id: 1, name: 'Page 1', thumbnail: '' }];
-    updatePages(defaultPages);
-    updateSelectedPageId(1);
+    setPages(defaultPages);
+    setSelectedPageId(1);
   };
 
+  /**
+   * When the user clicks a page card, set it as the selected page.
+   */
   const handlePageClick = (id: number) => {
-    updateSelectedPageId(id);
-  };
-
-  // When a suggestion is selected from SuggestedPages,
-  // create a new page using the suggestion's name.
-  const handleSuggestionSelect = (suggestion: {
-    name?: string;
-    title?: string;
-  }) => {
-    const suggestionName = suggestion.name || suggestion.title || '';
-    if (!suggestionName.trim()) return;
-
-    const maxId = pages.reduce((acc, p) => Math.max(acc, p.id), 0);
-    const newId = maxId + 1;
-    const newPage: Page = { id: newId, name: suggestionName, thumbnail: '' };
-    updatePages([...pages, newPage]);
-    updateSelectedPageId(newId);
-    setIsSuggestedOpen(false);
+    setSelectedPageId(id);
   };
 
   return (
     <Wrapper>
       <TabTitle>Pages</TabTitle>
+
       <ActionIconsRow>
         <IconButton
           iconProps={{ iconName: 'Add' }}
@@ -247,6 +264,7 @@ const PagesTab: React.FC = () => {
           onClick={() => setIsSuggestedOpen(true)}
         />
       </ActionIconsRow>
+
       <GridArea>
         {pages.map((page) => (
           <PageCard
@@ -267,6 +285,7 @@ const PagesTab: React.FC = () => {
           </PageCard>
         ))}
       </GridArea>
+
       {/* --- Add Page Modal --- */}
       <Modal
         isOpen={isAddModalOpen}
@@ -298,6 +317,7 @@ const PagesTab: React.FC = () => {
           </div>
         </div>
       </Modal>
+
       {/* --- Rename Page Modal --- */}
       <Modal
         isOpen={isRenameModalOpen}
@@ -329,13 +349,10 @@ const PagesTab: React.FC = () => {
           </div>
         </div>
       </Modal>
+
       {/* --- Suggested Pages Modal --- */}
       {isSuggestedOpen && (
-        <SuggestedPages
-          suggestions={getSuggestedPages().map((name) => ({ name }))}
-          onSelect={handleSuggestionSelect}
-          onClose={() => setIsSuggestedOpen(false)}
-        />
+        <SuggestedPages onClose={() => setIsSuggestedOpen(false)} />
       )}
     </Wrapper>
   );

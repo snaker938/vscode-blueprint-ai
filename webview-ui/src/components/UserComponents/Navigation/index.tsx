@@ -1,3 +1,5 @@
+// Navigation/index.tsx
+
 import {
   CSSProperties,
   FC,
@@ -7,16 +9,18 @@ import {
   useRef,
 } from 'react';
 import { useNode } from '@craftjs/core';
-import {
-  getGlobalPages,
-  subscribeGlobalPagesChange,
-  getGlobalSelectedPageId,
-  subscribeSelectedPageChange,
-  setGlobalSelectedPageId,
-  Page,
-} from '../../PrimarySidebar/PagesTab/pageStore';
-import { Resizer } from '../Utils/Resizer'; // Adjust import as needed
+import { Resizer } from '../Utils/Resizer'; // Adjust import if needed
 import { NavigationProperties } from './NavigationProperties';
+
+// 1) Import from the new store
+import {
+  getPages,
+  subscribePageChange,
+  getSelectedPageId,
+  subscribeSelectedPageChange,
+  setSelectedPageId,
+  Page,
+} from '../../../store/store';
 
 export interface INavigationProps {
   navType?: 'navbar' | 'sidebar';
@@ -35,6 +39,7 @@ export interface INavigationProps {
   pageDisplayNames?: Record<number, string>;
 }
 
+/** Default props if none are supplied from the Craft.js editor. */
 const defaultProps: Partial<INavigationProps> = {
   navType: 'navbar',
   displayName: 'MySite',
@@ -55,6 +60,7 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
   incomingProps
 ) => {
   const { connectors } = useNode(() => ({}));
+
   const props = { ...defaultProps, ...incomingProps };
   const {
     navType,
@@ -73,10 +79,14 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     pageDisplayNames,
   } = props;
 
-  const [pages, setPages] = useState<Page[]>(() => getGlobalPages());
-  const [selectedPageId, setSelectedPageId] = useState<number>(() =>
-    getGlobalSelectedPageId()
+  /**
+   * 2) Local state to mirror the store’s pages and selectedPageId
+   */
+  const [pages, setPagesState] = useState<Page[]>(() => getPages());
+  const [selectedPageId, setSelectedPageIdState] = useState<number>(() =>
+    getSelectedPageId()
   );
+
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const [effectiveNavType, setEffectiveNavType] = useState<
     'navbar' | 'sidebar'
@@ -84,19 +94,25 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * 3) Subscribe to store changes (pages + suggested pages).
+   */
   useEffect(() => {
     const handlePagesChange = () => {
-      setPages(getGlobalPages());
+      setPagesState(getPages());
     };
-    const unsubPages = subscribeGlobalPagesChange(handlePagesChange);
+    const unsubPages = subscribePageChange(handlePagesChange);
     return () => {
       unsubPages();
     };
   }, []);
 
+  /**
+   * 4) Subscribe to store changes (selected page ID).
+   */
   useEffect(() => {
     const handleSelectedPageChange = () => {
-      setSelectedPageId(getGlobalSelectedPageId());
+      setSelectedPageIdState(getSelectedPageId());
     };
     const unsubSelected = subscribeSelectedPageChange(handleSelectedPageChange);
     return () => {
@@ -104,16 +120,25 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     };
   }, []);
 
+  /**
+   * Connect this component to the Craft.js editor for drag/select
+   */
   useEffect(() => {
     if (containerRef.current) {
       connectors.connect(containerRef.current);
     }
   }, [connectors]);
 
+  /**
+   * Handle user clicking a page link in the nav
+   */
   const handlePageClick = useCallback((pageId: number) => {
-    setGlobalSelectedPageId(pageId);
+    setSelectedPageId(pageId);
   }, []);
 
+  /**
+   * Decide if we need a “sidebar” layout (e.g. if brand + links can’t fit horizontally).
+   */
   useEffect(() => {
     const measure = () => {
       if (navType === 'sidebar') {
@@ -122,6 +147,7 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
       }
       const el = containerRef.current;
       if (!el) return;
+
       if (el.scrollWidth > el.clientWidth) {
         setEffectiveNavType('sidebar');
         setIsCollapsed(true);
@@ -136,6 +162,9 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     };
   }, [navType, pages, displayName]);
 
+  /**
+   * Compute final width if it’s a collapsible sidebar
+   */
   const isSidebar = effectiveNavType === 'sidebar';
   const finalWidth = isSidebar
     ? collapsible
@@ -153,6 +182,9 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     padding,
   };
 
+  /**
+   * Different styling for “navbar” vs “sidebar”
+   */
   let containerStyle: CSSProperties = {};
   if (!isSidebar) {
     containerStyle = {
@@ -185,6 +217,9 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     ...linkStyle,
   };
 
+  /**
+   * Brand block or “logo” area
+   */
   const brandBlock = (
     <div
       style={{
@@ -218,6 +253,9 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     </div>
   );
 
+  /**
+   * Links for each page
+   */
   const pagesBlock = (
     <nav
       style={
@@ -227,9 +265,7 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
               flexDirection: 'column',
               gap: '4px',
             }
-          : {
-              display: 'flex',
-            }
+          : { display: 'flex' }
       }
     >
       {pages.map((page) => {
@@ -246,13 +282,7 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
             href="#"
             style={{
               ...resolvedLinkStyle,
-              ...(isSidebar
-                ? {
-                    margin: '8px 0',
-                  }
-                : {
-                    margin: '0 8px',
-                  }),
+              ...(isSidebar ? { margin: '8px 0' } : { margin: '0 8px' }),
               borderRadius: '4px',
               ...linkHighlight,
             }}
@@ -269,6 +299,9 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     </nav>
   );
 
+  /**
+   * If not a sidebar, we wrap in Resizer for direct resizing in Craft.js.
+   */
   if (!isSidebar) {
     return (
       <Resizer
@@ -292,6 +325,7 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
   }
 };
 
+/** Configure how Craft.js sees this component. */
 Navigation.craft = {
   displayName: 'Navigation',
   props: defaultProps,

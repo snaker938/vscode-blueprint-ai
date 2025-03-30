@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Editor, Frame, Element, useEditor } from '@craftjs/core';
 import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
 import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
 import { RenderNode } from '../../components/UserComponents/Utils/RenderNode';
-import { useLocation } from 'react-router-dom';
+
+import { getPageById, getSuggestedPages } from '../../store/store';
 
 import { parseAiOutput } from '../../components/CreateWithImagination/ExtraComponents/SelectedFeature/utils/AiParser';
-import { setSuggestedPages } from '../../components/PrimarySidebar/PagesTab/suggestedPageStore';
 
 import './MainInterface.css';
 import { Button } from '../../components/UserComponents/Button';
@@ -17,7 +17,11 @@ import { Video } from '../../components/UserComponents/Video';
 import { StarRating } from '../../components/UserComponents/StarRating';
 import { SearchBox } from '../../components/UserComponents/SearchBox';
 import { Slider } from '../../components/UserComponents/Slider';
-// import SuggestedPages from '../../components/SuggestedPages/SuggestedPages';
+import { Image } from '../../components/UserComponents/Image';
+
+// Example modal component import
+// Adjust this import path depending on your actual file structure
+import SuggestedPages from '../../components/SuggestedPages/SuggestedPages';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -46,7 +50,7 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
 };
 
 /**
- * A canvas component that optionally loads parsed AI output into the Frame.
+ * A canvas component that optionally loads parsed layout data into the Frame.
  */
 export const DroppableCanvas: React.FC<{ initialData?: any }> = ({
   initialData,
@@ -74,64 +78,29 @@ export const DroppableCanvas: React.FC<{ initialData?: any }> = ({
 };
 
 const MainInterface: React.FC = () => {
-  // Extract data passed from the AI route via location.state
-  const location = useLocation();
-  let rawLayoutJson = location?.state?.layoutJson || '';
+  // Local state controlling whether the SuggestedPages modal is open
+  const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
-  let suggestedPageNames: string[] | string = 'Missing suggestedPageNames';
-  let layoutJson: any = {};
-
-  try {
-    // 1. Locate the block containing suggestedPageNames via regex.
-    //    Looks for: { "suggestedPageNames": [...] }
-    const suggestedPagesRegex =
-      /\{\s*"suggestedPageNames"\s*:\s*\[[^\]]*\]\s*\}/;
-
-    // 2. Extract that JSON block if found.
-    const match = rawLayoutJson.match(suggestedPagesRegex);
-    if (match && match[0]) {
-      // Parse the object containing suggestedPageNames
-      const spnObject = JSON.parse(match[0]);
-      if (spnObject?.suggestedPageNames) {
-        suggestedPageNames = spnObject.suggestedPageNames;
-      }
-      // Remove this chunk so the remaining text is clean JSON (for layoutJson)
-      rawLayoutJson = rawLayoutJson.replace(suggestedPagesRegex, '');
+  // On component mount, load Page #1’s layout from the store
+  // and also check if we have suggested pages
+  useEffect(() => {
+    const suggested = getSuggestedPages();
+    if (suggested && suggested.length > 0) {
+      setIsSuggestedOpen(true);
     }
+  }, []);
 
-    // 3. Now parse the remainder as your layoutJson.
-    //    Use the "substring" technique to trim everything
-    //    before the first '{' and after the last '}'.
-    const firstCurlyIndex = rawLayoutJson.indexOf('{');
-    const lastCurlyIndex = rawLayoutJson.lastIndexOf('}');
-    if (firstCurlyIndex !== -1 && lastCurlyIndex !== -1) {
-      const validJsonString = rawLayoutJson.substring(
-        firstCurlyIndex,
-        lastCurlyIndex + 1
-      );
-      layoutJson = JSON.parse(validJsonString);
+  // Fetch Page #1
+  const page1 = getPageById(1);
+
+  // Convert the stored layout into a CraftJS-serialized tree
+  let parsedTree = null;
+  if (page1 && page1.layout) {
+    try {
+      parsedTree = parseAiOutput(JSON.stringify(page1.layout));
+    } catch (err) {
+      console.error('Failed to parse page1 layout:', err);
     }
-  } catch (err) {
-    console.error('Failed to parse layoutJson:', err);
-    layoutJson = {};
-  }
-
-  console.log('layoutJson:', layoutJson);
-  console.log('suggestedPageNames:', suggestedPageNames);
-
-  // Clean up so layoutJson doesn’t keep suggestedPageNames
-  delete layoutJson.suggestedPageNames;
-
-  // Convert the raw AI JSON to a CraftJS-serialized tree
-  const parsedTree = layoutJson
-    ? parseAiOutput(JSON.stringify(layoutJson))
-    : null;
-
-  console.log('Parsed CraftJS tree:', parsedTree);
-
-  // If the AI provided suggested pages, store them globally
-  if (Array.isArray(suggestedPageNames) && suggestedPageNames.length > 0) {
-    setSuggestedPages(suggestedPageNames);
   }
 
   return (
@@ -145,6 +114,7 @@ const MainInterface: React.FC = () => {
         SearchBox,
         Slider,
         Button,
+        Image,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >
@@ -166,15 +136,10 @@ const MainInterface: React.FC = () => {
           <PropertiesSidebar />
         </aside>
 
-        {/* Conditionally render the SuggestedPages if present */}
-        {/* {suggestedPageNames && suggestedPageNames.length > 0 && (
-          <SuggestedPages
-            isOpen={true}
-            onClose={() => {
-              // implement your close logic if necessary
-            }}
-          />
-        )} */}
+        {/* Show the SuggestedPages modal if isSuggestedOpen is true */}
+        {isSuggestedOpen && (
+          <SuggestedPages onClose={() => setIsSuggestedOpen(false)} />
+        )}
       </div>
     </Editor>
   );

@@ -1,14 +1,18 @@
-import { useEffect, useState, CSSProperties } from 'react';
-import { getSuggestedPages } from '../PrimarySidebar/PagesTab/suggestedPageStore';
+// SuggestedPages.tsx
+
+import React, { useEffect, useState, CSSProperties } from 'react';
+
+import { getSuggestedPages } from '../../store/store';
+
 import CreateSelectedPage from './CreateSelectedPage';
 
-/**
- * A single component that:
- * 1) Shows a list of suggested pages.
- * 2) When the user picks (Accepts) one, shows the CreateSelectedPage step.
- * 3) Allows the user to either close at any point or complete the flow.
- */
-function SuggestedPages() {
+// 1) Declare an interface that matches the props we need
+interface SuggestedPagesProps {
+  onClose: () => void; // The callback invoked when user cancels or closes
+}
+
+// 2) Mark this component as React.FC with the above props
+const SuggestedPages: React.FC<SuggestedPagesProps> = ({ onClose }) => {
   // Whether the entire modal is open or not
   const [isOpen, setIsOpen] = useState(true);
 
@@ -32,9 +36,11 @@ function SuggestedPages() {
     return null;
   }
 
-  // A helper to close everything
+  // A helper to close everything (internally)
   const closeModal = () => {
     setIsOpen(false);
+    // Also call the parent's onClose to unmount this component
+    onClose();
   };
 
   // Overlay/backdrop styling for centered modal
@@ -94,7 +100,6 @@ function SuggestedPages() {
     return (
       <div style={overlayStyle}>
         <div style={modalStyle} role="dialog" aria-modal="true">
-          {/* Pass the selected page name and a simple onClose to dismiss everything */}
           <CreateSelectedPage pageName={selectedPage} onClose={closeModal} />
         </div>
       </div>
@@ -184,6 +189,6 @@ function SuggestedPages() {
       </div>
     </div>
   );
-}
+};
 
 export default SuggestedPages;

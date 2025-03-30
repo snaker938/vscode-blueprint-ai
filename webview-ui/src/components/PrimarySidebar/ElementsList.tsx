@@ -18,6 +18,7 @@ import { Video } from '../UserComponents/Video';
 import { StarRating } from '../UserComponents/StarRating';
 import { SearchBox } from '../UserComponents/SearchBox';
 import { Slider } from '../UserComponents/Slider';
+import { Image } from '../UserComponents/Image';
 
 /* ------------------ Styled Components ------------------ */
 const Wrapper = styled.div`
@@ -95,6 +96,8 @@ const elementToCreate = (key: string) => {
       return <Video />;
     case 'button':
       return <Button />;
+    case 'image':
+      return <Image />;
     default:
       return null;
   }

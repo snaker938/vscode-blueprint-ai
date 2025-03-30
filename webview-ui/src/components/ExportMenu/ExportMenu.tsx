@@ -1,7 +1,12 @@
+// ExportMenu.tsx
+
 import React, { useState, useMemo } from 'react';
 import { useEditor } from '@craftjs/core';
 import { Checkbox, PrimaryButton, IconButton } from '@fluentui/react';
-import { getGlobalPages } from '../PrimarySidebar/PagesTab/pageStore'; // Adjust path if needed
+
+// 1) Import the Page interface and store getter from the new store
+import { Page, getPages } from '../../store/store';
+
 import './ExportMenu.css';
 
 interface ExportMenuProps {
@@ -9,13 +14,23 @@ interface ExportMenuProps {
 }
 
 const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
-  const pages = getGlobalPages();
+  /**
+   * Retrieve all pages from the store.
+   */
+  const pages: Page[] = getPages();
+
+  /**
+   * Local states for folder path, selected pages, and "select all" toggle.
+   */
   const [folderPath, setFolderPath] = useState('Choose folder');
   const [selectedPages, setSelectedPages] = useState<number[]>(
     pages.map((p) => p.id)
   );
   const [selectAll, setSelectAll] = useState(true);
 
+  /**
+   * Toggle a specific page’s selection by ID.
+   */
   const handleTogglePage = (id: number) => {
     if (selectedPages.includes(id)) {
       setSelectedPages(selectedPages.filter((pid) => pid !== id));
@@ -23,15 +38,23 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
     } else {
       const newSelected = [...selectedPages, id];
       setSelectedPages(newSelected);
-      if (newSelected.length === pages.length) setSelectAll(true);
+      if (newSelected.length === pages.length) {
+        setSelectAll(true);
+      }
     }
   };
 
+  /**
+   * Select or unselect all pages at once.
+   */
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     setSelectedPages(checked ? pages.map((p) => p.id) : []);
   };
 
+  /**
+   * Craft.js editor info for generating “dummy stats.”
+   */
   const { nodes } = useEditor((state) => ({ nodes: state.nodes }));
   const nodeCount = Object.keys(nodes).length;
 
@@ -50,8 +73,12 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
     [nodeCount, randomSeed]
   );
 
+  /**
+   * Simulates picking a folder in a file input (folder mode).
+   */
   const onFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
+    // Not all browsers fully support webkitdirectory; this is just for demonstration.
     setFolderPath(e.target.files[0].webkitRelativePath || 'Selected folder');
   };
 
@@ -89,7 +116,7 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
         <div className="export-left-panel">
           <h3>Select pages to export:</h3>
           <div className="pages-list">
-            {pages.map((page) => (
+            {pages.map((page: Page) => (
               <div key={page.id} className="page-card">
                 <div className="page-thumbnail">
                   {page.thumbnail ? (

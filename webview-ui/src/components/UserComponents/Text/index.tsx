@@ -1,3 +1,5 @@
+// Text/index.tsx
+
 import React, {
   useCallback,
   CSSProperties,
@@ -11,8 +13,8 @@ import { useNode, useEditor } from '@craftjs/core';
 import { Resizer } from '../Utils/Resizer';
 import { TextProperties } from './TextProperties';
 
-// Import your page store logic
-import { setGlobalSelectedPageId } from '../../PrimarySidebar/PagesTab/pageStore';
+// 1) Import from the new store
+import { setSelectedPageId } from '../../../store/store';
 
 /**
  * Utility type for margin/padding: [top, right, bottom, left]
@@ -33,10 +35,6 @@ export type LinkType = 'externalUrl' | 'page';
  * Main props for the Text component
  */
 export interface TextProps {
-  /**
-   * Rendering mode. If "textbox", it renders <input> or <textarea>;
-   * if "link", it renders <a>.
-   */
   renderMode?: RenderMode;
 
   // Text styling
@@ -266,11 +264,9 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
       // For non-links or internal page links, just use given href (default '#').
       return href || '#';
     }
-
     if (!href || href === '#') {
       return '#';
     }
-    // If user typed something like "youtube.com", ensure "https://youtube.com"
     if (!/^https?:\/\//i.test(href)) {
       return `https://${href}`;
     }
@@ -287,7 +283,8 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
     if (linkType === 'page') {
       e.preventDefault();
       if (typeof pageId === 'number') {
-        setGlobalSelectedPageId(pageId);
+        // 2) Use the new store system
+        setSelectedPageId(pageId);
       }
     }
     // If external, the browser will handle it (opens in new tab).
@@ -400,6 +397,7 @@ const TextComponent: CraftTextFC<TextProps> = (incomingProps) => {
       </a>
     );
   } else if (renderMode === 'dropdown') {
+    // DROPDOWN MODE
     const items = text?.split('||') || [];
     content = (
       <select

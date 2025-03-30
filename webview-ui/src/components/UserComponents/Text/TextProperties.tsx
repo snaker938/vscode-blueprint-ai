@@ -20,10 +20,10 @@ import { TextProps, RenderMode, LinkType } from './index';
 /**
  * Import your page-store helpers
  */
-import {
-  getGlobalPages,
-  subscribeGlobalPagesChange,
-} from '../../PrimarySidebar/PagesTab/pageStore';
+// import {
+//   getGlobalPages,
+//   subscribeGlobalPagesChange,
+// } from '../../PrimarySidebar/PagesTab/pageStore';
 
 /**
  * A small helper to display margin/padding controls with a Slider + TextInput for each side.

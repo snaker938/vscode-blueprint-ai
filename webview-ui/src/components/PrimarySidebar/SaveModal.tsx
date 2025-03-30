@@ -1,3 +1,4 @@
+// SaveModal.tsx
 import React from 'react';
 import { useEditor } from '@craftjs/core';
 import {
@@ -10,20 +11,30 @@ import {
   IIconProps,
 } from '@fluentui/react';
 
+// 1) Import your combined store and its utility methods:
+import {
+  getSelectedPageId,
+  updatePage,
+  saveStoreToLocalStorage,
+  clearStoreFromLocalStorage,
+} from '../../store/store';
+
 interface SaveModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose }) => {
+  // 2) Use the Craft.js editor for retrieving the current layout:
   const { query } = useEditor();
   const theme = getTheme();
 
+  // Your styles remain the same...
   const contentStyles = mergeStyleSets({
     container: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 15, // space between sections
+      gap: 15,
     },
     header: {
       display: 'flex',
@@ -52,15 +63,31 @@ export const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose }) => {
 
   const cancelIcon: IIconProps = { iconName: 'Cancel' };
 
-  const handleSaveToLocalStorage = () => {
-    const json = query.serialize();
-    localStorage.setItem('craftjs-data', json);
-    alert('Data saved to local storage.');
+  /**
+   * When the user saves:
+   * 1) Serialize the current CraftJS state.
+   * 2) Update the store for the currently selected page.
+   * 3) Save the entire store to localStorage.
+   */
+  const handleSaveClick = () => {
+    // 1) Get CraftJS layout data
+    const craftJsLayout = query.serialize();
+
+    // 2) Update the currently selected page in the store
+    const selectedPageId = getSelectedPageId();
+    updatePage(selectedPageId, { layout: craftJsLayout });
+
+    // 3) Persist to localStorage
+    saveStoreToLocalStorage();
+    alert('Page layout saved in combined store & persisted to localStorage.');
   };
 
-  const handleClearLocalStorage = () => {
-    localStorage.removeItem('craftjs-data');
-    alert('Local storage cleared.');
+  /**
+   * Clear all store data from localStorage.
+   */
+  const handleClearClick = () => {
+    clearStoreFromLocalStorage();
+    alert('Local storage cleared & in-memory store reset.');
   };
 
   return (
@@ -74,18 +101,19 @@ export const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose }) => {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 600, // Increased width to provide more space for content
+          width: 600,
           backgroundColor: theme.palette.white,
           boxShadow: theme.effects.elevation8,
           borderRadius: 4,
           outline: 'none',
           padding: 20,
-          maxHeight: '80vh', // Prevents the modal from growing too tall
-          overflowY: 'auto', // Enables vertical scrolling if needed
+          maxHeight: '80vh',
+          overflowY: 'auto',
         },
       }}
     >
       <div className={contentStyles.container}>
+        {/* Header */}
         <div className={contentStyles.header}>
           <h2 className={contentStyles.title}>Save Project</h2>
           <IconButton
@@ -94,19 +122,17 @@ export const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose }) => {
             onClick={onClose}
           />
         </div>
+        {/* Body */}
         <div className={contentStyles.body}>
           <p>
-            Save your current state to local storage or delete any existing
-            saved state.
+            This will store or clear your current page layout and suggested
+            pages in one combined store using localStorage for persistence.
           </p>
         </div>
+        {/* Footer */}
         <div className={contentStyles.footer}>
-          <PrimaryButton onClick={handleSaveToLocalStorage}>
-            Save to Local Storage
-          </PrimaryButton>
-          <DefaultButton onClick={handleClearLocalStorage}>
-            Delete Local Save
-          </DefaultButton>
+          <PrimaryButton onClick={handleSaveClick}>Save Store</PrimaryButton>
+          <DefaultButton onClick={handleClearClick}>Clear Store</DefaultButton>
         </div>
       </div>
     </Modal>

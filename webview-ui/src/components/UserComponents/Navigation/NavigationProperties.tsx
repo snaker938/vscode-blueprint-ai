@@ -15,11 +15,8 @@ import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
 import { SwitchInput } from '../../PropertiesSidebar/UI/SwitchInput';
 import { Radio } from '../../PropertiesSidebar/UI/Radio';
 
-import {
-  getGlobalPages,
-  subscribeGlobalPagesChange,
-  Page,
-} from '../../PrimarySidebar/PagesTab/pageStore';
+// 1) Import from the new store
+import { Page, getPages, subscribePageChange } from '../../../store/store';
 import { INavigationProps } from './index';
 
 /**
@@ -99,6 +96,7 @@ function SpacingControl({
  * The property editor for our Navigation component.
  */
 export const NavigationProperties: React.FC = () => {
+  // Pull props from the currently selected Navigation node in Craft.js
   const {
     navType,
     displayName,
@@ -136,19 +134,21 @@ export const NavigationProperties: React.FC = () => {
     };
   });
 
-  // We’ll keep track of the global pages to show page name overrides
-  const [globalPages, setGlobalPages] = useState<Page[]>(() =>
-    getGlobalPages()
-  );
+  // 2) Track the global pages from the store to show page-name overrides
+  const [globalPages, setGlobalPages] = useState<Page[]>(() => getPages());
 
   useEffect(() => {
+    // Subscribe to changes in pages or suggested pages
     const handlePagesChange = () => {
-      setGlobalPages(getGlobalPages());
+      setGlobalPages(getPages());
     };
-    const unsub = subscribeGlobalPagesChange(handlePagesChange);
-    return () => unsub();
+    const unsub = subscribePageChange(handlePagesChange);
+    return () => {
+      unsub();
+    };
   }, []);
 
+  // If the linkStyle includes a color, use it. Otherwise fallback to textColor or '#333'
   const linkColor: string = (linkStyle.color as string) || '#333';
 
   // Parse margin/padding for spacing controls
@@ -357,7 +357,7 @@ export const NavigationProperties: React.FC = () => {
         </Section>
       )}
 
-      {/* PAGE DISPLAY NAMES OVERRIDES */}
+      {/* PAGE DISPLAY NAME OVERRIDES */}
       {globalPages && globalPages.length > 0 && (
         <Section title="Page Display Name Overrides" defaultExpanded={false}>
           {globalPages.map((page) => {

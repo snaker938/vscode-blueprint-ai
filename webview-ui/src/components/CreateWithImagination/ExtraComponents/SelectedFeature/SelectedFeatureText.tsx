@@ -13,6 +13,9 @@ import { useNavigate } from 'react-router-dom';
 import './SelectedFeatureText.css';
 import { getVsCodeApi } from './utils/vscodeApi';
 
+// 1) Import your store mutation functions. Adjust the relative path as needed:
+import { setSuggestedPages, updatePage } from '../../../../store/store';
+
 interface SelectedFeatureTextProps {
   openModal: () => void;
 }
@@ -48,12 +51,64 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         } else if (payload.layoutJson) {
           console.log('AI result (layout JSON):', payload.layoutJson);
 
-          // Navigate to the /editing page, passing data via location state
-          navigate('/editing', {
-            state: {
-              layoutJson: payload.layoutJson,
-            },
-          });
+          /**
+           * 1) Parse out suggested pages from the raw JSON
+           * 2) Remove them from the raw JSON
+           * 3) Update the store: setSuggestedPages() + updatePage() for layout
+           * 4) Navigate to /editing
+           */
+          let rawLayoutJson: string = payload.layoutJson;
+          let suggestedPageNames: string[] | undefined;
+          let layoutJson: any = {};
+
+          try {
+            // 1. Locate the block containing suggestedPageNames via regex
+            //    e.g. { "suggestedPageNames": [...] }
+            const suggestedPagesRegex =
+              /\{\s*"suggestedPageNames"\s*:\s*\[[^\]]*\]\s*\}/;
+            const match = rawLayoutJson.match(suggestedPagesRegex);
+            if (match && match[0]) {
+              // Parse the object containing suggestedPageNames
+              const spnObject = JSON.parse(match[0]);
+              if (spnObject?.suggestedPageNames) {
+                suggestedPageNames = spnObject.suggestedPageNames;
+              }
+              // Remove this chunk so the remaining text is clean JSON (for layoutJson)
+              rawLayoutJson = rawLayoutJson.replace(suggestedPagesRegex, '');
+            }
+
+            // 2. Now parse the remainder as your layoutJson.
+            const firstCurlyIndex = rawLayoutJson.indexOf('{');
+            const lastCurlyIndex = rawLayoutJson.lastIndexOf('}');
+            if (firstCurlyIndex !== -1 && lastCurlyIndex !== -1) {
+              const validJsonString = rawLayoutJson.substring(
+                firstCurlyIndex,
+                lastCurlyIndex + 1
+              );
+              layoutJson = JSON.parse(validJsonString);
+            }
+          } catch (err) {
+            console.error('Failed to parse layoutJson:', err);
+            layoutJson = {};
+          }
+
+          // 3. Remove any leftover property from layoutJson
+          delete layoutJson.suggestedPageNames;
+
+          // 4. If the AI provided suggested pages, store them globally
+          if (
+            Array.isArray(suggestedPageNames) &&
+            suggestedPageNames.length > 0
+          ) {
+            setSuggestedPages(suggestedPageNames);
+          }
+
+          // 5. Update a known page’s layout in the store
+          //    If you have multiple pages, you might choose a different pageId.
+          updatePage(1, { layout: layoutJson });
+
+          // Finally, navigate to the /editing page
+          navigate('/editing');
         }
       }
     };
@@ -122,7 +177,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
    * Handle "Generate" click
    *   1) Convert the image to an ArrayBuffer
    *   2) Post a message to the VS Code extension
-   *   3) Wait for the extension's response and log to console
+   *   3) Wait for the extension's response in handleMessage above
    */
   const handleGenerateClick = async () => {
     // If no prompt and no image, possibly warn user?
@@ -134,14 +189,12 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
     setLoading(true);
 
     try {
-      // If there's an image, convert it to raw bytes
       let rawBytes: number[] | null = null;
       if (uploadedImage) {
         const arrayBuffer = await uploadedImage.arrayBuffer();
         rawBytes = Array.from(new Uint8Array(arrayBuffer));
       }
 
-      // Send the data to the extension
       const vsCode = getVsCodeApi();
       if (!vsCode) {
         console.error('VSCode API is not available.');
