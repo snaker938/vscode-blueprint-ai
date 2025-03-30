@@ -1,3 +1,5 @@
+// SidebarIconsBar.tsx
+
 import React, { useState } from 'react';
 import { useEditor } from '@craftjs/core';
 import {
@@ -106,11 +108,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
   onTabClick,
   onActionClick,
 }) => {
-  /**
-   * We can retrieve `canUndo` and `canRedo` from the editor directly.
-   * Whenever the history changes, these values will update and cause
-   * a rerender, allowing us to decide if undo/redo should be "dimmed".
-   */
   const { actions, query, canUndo, canRedo } = useEditor((_, query) => ({
     canUndo: query.history.canUndo(),
     canRedo: query.history.canRedo(),
@@ -168,7 +165,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
     // Check if the File System Access API is supported
     if ('showSaveFilePicker' in window) {
       try {
-        // Use the File System Access API to let the user choose file name & location
         const opts = {
           suggestedName: 'craftjs_data.json',
           types: [
@@ -187,7 +183,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
         console.error('Save file was cancelled or failed', err);
       }
     } else {
-      // Fallback for browsers that do not support showSaveFilePicker
       const fileName =
         prompt(
           'Enter a file name (including .json extension):',
@@ -284,7 +279,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
                       }}
                       title={act.title}
                       ariaLabel={act.title}
-                      // Note: we do NOT set `disabled` here, so the background won't be grayed out.
                     />
                   </div>
                 </div>
@@ -303,17 +297,14 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
         <ExportMenu onClose={() => setShowExportMenu(false)} />
       </Modal>
 
-      {/* Modal for Save to Local Storage */}
-      <Modal
-        isOpen={showSaveModal}
-        onDismiss={() => setShowSaveModal(false)}
-        isBlocking={false}
-      >
-        <SaveModal
-          isOpen={showSaveModal}
-          onClose={() => setShowSaveModal(false)}
-        />
-      </Modal>
+      {/* 
+        Remove the extra <Modal> wrapper for SaveModal because SaveModal
+        itself already renders a Fluent UI <Modal> inside. 
+        Just conditionally render <SaveModal /> instead.
+      */}
+      {showSaveModal && (
+        <SaveModal isOpen={true} onClose={() => setShowSaveModal(false)} />
+      )}
 
       {/* Modal for Importing JSON */}
       <Modal
