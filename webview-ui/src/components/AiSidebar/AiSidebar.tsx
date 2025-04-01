@@ -8,19 +8,27 @@ import './AiSidebar.css';
  */
 export interface AiSidebarProps {
   /**
-   * Optional callbacks when the user clicks the "suggested features" buttons.
-   */
-  onConvertScreenshot?: () => void;
-  onGenerateDesign?: () => void;
-
-  /**
    * Optional callback for submitting AI requests, e.g. "Chat with Blueprint AI".
    */
   onSubmitChat?: (message: string) => void;
 
   /**
-   * (Optional) Handler for closing this sidebar.
-   * Useful if you want to hide/unmount the AiSidebar when a close button is clicked.
+   * Whether the sidebar is currently detached from the main layout.
+   */
+  isDetached?: boolean;
+
+  /**
+   * Called to detach the sidebar from the main layout.
+   */
+  onDetach?: () => void;
+
+  /**
+   * Called to re-dock the sidebar into the main layout.
+   */
+  onDock?: () => void;
+
+  /**
+   * Called to close/hide the sidebar completely.
    */
   onClose?: () => void;
 }
@@ -32,9 +40,10 @@ export interface AiSidebarProps {
  * is not rendered as a direct child of a Craft node.
  */
 export const AiSidebar: React.FC<AiSidebarProps> = ({
-  onConvertScreenshot,
-  onGenerateDesign,
   onSubmitChat,
+  isDetached,
+  onDetach,
+  onDock,
   onClose,
 }) => {
   /**
@@ -79,7 +88,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
 
   /**
    * Listen for AI responses from the VS Code extension (if you need to).
-   * But per your instructions, we won't do anything after the response is received.
+   * We won't do anything else when response is received.
    */
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -87,7 +96,6 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
       if (command === 'blueprintAI.result') {
         setLoading(false);
         console.log('AI response received:', payload);
-        // Do nothing else per your instructions.
       }
     };
 
@@ -205,23 +213,88 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
 
   return (
     <div className="ai-sidebar">
-      {/* Optional close button */}
-      {onClose && (
-        <button className="ai-sidebar-close" onClick={onClose}>
-          ✕
-        </button>
-      )}
+      {/* A small draggable handle for the detached case */}
+      {isDetached && <div className="ai-sidebar-drag-handle" />}
 
-      {/* Header */}
-      <div className="ai-sidebar-header">
-        <h2>Blueprint AI</h2>
-        <p>Generate new designs, or refine existing ones.</p>
+      {/* Top bar with docking/detach and close icons */}
+      <div className="ai-sidebar-header-bar">
+        <div className="ai-sidebar-header-icons">
+          {isDetached ? (
+            <button
+              className="icon-button"
+              onClick={onDock}
+              title="Dock Sidebar"
+            >
+              {/* Dock icon (inline SVG) */}
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="2" y="2" width="20" height="20" rx="2"></rect>
+                <path d="M2 12h20"></path>
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="icon-button"
+              onClick={onDetach}
+              title="Detach Sidebar"
+            >
+              {/* Detach icon (inline SVG) */}
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="2" y="2" width="20" height="20" rx="2"></rect>
+                <path d="M2 7h20"></path>
+              </svg>
+            </button>
+          )}
+
+          <button
+            className="icon-button"
+            onClick={onClose}
+            title="Close Sidebar"
+          >
+            {/* Close icon (inline SVG) */}
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div className="ai-sidebar-title">
+          <h2>Blueprint AI</h2>
+          <p>Generate and refine designs</p>
+        </div>
       </div>
 
       {/* Selected element reference from useEditor */}
       {isSelected && selectedElementName ? (
         <div className="ai-sidebar-reference">
-          Currently referencing: <strong>{selectedElementName}</strong>
+          <span>Targeting element:</span> <strong>{selectedElementName}</strong>
         </div>
       ) : (
         <div className="ai-sidebar-reference ai-sidebar-reference-inactive">
@@ -229,26 +302,9 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
         </div>
       )}
 
-      {/* Suggested features */}
-      <div className="ai-sidebar-suggested-features">
-        <button
-          className="ai-sidebar-feature-button"
-          onClick={onConvertScreenshot}
-          title="Convert screenshot to design"
-        >
-          Convert screenshot
-        </button>
-        <button
-          className="ai-sidebar-feature-button"
-          onClick={onGenerateDesign}
-          title="Generate design from text"
-        >
-          Generate from text
-        </button>
-      </div>
-
       {/* Image upload section */}
       <div className="ai-sidebar-upload-section">
+        <label className="ai-sidebar-label">Image (Optional)</label>
         {uploadedImage ? (
           <div className="ai-sidebar-upload-preview">
             <img
@@ -257,9 +313,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
               className="ai-sidebar-image-preview"
             />
             <div className="ai-sidebar-upload-info">
-              <span>
-                Referencing <em>{truncateFileName(uploadedImage.name, 20)}</em>
-              </span>
+              <span>{truncateFileName(uploadedImage.name, 18)}</span>
               <button
                 className="ai-sidebar-upload-remove"
                 onClick={removeImage}
@@ -274,7 +328,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
             className="ai-sidebar-upload-button"
             onClick={handleUploadClick}
           >
-            Upload an Image
+            Upload Image
           </button>
         )}
 
@@ -289,19 +343,16 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
 
       {/* Prompt text area */}
       <div className="ai-sidebar-prompt-section">
-        <label
-          htmlFor="ai-sidebar-textarea"
-          className="ai-sidebar-prompt-label"
-        >
-          AI Prompt:
+        <label htmlFor="ai-sidebar-textarea" className="ai-sidebar-label">
+          Prompt
         </label>
         <textarea
           id="ai-sidebar-textarea"
           className="ai-sidebar-textarea"
-          placeholder="Describe your desired features..."
+          placeholder="Describe what you want to design..."
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          rows={5}
+          rows={4}
         />
       </div>
 
