@@ -81,6 +81,9 @@ const MainInterface: React.FC = () => {
   // Local state controlling whether the SuggestedPages modal is open
   const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
+  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
+  const [isAiSidebarDetached, setIsAiSidebarDetached] = useState(false);
+
   // On component mount, load Page #1’s layout from the store
   // and also check if we have suggested pages
   useEffect(() => {
@@ -121,7 +124,12 @@ const MainInterface: React.FC = () => {
       <div className="main-interface-container">
         {/* PrimarySidebar on the left */}
         <aside className="sidebar left-sidebar">
-          <PrimarySidebar />
+          <PrimarySidebar
+            isAiSidebarOpen={isAiSidebarOpen}
+            setIsAiSidebarOpen={setIsAiSidebarOpen}
+            isAiSidebarDetached={isAiSidebarDetached}
+            setIsAiSidebarDetached={setIsAiSidebarDetached}
+          />
         </aside>
 
         {/* The droppable canvas area */}
@@ -133,7 +141,12 @@ const MainInterface: React.FC = () => {
 
         {/* PropertiesSidebar on the right */}
         <aside className="sidebar right-sidebar">
-          <PropertiesSidebar />
+          <PropertiesSidebar
+            isAiSidebarOpen={isAiSidebarOpen}
+            isAiSidebarDetached={isAiSidebarDetached}
+            setIsAiSidebarDetached={setIsAiSidebarDetached}
+            closeAiSidebar={() => setIsAiSidebarOpen(false)}
+          />
         </aside>
 
         {/* Show the SuggestedPages modal if isSuggestedOpen is true */}

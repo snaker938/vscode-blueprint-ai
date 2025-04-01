@@ -5,7 +5,16 @@ import { useEditor } from '@craftjs/core';
 import { IconButton, IIconProps } from '@fluentui/react';
 import { Box, Typography } from '@mui/material';
 import styled from 'styled-components';
+import Draggable from 'react-draggable'; // For detached AI
+import { AiSidebar } from '../AiSidebar/AiSidebar'; // Your AI sidebar
 import './propertiesSidebarStyles.css';
+
+interface PropertiesSidebarProps {
+  isAiSidebarOpen: boolean;
+  isAiSidebarDetached: boolean;
+  setIsAiSidebarDetached: (detached: boolean) => void;
+  closeAiSidebar: () => void;
+}
 
 const SidebarContainer = styled.div<{ $collapsed: boolean }>`
   position: relative;
@@ -17,7 +26,7 @@ const SidebarContainer = styled.div<{ $collapsed: boolean }>`
   min-width: 0;
   border-left: 1px solid #ccc;
   background-color: #fff;
-  overflow: visible;
+  overflow: visible; /* can be auto or visible; doesn't affect pinned panel */
 `;
 
 const SidebarContent = styled.div`
@@ -59,11 +68,17 @@ const ContentArea = styled.div`
   padding: 16px;
 `;
 
-export const PropertiesSidebar: React.FC = () => {
+export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
+  isAiSidebarOpen,
+  isAiSidebarDetached,
+  setIsAiSidebarDetached,
+  closeAiSidebar,
+}) => {
   const [collapsed, setCollapsed] = useState(false);
 
   const collapseIcon: IIconProps = { iconName: 'ChevronRight' };
   const expandIcon: IIconProps = { iconName: 'ChevronLeft' };
+
   const toggleCollapse = () => setCollapsed(!collapsed);
 
   // Grab the selected node’s info (ID, name, and custom settings component)
@@ -102,7 +117,6 @@ export const PropertiesSidebar: React.FC = () => {
                 ariaLabel="Collapse Sidebar"
               />
             </Header>
-
             <ContentArea>
               {!selected ? (
                 <Typography variant="body2">
@@ -122,6 +136,75 @@ export const PropertiesSidebar: React.FC = () => {
       <OverlayHandle $show={collapsed} onClick={toggleCollapse}>
         <IconButton iconProps={expandIcon} ariaLabel="Expand Sidebar" />
       </OverlayHandle>
+
+      {/* If AI sidebar is open and pinned at bottom of the screen */}
+      {isAiSidebarOpen && !isAiSidebarDetached && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            right: collapsed ? '0' : '320px', // align with collapsed or full width
+            width: '320px',
+            height: '300px',
+            backgroundColor: '#fff',
+            borderLeft: '1px solid #ccc',
+            boxShadow: '-2px 0 6px rgba(0,0,0,0.1)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Title bar with 'Detach' & 'Close' */}
+          <div style={{ display: 'flex', background: '#eee', padding: '4px' }}>
+            <button onClick={() => setIsAiSidebarDetached(true)}>Detach</button>
+            <button onClick={closeAiSidebar}>Close</button>
+          </div>
+          {/* AI Sidebar content */}
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <AiSidebar onClose={closeAiSidebar} />
+          </div>
+        </div>
+      )}
+
+      {/* If AI sidebar is open and detached (draggable) */}
+      {isAiSidebarOpen && isAiSidebarDetached && (
+        <Draggable handle=".draggable-handle">
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '100px',
+              right: '80px',
+              width: '320px',
+              height: '300px',
+              background: '#fff',
+              border: '1px solid #ccc',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              zIndex: 9999,
+            }}
+          >
+            {/* Draggable handle bar */}
+            <div
+              className="draggable-handle"
+              style={{
+                display: 'flex',
+                background: '#eee',
+                padding: '4px',
+                cursor: 'move',
+              }}
+            >
+              <button onClick={() => setIsAiSidebarDetached(false)}>
+                Dock
+              </button>
+              <button onClick={closeAiSidebar}>Close</button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <AiSidebar onClose={closeAiSidebar} />
+            </div>
+          </div>
+        </Draggable>
+      )}
     </>
   );
 };

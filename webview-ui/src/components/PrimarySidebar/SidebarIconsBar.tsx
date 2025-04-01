@@ -11,12 +11,18 @@ import {
 } from '@fluentui/react';
 import { SaveModal } from './SaveModal';
 import ExportMenu from '../ExportMenu/ExportMenu';
+import { AiSidebar } from '../AiSidebar/AiSidebar'; // <-- NEW IMPORT
 import './sidebarStyles.css';
 
 interface SidebarIconsBarProps {
   activeTab: string | null;
   onTabClick: (key: string) => void;
   onActionClick?: (key: string) => void; // Optional external callback
+
+  isAiSidebarOpen: boolean;
+  setIsAiSidebarOpen: (open: boolean) => void;
+  isAiSidebarDetached: boolean;
+  setIsAiSidebarDetached: (detached: boolean) => void;
 }
 
 const tabs = [
@@ -105,6 +111,10 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
   activeTab,
   onTabClick,
   onActionClick,
+  isAiSidebarOpen,
+  setIsAiSidebarOpen,
+  isAiSidebarDetached,
+  setIsAiSidebarDetached,
 }) => {
   const { actions, query, canUndo, canRedo } = useEditor((_, query) => ({
     canUndo: query.history.canUndo(),
@@ -114,6 +124,9 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+
+  // NEW STATE FOR AI SIDEBAR
+  const [showAiSidebar, setShowAiSidebar] = useState(false);
 
   const handleActionClick = (key: string) => {
     // Invoke external callback if provided
@@ -235,6 +248,38 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
           })}
         </div>
 
+        {/* NEW AI ICON SECTION (SEPARATE FROM TABS) */}
+        <div className="ai-section">
+          <TooltipHost
+            content="AI Assistant"
+            directionalHint={DirectionalHint.rightCenter}
+          >
+            <div
+              className="sidebar-item"
+              onClick={() => {
+                // Toggle open/closed. If opening, ensure it's pinned by default
+                if (!isAiSidebarOpen) {
+                  setIsAiSidebarDetached(false);
+                }
+                setIsAiSidebarOpen(!isAiSidebarOpen);
+              }}
+            >
+              <div className="icon-container">
+                {/* Change icon depending on isAiSidebarDetached */}
+                <IconButton
+                  iconProps={{
+                    iconName: isAiSidebarDetached
+                      ? 'PlugDisconnected'
+                      : 'Robot',
+                    styles: { root: { fontSize: 30 } },
+                  }}
+                  ariaLabel="Toggle AI Sidebar"
+                />
+              </div>
+            </div>
+          </TooltipHost>
+        </div>
+
         {/* Bottom Actions */}
         <div className="bottom-section">
           <div className="double-separator">
@@ -312,6 +357,25 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
           onImport={handleImportFinish}
         />
       </Modal>
+
+      {/* NEW: AI SIDEBAR, POSITIONED TO THE LEFT OF THE RIGHT PROPERTIES SIDEBAR */}
+      {showAiSidebar && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            right: '320px', // directly to the left of the 320px-wide Properties sidebar
+            width: '320px',
+            height: '100vh',
+            backgroundColor: '#fff',
+            borderLeft: '1px solid #ccc',
+            boxShadow: '-2px 0 6px rgba(0,0,0,0.1)',
+            zIndex: 9998,
+          }}
+        >
+          <AiSidebar onClose={() => setShowAiSidebar(false)} />
+        </div>
+      )}
     </>
   );
 };

@@ -18,17 +18,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Padding if you want some spacing at the top. */
   padding-top: 10px;
+}
+
+/* NEW: a small optional section to hold the AI icon, separate from tabs */
+.ai-section {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* The bottom section (actions) is forced to the bottom. */
 .bottom-section {
-  margin-top: auto; /* push this section down */
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Padding if you want some spacing at the bottom. */
   padding-bottom: 10px;
 }
 
@@ -56,12 +62,11 @@
 
 /*
    Each "row."
-   We rely on a ::before pseudo-element for the active highlight bar,
-   so the icon can remain centered, and the bar is slightly inset from the screen edge.
+   We rely on a ::before pseudo-element for the active highlight bar.
 */
 .sidebar-item {
   position: relative;
-  width: 60px; /* same as icon-bar-container width */
+  width: 60px;
   margin: 6px 0;
   padding: 6px 0;
   border-radius: 6px;
@@ -71,36 +76,30 @@
 
   display: flex;
   align-items: center;
-  justify-content: center; /* icon is horizontally centered */
+  justify-content: center;
 }
 
-/* A pseudo-element for the left highlight bar if active. */
 .sidebar-item::before {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 4px; /* SHIFT highlight bar in from the edge */
-  width: 4px; /* bar thickness */
+  left: 4px;
+  width: 4px;
   background-color: transparent;
   border-radius: 6px;
   transition: background-color 0.2s ease;
 }
 
-/* If active, color that left bar. */
 .sidebar-item-active::before {
   background-color: #5c2d91; /* Purple highlight */
 }
 
-/* Hover: subtle background + small shadow. */
 .sidebar-item:hover {
   background-color: #f5f5f5;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* The icon container in the horizontal center.
-   Slight scale on hover.
-*/
 .icon-container {
   transition: transform 0.2s ease;
 }
