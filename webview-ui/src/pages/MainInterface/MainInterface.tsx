@@ -22,6 +22,8 @@ import { Image } from '../../components/UserComponents/Image';
 import AmazonHomeNoImages from '../../components/DemoPages/Amazon/no-images';
 import AmazonHomeYesImages from '../../components/DemoPages/Amazon/yes-images';
 
+import ChangedHome from '../../components/DemoPages/Amazon/changed-home';
+
 import './MainInterface.css';
 
 /**
