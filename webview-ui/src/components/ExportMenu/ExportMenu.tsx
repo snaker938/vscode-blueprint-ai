@@ -1,11 +1,17 @@
-// ExportMenu.tsx
-
 import React, { useState, useMemo } from 'react';
 import { useEditor } from '@craftjs/core';
 import { Checkbox, PrimaryButton, IconButton } from '@fluentui/react';
+import { html as beautifyHtml } from 'js-beautify'; // for HTML formatting
 
-// 1) Import the Page interface and store getter from the new store
-import { Page, getPages } from '../../store/store';
+// If you have a store for pages, you can import from there.
+// For demonstration, we just define a Page type here.
+interface Page {
+  id: number;
+  name: string;
+  thumbnail?: string;
+}
+
+import ExportEditorView from './ExportEditorView';
 
 import './ExportMenu.css';
 
@@ -13,51 +19,32 @@ interface ExportMenuProps {
   onClose: () => void;
 }
 
+/**
+ * In a real application, you might pull pages from a Redux store,
+ * or craftjs or your own store. Here, we define a single mock page.
+ */
+const MOCK_PAGE: Page = {
+  id: 1,
+  name: 'MyPage',
+  thumbnail: '',
+};
+
 const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
   /**
-   * Retrieve all pages from the store.
-   */
-  const pages: Page[] = getPages();
-
-  /**
-   * Local states for folder path, selected pages, and "select all" toggle.
+   * Local states for folder path, “select all” toggle, etc.
+   * Since we only have one page, we can keep it simple.
    */
   const [folderPath, setFolderPath] = useState('Choose folder');
-  const [selectedPages, setSelectedPages] = useState<number[]>(
-    pages.map((p) => p.id)
-  );
   const [selectAll, setSelectAll] = useState(true);
 
   /**
-   * Toggle a specific page’s selection by ID.
-   */
-  const handleTogglePage = (id: number) => {
-    if (selectedPages.includes(id)) {
-      setSelectedPages(selectedPages.filter((pid) => pid !== id));
-      setSelectAll(false);
-    } else {
-      const newSelected = [...selectedPages, id];
-      setSelectedPages(newSelected);
-      if (newSelected.length === pages.length) {
-        setSelectAll(true);
-      }
-    }
-  };
-
-  /**
-   * Select or unselect all pages at once.
-   */
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    setSelectedPages(checked ? pages.map((p) => p.id) : []);
-  };
-
-  /**
-   * Craft.js editor info for generating “dummy stats.”
+   * Craft.js editor info for generating “dummy stats” (optional).
+   * In a real app, you could compute actual stats here.
    */
   const { nodes } = useEditor((state) => ({ nodes: state.nodes }));
   const nodeCount = Object.keys(nodes).length;
 
+  // Some made-up numbers for demonstration.
   const randomSeed = useMemo(() => Math.floor(Math.random() * 500), []);
   const totalSize = useMemo(
     () => (nodeCount * 2 + randomSeed).toFixed(1),
@@ -81,6 +68,72 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
     // Not all browsers fully support webkitdirectory; this is just for demonstration.
     setFolderPath(e.target.files[0].webkitRelativePath || 'Selected folder');
   };
+
+  /**
+   * Handle toggling "Select All" pages (though we only have one page).
+   */
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+  };
+
+  /**
+   * When the user clicks "Export," we want to:
+   * 1) Grab the HTML from `#droppable-canvas-border`
+   * 2) Beautify/format it
+   * 3) Pass that + some initial CSS to `ExportEditorView`.
+   */
+  const [showEditorView, setShowEditorView] = useState(false);
+
+  // Data to pass to ExportEditorView
+  const [pageHtml, setPageHtml] = useState('');
+  const [pageCss, setPageCss] = useState('');
+
+  const handleExport = () => {
+    const canvasEl = document.getElementById('droppable-canvas-border');
+    // Raw HTML from the container
+    const rawHtml = canvasEl
+      ? canvasEl.outerHTML
+      : '<div>No content found</div>';
+
+    // Format the HTML into multiple lines with indentation
+    const formattedHtml = beautifyHtml(rawHtml, {
+      indent_size: 2,
+      preserve_newlines: true,
+      // You can adjust other options as you like
+    });
+
+    // Provide some default CSS to start with; the actual computed CSS
+    // will be gathered by ExportEditorView.
+    const defaultCss = `/* Example default CSS for your page. 
+   Insert or override as needed. */
+body {
+  margin: 0;
+  padding: 0;
+}
+`;
+
+    setPageHtml(formattedHtml);
+    setPageCss(defaultCss);
+
+    // Show the ExportEditorView
+    setShowEditorView(true);
+  };
+
+  /**
+   * Renders the standard export menu,
+   * or the ExportEditorView if "Export" was clicked.
+   */
+  if (showEditorView) {
+    return (
+      <ExportEditorView
+        pageId={String(MOCK_PAGE.id)}
+        pageName={MOCK_PAGE.name}
+        initialHtml={pageHtml}
+        initialCss={pageCss}
+        onBack={() => setShowEditorView(false)}
+      />
+    );
+  }
 
   return (
     <div className="export-menu-container">
@@ -115,21 +168,20 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
       <div className="export-menu-body">
         <div className="export-left-panel">
           <h3>Select pages to export:</h3>
+          {/* Single page selection for demonstration */}
           <div className="pages-list">
-            {pages.map((page: Page) => (
-              <div key={page.id} className="page-card">
-                <div className="page-thumbnail">
-                  {page.thumbnail ? (
-                    <img src={page.thumbnail} alt={page.name} />
-                  ) : null}
-                </div>
-                <div className="page-label">{page.name}</div>
-                <Checkbox
-                  checked={selectedPages.includes(page.id)}
-                  onChange={() => handleTogglePage(page.id)}
-                />
+            <div key={MOCK_PAGE.id} className="page-card">
+              <div className="page-thumbnail">
+                {MOCK_PAGE.thumbnail ? (
+                  <img src={MOCK_PAGE.thumbnail} alt={MOCK_PAGE.name} />
+                ) : null}
               </div>
-            ))}
+              <div className="page-label">{MOCK_PAGE.name}</div>
+              <Checkbox
+                checked={selectAll}
+                onChange={(_, chk) => handleSelectAll(!!chk)}
+              />
+            </div>
           </div>
           <div className="pages-footer">
             <Checkbox
@@ -138,7 +190,7 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
               onChange={(_, chk) => handleSelectAll(!!chk)}
             />
             <div className="pages-count">
-              Num Pages: {selectedPages.length}/{pages.length}
+              Num Pages: {selectAll ? '1/1' : '0/1'}
             </div>
           </div>
         </div>
@@ -161,7 +213,12 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
               <span>Time To Export:</span> <span>{timeToExport} seconds</span>
             </div>
           </div>
-          <PrimaryButton className="export-button" text="Export" />
+          <PrimaryButton
+            className="export-button"
+            text="Export"
+            disabled={!selectAll} // For demonstration, only enable if selected
+            onClick={handleExport}
+          />
         </div>
       </div>
     </div>

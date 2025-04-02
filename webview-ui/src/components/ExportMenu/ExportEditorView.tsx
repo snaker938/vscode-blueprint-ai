@@ -1,135 +1,174 @@
-// // src/components/ExportMenu/ExportEditorView.tsx
-// import React, { useEffect, useState } from 'react';
-// import {
-//   Stack,
-//   Pivot,
-//   PivotItem,
-//   PrimaryButton,
-//   DefaultButton,
-// } from '@fluentui/react';
-// import Editor from '@monaco-editor/react';
-// import { Page, generatePageCode } from './codeGenerator';
+import React, { useEffect, useState } from 'react';
+import {
+  Stack,
+  Pivot,
+  PivotItem,
+  PrimaryButton,
+  DefaultButton,
+} from '@fluentui/react';
+import Editor from '@monaco-editor/react';
 
-// interface ExportEditorViewProps {
-//   pages: Page[]; // pages selected for export
-//   onBack: () => void; // callback to exit editor mode
-// }
+// For zipping:
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { css as beautifyCss } from 'js-beautify'; // for optional CSS formatting
 
-// interface PageWithCode {
-//   id: string;
-//   name: string;
-//   html: string;
-//   css: string;
-//   js: string;
-// }
+interface ExportEditorViewProps {
+  pageId: string;
+  pageName: string;
+  /** The initial HTML to display in the editor */
+  initialHtml: string;
+  /** For this example, we will generate the CSS automatically from computed styles,
+   * but you can still provide some initial CSS or an empty string. */
+  initialCss: string;
+  /** Called when clicking "Back to Editor" */
+  onBack: () => void;
+}
 
-// const ExportEditorView: React.FC<ExportEditorViewProps> = ({
-//   pages,
-//   onBack,
-// }) => {
-//   const [pageCodeList, setPageCodeList] = useState<PageWithCode[]>([]);
+/**
+ * A component that:
+ * 1) Shows two Monaco Editor tabs (HTML/CSS).
+ * 2) Gathers computed CSS for #droppable-canvas-border and its children,
+ *    storing it in the "CSS" tab automatically.
+ * 3) Allows downloading these two as a zip file (no JS).
+ * 4) Uses a wide layout (90vw) so the editor is fairly wide.
+ */
+const ExportEditorView: React.FC<ExportEditorViewProps> = ({
+  pageId,
+  pageName,
+  initialHtml,
+  initialCss,
+  onBack,
+}) => {
+  // Local states for code in each editor
+  const [htmlCode, setHtmlCode] = useState(initialHtml);
+  const [cssCode, setCssCode] = useState(initialCss);
 
-//   // Generate code for selected pages on mount or if pages prop changes
-//   useEffect(() => {
-//     const generated = pages.map((page) => {
-//       const code = generatePageCode(page);
-//       return { id: page.id, name: page.name, ...code };
-//     });
-//     setPageCodeList(generated);
-//   }, [pages]);
+  // Set the initial code from props on mount
+  useEffect(() => {
+    setHtmlCode(initialHtml);
+    setCssCode(initialCss);
+  }, [initialHtml, initialCss]);
 
-//   // Handle code editor changes: update state so we always have current code
-//   const handleCodeChange = (
-//     pageId: string,
-//     field: 'html' | 'css' | 'js',
-//     value?: string
-//   ) => {
-//     if (value === undefined) return; // ignore undefined values
-//     setPageCodeList((prevList) =>
-//       prevList.map((item) =>
-//         item.id === pageId ? { ...item, [field]: value } : item
-//       )
-//     );
-//   };
+  /**
+   * On mount, gather computed styles for #droppable-canvas-border and its children,
+   * then build a CSS string that we store in state.
+   */
+  useEffect(() => {
+    const container = document.getElementById('droppable-canvas-border');
+    if (!container) return;
 
-//   // Trigger downloads of HTML, CSS, JS files for a page
-//   const downloadPageFiles = (page: PageWithCode) => {
-//     // Helper to create a download for one file
-//     const triggerDownload = (
-//       filename: string,
-//       content: string,
-//       mimeType: string
-//     ) => {
-//       const blob = new Blob([content], { type: mimeType });
-//       const url = URL.createObjectURL(blob);
-//       const link = document.createElement('a');
-//       link.href = url;
-//       link.download = filename;
-//       link.click();
-//       // No persistence needed; we can revoke the object URL after a short delay
-//       setTimeout(() => URL.revokeObjectURL(url), 0);
-//     };
-//     // Trigger download for each file type
-//     triggerDownload(`${page.name}.html`, page.html, 'text/html');
-//     triggerDownload(`${page.name}.css`, page.css, 'text/css');
-//     triggerDownload(`${page.name}.js`, page.js, 'application/javascript');
-//   };
+    // Grab all elements inside (including the container itself)
+    const allEls = [container, ...container.querySelectorAll('*')];
 
-//   return (
-//     <Stack tokens={{ childrenGap: 10 }} styles={{ root: { padding: 16 } }}>
-//       {/* Back button to return to main interface */}
-//       <DefaultButton
-//         iconProps={{ iconName: 'Back' }}
-//         text="Back to Editor"
-//         onClick={onBack}
-//       />
-//       {/* If multiple pages, use a Pivot to switch between page code; if one page, Pivot will still display the single page name */}
-//       <Pivot>
-//         {pageCodeList.map((page) => (
-//           <PivotItem headerText={page.name} key={page.id}>
-//             {/* Download button for this page */}
-//             <div style={{ textAlign: 'right', margin: '8px 0' }}>
-//               <PrimaryButton
-//                 iconProps={{ iconName: 'Download' }}
-//                 text="Download Files"
-//                 onClick={() => downloadPageFiles(page)}
-//               />
-//             </div>
-//             {/* Tabs for HTML, CSS, JS code editors */}
-//             <Pivot>
-//               <PivotItem headerText="HTML" itemKey="html">
-//                 <Editor
-//                   width="100%"
-//                   height="70vh"
-//                   language="html"
-//                   value={page.html}
-//                   onChange={(val) => handleCodeChange(page.id, 'html', val)}
-//                 />
-//               </PivotItem>
-//               <PivotItem headerText="CSS" itemKey="css">
-//                 <Editor
-//                   width="100%"
-//                   height="70vh"
-//                   language="css"
-//                   value={page.css}
-//                   onChange={(val) => handleCodeChange(page.id, 'css', val)}
-//                 />
-//               </PivotItem>
-//               <PivotItem headerText="JS" itemKey="js">
-//                 <Editor
-//                   width="100%"
-//                   height="70vh"
-//                   language="javascript"
-//                   value={page.js}
-//                   onChange={(val) => handleCodeChange(page.id, 'js', val)}
-//                 />
-//               </PivotItem>
-//             </Pivot>
-//           </PivotItem>
-//         ))}
-//       </Pivot>
-//     </Stack>
-//   );
-// };
+    // Assign a data attribute for unique identification
+    allEls.forEach((el, i) => {
+      el.setAttribute('data-export-index', String(i));
+    });
 
-// export default ExportEditorView;
+    let computedCss = '';
+    // Build a rule for each element
+    allEls.forEach((el, i) => {
+      // If it's the container itself:
+      const selector =
+        i === 0
+          ? '#droppable-canvas-border[data-export-index="0"]'
+          : `#droppable-canvas-border [data-export-index="${i}"]`;
+
+      const styleObj = window.getComputedStyle(el as HTMLElement);
+      const styleProps = Array.from(styleObj);
+
+      let rule = `${selector} {\n`;
+      styleProps.forEach((prop) => {
+        const val = styleObj.getPropertyValue(prop);
+        rule += `  ${prop}: ${val};\n`;
+      });
+      rule += '}\n\n';
+      computedCss += rule;
+    });
+
+    // Remove the data attributes from the DOM
+    allEls.forEach((el) => el.removeAttribute('data-export-index'));
+
+    // Optionally beautify the computed CSS
+    const finalCss = beautifyCss(computedCss, {
+      indent_size: 2,
+      preserve_newlines: true,
+    });
+
+    // Update the editor’s CSS with the computed/beautified style
+    setCssCode(
+      (prev) => `${prev}\n\n/* --- Computed CSS Below --- */\n\n${finalCss}`
+    );
+  }, []);
+
+  /**
+   * Creates a Zip file with the HTML and CSS, then triggers download.
+   */
+  const downloadPageFilesAsZip = async () => {
+    const zip = new JSZip();
+    zip.file(`${pageName}.html`, htmlCode);
+    zip.file(`${pageName}.css`, cssCode);
+
+    const content = await zip.generateAsync({ type: 'blob' });
+    saveAs(content, `${pageName}.zip`);
+  };
+
+  return (
+    <Stack
+      tokens={{ childrenGap: 10 }}
+      // Make the area much wider (e.g. 90% of the viewport width).
+      styles={{ root: { padding: 16, width: '90vw', margin: '0 auto' } }}
+    >
+      {/* Back button to return to main interface */}
+      <DefaultButton
+        iconProps={{ iconName: 'Back' }}
+        text="Back to Editor"
+        onClick={onBack}
+      />
+
+      {/* Single pivot item for this one page */}
+      <Pivot>
+        <PivotItem headerText={pageName} itemKey={pageId}>
+          {/* Download as Zip button */}
+          <div style={{ textAlign: 'right', margin: '8px 0' }}>
+            <PrimaryButton
+              iconProps={{ iconName: 'Download' }}
+              text="Download as Zip"
+              onClick={downloadPageFilesAsZip}
+            />
+          </div>
+
+          {/* Nested pivot for HTML/CSS (NO JS tab) */}
+          <Pivot>
+            <PivotItem headerText="HTML" itemKey="html">
+              <Editor
+                width="100%"
+                height="70vh"
+                language="html"
+                value={htmlCode}
+                onChange={(val) => {
+                  if (val !== undefined) setHtmlCode(val);
+                }}
+              />
+            </PivotItem>
+
+            <PivotItem headerText="CSS" itemKey="css">
+              <Editor
+                width="100%"
+                height="70vh"
+                language="css"
+                value={cssCode}
+                onChange={(val) => {
+                  if (val !== undefined) setCssCode(val);
+                }}
+              />
+            </PivotItem>
+          </Pivot>
+        </PivotItem>
+      </Pivot>
+    </Stack>
+  );
+};
+
+export default ExportEditorView;

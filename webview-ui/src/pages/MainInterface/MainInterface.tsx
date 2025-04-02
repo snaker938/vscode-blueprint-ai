@@ -19,10 +19,10 @@ import { SearchBox } from '../../components/UserComponents/SearchBox';
 import { Slider } from '../../components/UserComponents/Slider';
 import { Image } from '../../components/UserComponents/Image';
 
-import AmazonHomeNoImages from '../../components/DemoPages/Amazon/no-images';
-import AmazonHomeYesImages from '../../components/DemoPages/Amazon/yes-images';
-import ChangedHome from '../../components/DemoPages/Amazon/changed-home';
-import AcceptChanges from '../../components/DemoPages/Amazon/accept-changes';
+import AmazonHomeNoImages from '../../components/LocalPages/Page1/no-images';
+import AmazonHomeYesImages from '../../components/LocalPages/Page1/yes-images';
+import ChangedHome from '../../components/LocalPages/Page1/changed-home';
+import AcceptChanges from '../../components/LocalPages/Page1/accept-changes';
 
 import './MainInterface.css';
 
