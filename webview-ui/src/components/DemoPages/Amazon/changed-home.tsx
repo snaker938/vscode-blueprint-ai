@@ -8,7 +8,7 @@ import heroBanner from './hero-banner.jpg';
 import categoryElectronics from './category-electronics.png';
 import categoryFashion from './category-fashion.png';
 import categoryHomeKitchen from './category-home-kitchen.png';
-import placeholderImage from './PlaceholderImage.png'; // New placeholder image
+import trendyImage from './trendy-image.png';
 import featuredProduct1 from './featured-product1.png';
 import featuredProduct2 from './featured-product2.png';
 import featuredProduct3 from './featured-product3.png';
@@ -257,7 +257,7 @@ const ChangedHome: ChangedHomeType = () => {
             >
               <div style={{ position: 'relative' }}>
                 <img
-                  src={placeholderImage}
+                  src={trendyImage}
                   alt="Trending categories placeholder"
                   style={{
                     width: '180px',
@@ -268,22 +268,19 @@ const ChangedHome: ChangedHomeType = () => {
                 {/* Call-to-action button overlayed on the image */}
                 <button
                   type="button"
-                  onClick={() => {
-                    // You can change this to your desired URL or route
-                    window.location.href = '/trending-categories';
-                  }}
                   style={{
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    padding: '6px 12px',
-                    backgroundColor: '#ff8ba7',
+                    padding: '8px 16px',
+                    backgroundColor: '#2a9d8f',
                     color: '#fff',
                     fontWeight: 'bold',
-                    border: 'none',
-                    borderRadius: '4px',
+                    border: '2px solid #fff',
+                    borderRadius: '8px',
                     cursor: 'pointer',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                   }}
                 >
                   View Trending

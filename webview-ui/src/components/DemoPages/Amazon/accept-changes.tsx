@@ -1,71 +1,31 @@
 import React from 'react';
-import placeholder from './PlaceholderImage.png'; // Single placeholder image
+
+// Image imports assume these files exist in the same directory
+import amazonLogo from './amazon-logo.png';
+import heroBanner from './hero-banner.jpg';
+import categoryElectronics from './category-electronics.png';
+import categoryFashion from './category-fashion.png';
+import categoryHomeKitchen from './category-home-kitchen.png';
+import placeholderImage from './PlaceholderImage.png'; // New placeholder image
+import featuredProduct1 from './featured-product1.png';
+import featuredProduct2 from './featured-product2.png';
+import featuredProduct3 from './featured-product3.png';
+import dealItem1 from './deal-item1.png';
+import dealItem2 from './deal-item2.png';
+import dealItem3 from './deal-item3.png';
+import giftCard1 from './gift-card1.png';
+import giftCard2 from './gift-card2.png';
+import giftCard3 from './gift-card3.png';
 
 // Extend React.FC with a craft property to satisfy Craft.js (if you're using Craft.js)
-type AmazonHomeType = React.FC & {
+type ChangedHomeType = React.FC & {
   craft?: {
     displayName: string;
     rules?: Record<string, unknown>;
   };
 };
 
-//
-// A small helper component that shows a placeholder image
-// with an overlay of the alt text, so it is visible.
-//
-const ImageWithAltOverlay: React.FC<{
-  alt: string;
-  width?: string | number;
-  height?: string | number;
-  containerStyle?: React.CSSProperties;
-}> = ({ alt, width = '100%', height = 'auto', containerStyle }) => {
-  return (
-    <div
-      style={{
-        position: 'relative',
-        width,
-        height,
-        // If height is 'auto', we rely on the image's aspect ratio
-        // For uniform squares, pass a fixed px height or set objectFit
-        ...containerStyle,
-      }}
-    >
-      {/* The placeholder image */}
-      <img
-        src={placeholder}
-        alt={alt}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-      />
-      {/* Overlay that shows the alt text */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '0',
-          left: '0',
-          right: '0',
-          bottom: '0',
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          color: '#fff',
-          fontSize: '0.8rem',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          padding: '6px',
-        }}
-      >
-        {alt}
-      </div>
-    </div>
-  );
-};
-
-const AmazonHome: AmazonHomeType = () => {
+const ChangedHome: ChangedHomeType = () => {
   return (
     <div
       style={{
@@ -87,14 +47,11 @@ const AmazonHome: AmazonHomeType = () => {
           padding: '14px 20px',
         }}
       >
-        {/* Amazon Logo Placeholder */}
-        <div style={{ marginRight: '20px', height: '40px', width: '80px' }}>
-          <ImageWithAltOverlay
-            alt="AI Prompt: 'Minimal Amazon-style company logo, dark text on a bright rectangle'"
-            width="80px"
-            height="40px"
-          />
-        </div>
+        <img
+          src={amazonLogo}
+          alt="AI Prompt: 'Minimal Amazon-style company logo, dark text on a bright rectangle'"
+          style={{ marginRight: '20px', height: '40px' }}
+        />
         <h1
           style={{
             fontSize: '1.75rem',
@@ -171,13 +128,11 @@ const AmazonHome: AmazonHomeType = () => {
           >
             Big Sale
           </h2>
-          {/* Hero Banner Placeholder */}
-          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <ImageWithAltOverlay
-              alt="AI Prompt: 'A wide, vibrant e-commerce hero banner with special deals, minimal Amazon style, bright color palette, 3D product shapes'"
-              containerStyle={{ width: '100%', height: '300px' }}
-            />
-          </div>
+          <img
+            src={heroBanner}
+            alt="AI Prompt: 'A wide, vibrant e-commerce hero banner with special deals, minimal Amazon style, bright color palette, 3D product shapes'"
+            style={{ width: '100%', maxWidth: '1200px', height: 'auto' }}
+          />
         </section>
 
         {/* Categories */}
@@ -212,7 +167,7 @@ const AmazonHome: AmazonHomeType = () => {
           >
             Browse an extensive range of products organized by category. Whether
             you're looking for the latest tech, fashionable outfits, cozy home
-            essentials, or captivating books, we have you covered.
+            essentials, or exploring trending categories, we have you covered.
           </p>
           <div
             style={{
@@ -233,13 +188,18 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={categoryElectronics}
                 alt="AI Prompt: 'Iconic electronics category illustration with tech gadgets and circuit patterns'"
-                width="180px"
-                height="180px"
+                style={{
+                  width: '180px',
+                  height: '180px',
+                  objectFit: 'contain',
+                }}
               />
               <p style={{ marginTop: '10px', fontWeight: 500 }}>Electronics</p>
             </div>
+
             {/* Category: Fashion */}
             <div
               style={{
@@ -250,13 +210,18 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={categoryFashion}
                 alt="AI Prompt: 'Fashion category illustration with trendy clothes, shoes, and bright pop colors'"
-                width="180px"
-                height="180px"
+                style={{
+                  width: '180px',
+                  height: '180px',
+                  objectFit: 'contain',
+                }}
               />
               <p style={{ marginTop: '10px', fontWeight: 500 }}>Fashion</p>
             </div>
+
             {/* Category: Home & Kitchen */}
             <div
               style={{
@@ -267,16 +232,21 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={categoryHomeKitchen}
                 alt="AI Prompt: 'Home and kitchen category image with cozy living room decor and cookingware'"
-                width="180px"
-                height="180px"
+                style={{
+                  width: '180px',
+                  height: '180px',
+                  objectFit: 'contain',
+                }}
               />
               <p style={{ marginTop: '10px', fontWeight: 500 }}>
                 Home &amp; Kitchen
               </p>
             </div>
-            {/* Category: Books */}
+
+            {/* Category: Trending Categories (replaces Books) */}
             <div
               style={{
                 display: 'flex',
@@ -284,14 +254,65 @@ const AmazonHome: AmazonHomeType = () => {
                 alignItems: 'center',
                 width: '180px',
                 textAlign: 'center',
+
+                // Distinct dotted border to signify this changed section
+                border: '2px dotted #d25e5e',
+                borderRadius: '6px',
+                padding: '10px',
+                position: 'relative',
               }}
             >
-              <ImageWithAltOverlay
-                alt="AI Prompt: 'Books category with stacked novels and floating pages, minimal line art style'"
-                width="180px"
-                height="180px"
-              />
-              <p style={{ marginTop: '10px', fontWeight: 500 }}>Books</p>
+              {/* A small label indicating it's changed from the original */}
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-10px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  backgroundColor: '#d25e5e',
+                  color: '#fff',
+                  fontSize: '0.75rem',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                }}
+              >
+                CHANGED SECTION
+              </span>
+              <div style={{ position: 'relative' }}>
+                <img
+                  src={placeholderImage}
+                  alt="Trending categories placeholder"
+                  style={{
+                    width: '180px',
+                    height: '180px',
+                    objectFit: 'contain',
+                  }}
+                />
+                {/* Call-to-action button overlayed on the image */}
+                <button
+                  type="button"
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    padding: '8px 16px',
+                    backgroundColor: '#2a9d8f',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '2px solid #fff',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  View Trending
+                </button>
+              </div>
+              <p style={{ marginTop: '10px', fontWeight: 500 }}>
+                Trending Categories
+              </p>
             </div>
           </div>
           <button
@@ -364,10 +385,13 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={featuredProduct1}
                 alt="AI Prompt: 'Minimal product shot of a sleek tech gadget on a white background, angled lighting'"
-                width="100%"
-                height="120px"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                }}
               />
               <p style={{ marginTop: '10px' }}>Product 1</p>
               <p
@@ -405,10 +429,13 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={featuredProduct2}
                 alt="AI Prompt: 'Compact product arrangement for a wearable accessory, pastel background, styled lighting'"
-                width="100%"
-                height="120px"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                }}
               />
               <p style={{ marginTop: '10px' }}>Product 2</p>
               <p
@@ -446,10 +473,13 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={featuredProduct3}
                 alt="AI Prompt: 'High-quality product photo of a household item with bright color pop, playful arrangement'"
-                width="100%"
-                height="120px"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                }}
               />
               <p style={{ marginTop: '10px' }}>Product 3</p>
               <p
@@ -549,10 +579,10 @@ const AmazonHome: AmazonHomeType = () => {
                 backgroundColor: '#fefefe',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={dealItem1}
                 alt="AI Prompt: 'An everyday household item with a bold discount label, bright red sale text'"
-                width="100%"
-                height="120px"
+                style={{ width: '100%', height: 'auto' }}
               />
               <p style={{ marginTop: '10px' }}>Deal Item 1</p>
               <p
@@ -585,10 +615,10 @@ const AmazonHome: AmazonHomeType = () => {
                 backgroundColor: '#fefefe',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={dealItem2}
                 alt="AI Prompt: 'Stylish tech accessory on sale, discount label with bright highlight colors'"
-                width="100%"
-                height="120px"
+                style={{ width: '100%', height: 'auto' }}
               />
               <p style={{ marginTop: '10px' }}>Deal Item 2</p>
               <p
@@ -621,10 +651,10 @@ const AmazonHome: AmazonHomeType = () => {
                 backgroundColor: '#fefefe',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={dealItem3}
                 alt="AI Prompt: 'Small but attractive item with a big clearance discount, cheerful background'"
-                width="100%"
-                height="120px"
+                style={{ width: '100%', height: 'auto' }}
               />
               <p style={{ marginTop: '10px' }}>Deal Item 3</p>
               <p
@@ -722,10 +752,10 @@ const AmazonHome: AmazonHomeType = () => {
                 backgroundColor: '#fefefe',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={giftCard1}
                 alt="AI Prompt: 'Gift card design with minimal Amazon style, confetti, bright and cheerful layout'"
-                width="100%"
-                height="100px"
+                style={{ width: '100%', height: 'auto' }}
               />
               <p style={{ marginTop: '10px' }}>Gift Card 1</p>
             </div>
@@ -740,10 +770,10 @@ const AmazonHome: AmazonHomeType = () => {
                 backgroundColor: '#fefefe',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={giftCard2}
                 alt="AI Prompt: 'Modern gift card featuring abstract shapes and bold Amazon color palette, gradient background'"
-                width="100%"
-                height="100px"
+                style={{ width: '100%', height: 'auto' }}
               />
               <p style={{ marginTop: '10px' }}>Gift Card 2</p>
             </div>
@@ -758,10 +788,10 @@ const AmazonHome: AmazonHomeType = () => {
                 backgroundColor: '#fefefe',
               }}
             >
-              <ImageWithAltOverlay
+              <img
+                src={giftCard3}
                 alt="AI Prompt: 'Minimal line-art gift card with small Amazon logo, pastel background, celebratory ribbons'"
-                width="100%"
-                height="100px"
+                style={{ width: '100%', height: 'auto' }}
               />
               <p style={{ marginTop: '10px' }}>Gift Card 3</p>
             </div>
@@ -805,12 +835,12 @@ const AmazonHome: AmazonHomeType = () => {
 };
 
 // Register component for Craft.js (if needed)
-AmazonHome.craft = {
-  displayName: 'AmazonHome',
+ChangedHome.craft = {
+  displayName: 'ChangedHome',
   // rules: {
   //   canMove: () => false,
   //   canDrag: () => false,
   // },
 };
 
-export default AmazonHome;
+export default ChangedHome;

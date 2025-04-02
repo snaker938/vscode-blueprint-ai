@@ -21,8 +21,8 @@ import { Image } from '../../components/UserComponents/Image';
 
 import AmazonHomeNoImages from '../../components/DemoPages/Amazon/no-images';
 import AmazonHomeYesImages from '../../components/DemoPages/Amazon/yes-images';
-
 import ChangedHome from '../../components/DemoPages/Amazon/changed-home';
+import AcceptChanges from '../../components/DemoPages/Amazon/accept-changes';
 
 import './MainInterface.css';
 
@@ -36,6 +36,7 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
   const { actions } = useEditor();
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If user clicks empty space, deselect everything
     if (e.target === e.currentTarget) {
       actions.selectNode([]);
     }
@@ -53,14 +54,13 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
 };
 
 /**
- * A component that sets up the initial demo page within a frame.
+ * A component that sets up the chosen page within a Frame.
  */
-export const DroppableCanvas: React.FC<{
-  isUsingYesImages: boolean;
-  SelectedPageComponent: React.ElementType;
-}> = ({ isUsingYesImages, SelectedPageComponent }) => {
+const DroppableCanvas: React.FC<{ RootComponent: React.ElementType }> = ({
+  RootComponent,
+}) => {
   return (
-    <Frame key={isUsingYesImages ? 'withImages' : 'noImages'}>
+    <Frame>
       <Element
         is={Container}
         canvas
@@ -71,7 +71,7 @@ export const DroppableCanvas: React.FC<{
         margin={[0, 0, 0, 0]}
         padding={[20, 20, 20, 20]}
       >
-        <SelectedPageComponent />
+        <RootComponent />
       </Element>
     </Frame>
   );
@@ -180,52 +180,121 @@ const AiImagesModal: React.FC<{
  */
 const MainInterface: React.FC = () => {
   // Demo page references
-  const PageNoImages: React.ElementType = AmazonHomeNoImages;
-  const PageYesImages: React.ElementType = AmazonHomeYesImages;
+  const PageNoImages = AmazonHomeNoImages;
+  const PageYesImages = AmazonHomeYesImages;
 
-  // State
+  /**
+   * If user accepted changes, we show ChangedHome.
+   * If user loaded AI images, we show AmazonHomeYesImages.
+   * Otherwise, we show AmazonHomeNoImages.
+   *
+   * BUT if the user clicks AI Generate, we'll display AcceptChanges.
+   */
   const [isUsingYesImages, setIsUsingYesImages] = useState(false);
+  const [hasAcceptedChanges, setHasAcceptedChanges] = useState(false);
+  const [showAcceptChanges, setShowAcceptChanges] = useState(false);
+
+  /**
+   * Key used to force a complete unmount/remount of the <Editor>.
+   * Each time we increment this key, it triggers a fresh editor instance.
+   */
+  const [editorKey, setEditorKey] = useState(0);
+
+  // States for the initial AI modal, AI sidebar, and spinner
   const [isGenerating, setIsGenerating] = useState(false);
   const [showModal, setShowModal] = useState(true);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
-  const [showAcceptChanges, setShowAcceptChanges] = useState(false);
   const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
-  // Determine which page to show
-  const SelectedPageComponent = isUsingYesImages ? PageYesImages : PageNoImages;
+  // Decide which page layout to display
+  const getRootComponent = (): React.ElementType => {
+    // If we've triggered the AI Generation, show the AcceptChanges layout:
+    if (showAcceptChanges) {
+      return AcceptChanges;
+    }
 
-  // Modal button handlers
+    // If the user accepted changes, show the final "ChangedHome"
+    if (hasAcceptedChanges) {
+      return ChangedHome;
+    }
+
+    // Otherwise, show either "Yes Images" or "No Images" pages
+    return isUsingYesImages ? PageYesImages : PageNoImages;
+  };
+
+  // Force a brand-new Editor by incrementing "editorKey"
+  const reloadEditor = () => {
+    setEditorKey((prevKey) => prevKey + 1);
+  };
+
+  /**
+   * The user picks "Yes" on the initial AI modal
+   */
   const handleGenerateImagesYes = () => {
     setIsGenerating(true);
+    // Simulate an async AI call
     setTimeout(() => {
       setIsGenerating(false);
       setIsUsingYesImages(true);
       setShowModal(false);
+
+      // Force editor to re-mount
+      reloadEditor();
     }, 3000);
   };
 
+  /**
+   * The user picks "No" on the initial AI modal
+   */
   const handleGenerateImagesNo = () => {
     setShowModal(false);
+
+    // Force editor to re-mount so we load the "no images" layout fresh
+    reloadEditor();
   };
 
-  // AI generation logic
+  /**
+   * AI Sidebar triggers an AI generation
+   * -> Show AcceptChanges layout in place of the others
+   */
   const handleAiGenerate = () => {
-    console.log('Generate Clicked');
+    console.log('AI Generate button clicked');
+
+    // Set the flag to display the AcceptChanges layout:
     setShowAcceptChanges(true);
+    // Remount the editor so it displays AcceptChanges immediately:
+    reloadEditor();
   };
 
+  /**
+   * The user accepts the AI changes
+   * -> Show the final "ChangedHome"
+   */
   const handleAcceptChanges = () => {
     console.log('Changes accepted!');
     setShowAcceptChanges(false);
+    setHasAcceptedChanges(true);
+
+    // Force editor to re-mount with the "ChangedHome" layout
+    reloadEditor();
   };
 
+  /**
+   * The user rejects/closes the AI changes
+   * -> Revert to the original layout (either with or without images)
+   */
   const handleRejectChanges = () => {
     console.log('Changes rejected or closed');
     setShowAcceptChanges(false);
+
+    // Reload the editor to go back to the prior page
+    reloadEditor();
   };
 
   return (
+    // Render a new <Editor> each time "editorKey" changes
     <Editor
+      key={editorKey}
       resolver={{
         Container,
         Text,
@@ -238,25 +307,23 @@ const MainInterface: React.FC = () => {
         Image,
         AmazonHomeNoImages,
         AmazonHomeYesImages,
+        ChangedHome,
+        AcceptChanges,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >
-      {/* Main Interface Layout */}
-      {/*
-        Add "ai-closed" class if the AI sidebar is NOT open.
-        This collapses the second grid column in CSS.
-      */}
+      {/* Main layout */}
       <div
         className={
           'main-interface-container' + (isAiSidebarOpen ? '' : ' ai-closed')
         }
       >
-        {/* Left sidebar (Primary) */}
+        {/* Left sidebar */}
         <aside className="sidebar left-sidebar">
           <PrimarySidebar />
         </aside>
 
-        {/* AI Sidebar wrapper ALWAYS present; just conditionally render the content */}
+        {/* AI Sidebar */}
         <div className="ai-sidebar-wrapper">
           {isAiSidebarOpen && (
             <AiSidebar
@@ -273,10 +340,7 @@ const MainInterface: React.FC = () => {
         {/* Main Canvas Area */}
         <main className="editor-canvas-area">
           <CanvasBorderWrapper>
-            <DroppableCanvas
-              isUsingYesImages={isUsingYesImages}
-              SelectedPageComponent={SelectedPageComponent}
-            />
+            <DroppableCanvas RootComponent={getRootComponent()} />
           </CanvasBorderWrapper>
         </main>
 
@@ -286,7 +350,7 @@ const MainInterface: React.FC = () => {
         </aside>
       </div>
 
-      {/* Modal to prompt AI image generation */}
+      {/* Modal: prompt if user wants AI images */}
       {showModal && (
         <AiImagesModal
           onYes={handleGenerateImagesYes}
