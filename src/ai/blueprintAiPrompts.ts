@@ -1,8 +1,6 @@
 /**
  * blueprintAiPrompts.ts
  *
- * Central place to store meta prompts for each AI call,
- * so you can easily modify them without searching the code.
  */
 
 /**

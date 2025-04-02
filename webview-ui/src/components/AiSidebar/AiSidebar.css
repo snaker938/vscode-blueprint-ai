@@ -1,242 +1,270 @@
 /* Overall sidebar container */
 .ai-sidebar {
-  position: relative;
-  width: 340px;
-  height: 100%;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(120deg, #fafafa, #f2f2f2);
+  /* Soft gradient background */
+  background: linear-gradient(145deg, #ffffff, #f8f8fa);
+  /* Subtle border on the left edge */
   border-left: 1px solid #ddd;
-  box-sizing: border-box;
+  /* Soft box shadow to separate from main content */
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.04);
+  /* Offscreen by default */
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 9998;
   font-family: 'Segoe UI', Roboto, sans-serif;
   color: #333;
 }
 
-/* If the sidebar is detached, we show a subtle handle for dragging. */
-.ai-sidebar-drag-handle {
-  width: 100%;
-  height: 6px;
-  background: #ccc;
-  cursor: move;
+/* Slide in when open */
+.ai-sidebar.open {
+  transform: translateX(0);
 }
 
-/* Header bar (contains icons and title) */
-.ai-sidebar-header-bar {
-  display: flex;
-  flex-direction: column;
-  padding: 12px;
-  background: #fefefe;
-  border-bottom: 1px solid #eee;
+/* Header container */
+.ai-sidebar-header {
   position: relative;
+  padding: 20px;
+  border-bottom: 1px solid #ebebeb;
+  background-color: #fcfcfc;
 }
 
-/* Icons (Detach / Dock / Close) */
-.ai-sidebar-header-icons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-/* Icon button base style */
-.icon-button {
-  background: none;
+/* Close button (X) at top-right */
+.ai-sidebar-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
   border: none;
-  outline: none;
+  background: transparent;
+  font-size: 18px;
   cursor: pointer;
-  color: #666;
-  padding: 4px;
+  color: #777;
   transition: color 0.2s ease;
 }
-
-.icon-button:hover {
+.ai-sidebar-close:hover {
   color: #444;
 }
 
-/* Title text */
-.ai-sidebar-title {
-  display: flex;
-  flex-direction: column;
+/* Title in header */
+.ai-sidebar-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+}
+.ai-sidebar-header p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #555;
 }
 
-.ai-sidebar-title h2 {
+/* Selected Element Reference container */
+.ai-sidebar-reference {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+}
+.ai-sidebar-reference h4 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #444;
 }
-
-.ai-sidebar-title p {
-  margin: 2px 0 0;
+.ai-sidebar-reference p {
+  margin: 6px 0 0;
   font-size: 0.9rem;
-  color: #777;
-}
-
-/* Reference area */
-.ai-sidebar-reference {
-  padding: 10px 12px;
-  font-size: 0.9rem;
-  background-color: #ffffff;
-  border-bottom: 1px solid #eee;
-}
-
-.ai-sidebar-reference span {
-  color: #666;
-}
-
-.ai-sidebar-reference strong {
-  margin-left: 4px;
   color: #333;
 }
-
 .ai-sidebar-reference-inactive {
   color: #999;
 }
 
-/* Section labels */
-.ai-sidebar-label {
-  font-weight: 600;
-  font-size: 0.85rem;
-  margin-bottom: 6px;
-  display: block;
-}
-
-/* Upload section */
+/* Image Upload container */
 .ai-sidebar-upload-section {
-  padding: 12px;
+  padding: 16px;
   border-bottom: 1px solid #eee;
 }
-
+.ai-sidebar-upload-section h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #444;
+}
+.ai-sidebar-upload-section p {
+  margin: 6px 0;
+  color: #555;
+  font-size: 0.85rem;
+}
 .ai-sidebar-upload-button {
   width: 100%;
-  background-color: #fff;
-  border: 1px dashed #ccc;
+  border: 1px dashed #aaa;
   padding: 10px;
-  font-size: 0.9rem;
-  border-radius: 4px;
   cursor: pointer;
-  text-align: center;
+  margin-top: 8px;
+  background-color: #fff;
   color: #666;
+  text-align: center;
   transition: background-color 0.2s ease;
 }
-
 .ai-sidebar-upload-button:hover {
-  background-color: #f8f8f8;
+  background-color: #fafafa;
 }
 
+/* Image preview box */
 .ai-sidebar-upload-preview {
   position: relative;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  margin-top: 8px;
   overflow: hidden;
 }
-
 .ai-sidebar-image-preview {
-  display: block;
   width: 100%;
-  height: auto;
+  display: block;
   object-fit: cover;
 }
-
 .ai-sidebar-upload-info {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: 6px 8px;
-  background-color: #fdfdfd;
+  background-color: #fafafa;
   border-top: 1px solid #ccc;
-  font-size: 0.85rem;
-  color: #555;
 }
-
 .ai-sidebar-upload-remove {
-  background: none;
   border: none;
+  background-color: transparent;
   color: #d00;
   cursor: pointer;
   font-size: 0.85rem;
   transition: color 0.2s ease;
 }
-
 .ai-sidebar-upload-remove:hover {
   color: #a00;
 }
 
-/* Prompt section */
+/* Prompt Section */
 .ai-sidebar-prompt-section {
-  padding: 12px;
+  padding: 16px;
   border-bottom: 1px solid #eee;
 }
-
+.ai-sidebar-prompt-section h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #444;
+}
+.ai-sidebar-prompt-section p {
+  margin: 6px 0;
+  font-size: 0.85rem;
+  color: #555;
+}
 .ai-sidebar-textarea {
   width: 100%;
-  border-radius: 4px;
-  border: 1px solid #ccc;
   padding: 8px;
+  box-sizing: border-box;
+  resize: none;
   font-size: 0.9rem;
   font-family: inherit;
-  resize: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   outline: none;
   transition: border-color 0.2s ease;
 }
-
 .ai-sidebar-textarea:focus {
-  border-color: #999;
+  border-color: #777;
 }
 
-/* Action buttons */
+/* Action buttons (Generate / Clear) */
 .ai-sidebar-action-buttons {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
   display: flex;
   gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid #eee;
 }
-
 .ai-sidebar-generate-button {
   flex: 1;
   background-color: #6942f5;
   color: #fff;
   border: none;
-  padding: 10px 14px;
-  font-size: 0.9rem;
-  border-radius: 4px;
+  padding: 10px 0;
   cursor: pointer;
-  text-align: center;
+  border-radius: 4px;
+  font-size: 0.9rem;
   transition: background-color 0.2s ease;
 }
-
 .ai-sidebar-generate-button:hover {
-  background-color: #5d3be0;
+  background-color: #5b3fe0;
 }
-
 .ai-sidebar-generate-button:disabled {
   background-color: #aaa;
   cursor: not-allowed;
 }
-
 .ai-sidebar-clear-button {
   background-color: #bbb;
   color: #fff;
   border: none;
-  padding: 10px 14px;
-  font-size: 0.9rem;
-  border-radius: 4px;
+  padding: 10px 16px;
   cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.9rem;
   transition: background-color 0.2s ease;
 }
-
 .ai-sidebar-clear-button:hover {
   background-color: #999;
 }
-
 .ai-sidebar-clear-button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
 
-/* Loading indicator */
+/* "Accept these changes" panel */
+.ai-sidebar-accept-changes {
+  padding: 16px;
+  margin: 16px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+.ai-sidebar-accept-changes h3 {
+  margin-top: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+.ai-sidebar-accept-changes p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 6px 0 12px;
+}
+.ai-sidebar-accept-changes button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  margin-right: 6px;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+.ai-sidebar-accept-changes button:first-of-type {
+  background-color: #28a745;
+  color: #fff;
+}
+.ai-sidebar-accept-changes button:last-of-type {
+  background-color: #f44336;
+  color: #fff;
+}
+.ai-sidebar-accept-changes button:hover {
+  opacity: 0.9;
+}
+
+/* Loading indicator (if used) */
 .ai-sidebar-loading {
   padding: 12px;
   font-size: 0.85rem;
   color: #666;
+  text-align: center;
 }

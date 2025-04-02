@@ -13,80 +13,125 @@ const AiFeaturesModal: React.FC<AiFeaturesModalProps> = ({
   return (
     <>
       <style>{`
+        /* -------------------------------------------------------
+           MODAL CONTAINER
+        ------------------------------------------------------- */
         .ai-modal-container {
-          max-width: 600px;
-          width: 90%;
-          max-height: 80vh;
-          margin: 0 auto;
-          padding: 20px;
-          background: linear-gradient(135deg, #ffffff, #f9f9ff);
-          border-radius: 12px;
-          box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
-          overflow-y: auto;
+          /* Wider modal, large height */
+          width: 80%;
+          max-width: 1000px;
+          max-height: 90vh;
+
+          /* Centered in viewport */
+          margin: 5vh auto;
+
+          /* Rounded corners */
+          border-radius: 16px;
+          overflow: hidden;
+
+          /* Eye-catching background gradient */
+          background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
         }
+
+        /* -------------------------------------------------------
+           MODAL CONTENT OVERLAY
+        ------------------------------------------------------- */
         .ai-modal-content {
+          /* Translucent white overlay for the content area */
+          background-color: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(8px);
+
           display: flex;
           flex-direction: column;
+          padding: 30px;
+          height: auto; /* let content define height */
         }
+
+        /* -------------------------------------------------------
+           HEADER
+        ------------------------------------------------------- */
         .ai-modal-header {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding-bottom: 15px;
-          border-bottom: 2px solid #ececec;
+          justify-content: space-between;
           margin-bottom: 20px;
         }
+
         .ai-modal-title {
-          font-weight: 700;
-          color: #333333;
+          font-weight: 800;
+          font-size: 28px;
+          color: #444;
           text-transform: uppercase;
           letter-spacing: 1.5px;
         }
+
+        /* Close button styles */
         .ai-modal-close-button {
-          color: #5c2d91;
+          color: #7d00c6;
           font-size: 20px;
-          transition: color 0.2s;
+          transition: color 0.3s ease;
         }
         .ai-modal-close-button:hover {
           color: #3e1a6a;
         }
+
+        /* -------------------------------------------------------
+           BODY (VERTICAL SCROLL)
+        ------------------------------------------------------- */
         .ai-modal-body {
-          padding-top: 10px;
+          overflow-y: auto;
+          overflow-x: hidden;
+          max-height: 60vh;
+          padding-right: 10px; /* space for scrollbar */
         }
+
+        /* -------------------------------------------------------
+           FEATURE ITEMS
+        ------------------------------------------------------- */
         .ai-modal-feature-item {
-          display: flex;
-          align-items: flex-start;
-          padding: 15px;
-          border-radius: 10px;
-          background-color: #fafafa;
-          transition: transform 0.2s, background-color 0.2s;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-          min-width: 220px;
-          margin: 10px;
-        }
-        .ai-modal-feature-item:hover {
-          transform: scale(1.02);
-          background-color: #f0f0ff;
-        }
-        .ai-modal-feature-icon {
-          font-size: 48px;
-          color: #5c2d91;
-          margin-right: 15px;
-        }
-        .ai-modal-feature-text {
+          /* Force consistent dimensions */
+          width: 260px;
+          height: 180px;
+
           display: flex;
           flex-direction: column;
+          align-items: flex-start;
+          justify-content: flex-start;
+
+          padding: 20px;
+          margin: 10px;
+          border-radius: 12px;
+          background-color: #fff;
+          transition: transform 0.2s ease, background-color 0.2s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
+        .ai-modal-feature-item:hover {
+          transform: translateY(-2px);
+          background-color: #f7f7ff;
+        }
+
+        /* Icon in the feature card */
+        .ai-modal-feature-icon {
+          font-size: 40px;
+          color: #7d00c6;
+          margin-bottom: 12px;
+        }
+
+        /* Title & text in the feature card */
         .ai-modal-feature-title {
-          font-weight: 600;
-          color: #333333;
-          margin-bottom: 5px;
+          font-weight: 700;
+          font-size: 16px;
+          color: #333;
+          margin-bottom: 6px;
         }
         .ai-modal-feature-description {
-          color: #666666;
-          line-height: 1.5;
+          font-size: 14px;
+          color: #555;
+          line-height: 1.4;
         }
       `}</style>
+
       <Modal
         isOpen={isOpen}
         onDismiss={onClose}
@@ -94,10 +139,9 @@ const AiFeaturesModal: React.FC<AiFeaturesModalProps> = ({
         containerClassName="ai-modal-container"
       >
         <div className="ai-modal-content">
+          {/* HEADER */}
           <header className="ai-modal-header">
-            <Text variant="xLarge" className="ai-modal-title">
-              Explore AI Features
-            </Text>
+            <Text className="ai-modal-title">Explore AI Features</Text>
             <IconButton
               iconProps={{ iconName: 'Cancel' }}
               ariaLabel="Close modal"
@@ -106,6 +150,7 @@ const AiFeaturesModal: React.FC<AiFeaturesModalProps> = ({
             />
           </header>
 
+          {/* BODY */}
           <section className="ai-modal-body">
             <Stack
               horizontal
@@ -113,38 +158,30 @@ const AiFeaturesModal: React.FC<AiFeaturesModalProps> = ({
               horizontalAlign="center"
               tokens={{ childrenGap: 30 }}
             >
+              {/* Feature 1 */}
               <div className="ai-modal-feature-item">
                 <Icon iconName="Camera" className="ai-modal-feature-icon" />
-                <div className="ai-modal-feature-text">
-                  <Text variant="large" className="ai-modal-feature-title">
-                    Screenshot to Design
-                  </Text>
-                  <Text
-                    variant="small"
-                    className="ai-modal-feature-description"
-                  >
-                    Quickly transform your screenshots into editable designs.
-                  </Text>
-                </div>
+                <Text className="ai-modal-feature-title">
+                  Screenshot to Design
+                </Text>
+                <Text className="ai-modal-feature-description">
+                  Quickly transform your screenshots into editable designs.
+                </Text>
               </div>
 
+              {/* Feature 2 */}
               <div className="ai-modal-feature-item">
                 <Icon iconName="TextField" className="ai-modal-feature-icon" />
-                <div className="ai-modal-feature-text">
-                  <Text variant="large" className="ai-modal-feature-title">
-                    Generate from Text
-                  </Text>
-                  <Text
-                    variant="small"
-                    className="ai-modal-feature-description"
-                  >
-                    Describe your vision and let AI craft a design tailored for
-                    you.
-                  </Text>
-                </div>
+                <Text className="ai-modal-feature-title">
+                  Generate from Text
+                </Text>
+                <Text className="ai-modal-feature-description">
+                  Describe your vision and let AI craft a design tailored for
+                  you.
+                </Text>
               </div>
 
-              {/* Additional features can be added here */}
+              {/* Add more features if needed */}
             </Stack>
           </section>
         </div>

@@ -29,19 +29,7 @@ const ContentArea = styled.div`
   flex-direction: column;
 `;
 
-interface PrimarySidebarProps {
-  isAiSidebarOpen: boolean;
-  setIsAiSidebarOpen: (open: boolean) => void;
-  isAiSidebarDetached: boolean;
-  setIsAiSidebarDetached: (detached: boolean) => void;
-}
-
-export const PrimarySidebar: React.FC<PrimarySidebarProps> = ({
-  isAiSidebarOpen,
-  setIsAiSidebarOpen,
-  isAiSidebarDetached,
-  setIsAiSidebarDetached,
-}) => {
+export const PrimarySidebar: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string | null>('components');
 
   const handleTabClick = (tabKey: string) => {
@@ -67,10 +55,6 @@ export const PrimarySidebar: React.FC<PrimarySidebarProps> = ({
         activeTab={activeTab}
         onTabClick={handleTabClick}
         onActionClick={handleActionClick}
-        isAiSidebarOpen={isAiSidebarOpen}
-        setIsAiSidebarOpen={setIsAiSidebarOpen}
-        isAiSidebarDetached={isAiSidebarDetached}
-        setIsAiSidebarDetached={setIsAiSidebarDetached}
       />
 
       {/* If there's an active tab, show the content. Otherwise, none. */}

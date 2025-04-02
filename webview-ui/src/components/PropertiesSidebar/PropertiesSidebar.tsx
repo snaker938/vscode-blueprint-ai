@@ -5,17 +5,11 @@ import { useEditor } from '@craftjs/core';
 import { IconButton, IIconProps } from '@fluentui/react';
 import { Box, Typography } from '@mui/material';
 import styled from 'styled-components';
-import Draggable from 'react-draggable';
-import { AiSidebar } from '../AiSidebar/AiSidebar';
 import './propertiesSidebarStyles.css';
 
-interface PropertiesSidebarProps {
-  isAiSidebarOpen: boolean;
-  isAiSidebarDetached: boolean;
-  setIsAiSidebarDetached: (detached: boolean) => void;
-  closeAiSidebar: () => void;
-}
-
+/**
+ * The main container for the properties sidebar
+ */
 const SidebarContainer = styled.div<{ $collapsed: boolean }>`
   position: relative;
   display: flex;
@@ -26,27 +20,13 @@ const SidebarContainer = styled.div<{ $collapsed: boolean }>`
   min-width: 0;
   border-left: 1px solid #ccc;
   background-color: #fff;
-  /* Hide overflow so we can pin the AI block at the bottom */
-  overflow: hidden;
+  /* No overflow constraints so it's purely for properties. */
 `;
 
-/**
- * Wraps everything (properties + pinned AI) in a vertical layout.
- */
 const SidebarInner = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-`;
-
-/**
- * This portion scrolls independently for properties.
- */
-const PropertiesScrollArea = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
 `;
 
 const SidebarContent = styled.div`
@@ -84,37 +64,31 @@ const Header = styled.div`
 
 const ContentArea = styled.div`
   flex: 1;
+  /* No scrolling here; remove overflow-y. */
   padding: 16px;
 `;
 
-/**
- * The pinned AI container at the bottom.
- */
-const DockedAiContainer = styled.div`
-  border-top: 1px solid #ccc;
-  background: #fff;
-  width: 100%;
-  height: 300px; /* fixed height for pinned AI sidebar */
-  flex-shrink: 0; /* do not shrink */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* no scrolling here */
-`;
+export interface PropertiesSidebarProps {
+  defaultCollapsed?: boolean;
+  onCollapseChange?: (collapsed: boolean) => void; // <-- NEW
+}
 
 export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
-  isAiSidebarOpen,
-  isAiSidebarDetached,
-  setIsAiSidebarDetached,
-  closeAiSidebar,
+  defaultCollapsed = false,
+  onCollapseChange,
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   const collapseIcon: IIconProps = { iconName: 'ChevronRight' };
   const expandIcon: IIconProps = { iconName: 'ChevronLeft' };
 
-  const toggleCollapse = () => setCollapsed(!collapsed);
+  const toggleCollapse = () => {
+    const newState = !collapsed;
+    setCollapsed(!collapsed);
+    onCollapseChange?.(newState);
+  };
 
-  // Get the currently selected node's data
+  // Get the currently selected node's data from the Craft editor
   const { selected } = useEditor((state) => {
     const [currentNodeId] = state.events.selected;
     let selectedData = null;
@@ -140,6 +114,7 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   return (
     <SidebarContainer $collapsed={collapsed}>
       <SidebarInner>
+        {/* If not collapsed, show the main content */}
         {!collapsed && (
           <SidebarContent>
             <Header>
@@ -151,70 +126,26 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
               />
             </Header>
 
-            {/* The scrollable area for properties */}
-            <PropertiesScrollArea>
-              <ContentArea>
-                {!selected ? (
-                  <Typography variant="body2">
-                    Please select an element to configure its properties.
-                  </Typography>
-                ) : (
-                  <Box>
-                    {selected.settings &&
-                      React.createElement(selected.settings)}
-                  </Box>
-                )}
-              </ContentArea>
-            </PropertiesScrollArea>
+            <ContentArea>
+              {!selected ? (
+                <Typography variant="body2">
+                  Please select an element to configure its properties.
+                </Typography>
+              ) : (
+                <Box>
+                  {/* Render the node’s settings component, if it exists */}
+                  {selected.settings && React.createElement(selected.settings)}
+                </Box>
+              )}
+            </ContentArea>
           </SidebarContent>
         )}
 
-        {/* Handle for expanding when collapsed */}
+        {/* Overlay handle to expand when collapsed */}
         <OverlayHandle $show={collapsed} onClick={toggleCollapse}>
           <IconButton iconProps={expandIcon} ariaLabel="Expand Sidebar" />
         </OverlayHandle>
-
-        {/* If AI is open and not detached, show pinned AI at bottom */}
-        {isAiSidebarOpen && !isAiSidebarDetached && (
-          <DockedAiContainer style={{ overflowY: 'auto' }}>
-            <AiSidebar
-              isDetached={false}
-              onDetach={() => setIsAiSidebarDetached(true)}
-              onClose={closeAiSidebar}
-            />
-          </DockedAiContainer>
-        )}
       </SidebarInner>
-
-      {/* If AI is open and detached, show it in a draggable popup */}
-      {isAiSidebarOpen && isAiSidebarDetached && (
-        <Draggable handle=".ai-sidebar-drag-handle">
-          <div
-            style={{
-              position: 'fixed',
-              bottom: '100px',
-              right: '80px',
-              resize: 'both',
-              overflow: 'auto',
-              // Example default size ~40% width, 50% height of the viewport:
-              width: `${window.innerWidth * 0.4}px`,
-              height: `${window.innerHeight * 0.5}px`,
-              background: '#fff',
-              border: '1px solid #ccc',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              display: 'flex',
-              flexDirection: 'column',
-              zIndex: 9999,
-            }}
-          >
-            <AiSidebar
-              isDetached={true}
-              onDock={() => setIsAiSidebarDetached(false)}
-              onClose={closeAiSidebar}
-            />{' '}
-          </div>
-        </Draggable>
-      )}
     </SidebarContainer>
   );
 };

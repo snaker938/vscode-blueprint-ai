@@ -1,24 +1,23 @@
-// SelectedFeatureText.tsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Text,
   TextField,
-  IconButton,
-  Icon,
-  PrimaryButton,
   Spinner,
+  PrimaryButton,
+  DefaultButton,
+  IconButton,
+  IIconProps,
+  Icon,
 } from '@fluentui/react';
 import { useNavigate } from 'react-router-dom';
 import './SelectedFeatureText.css';
-import { getVsCodeApi } from './utils/vscodeApi';
-
-// 1) Import your store mutation functions. Adjust the relative path as needed:
-import { setSuggestedPages, updatePage } from '../../../../store/store';
 
 interface SelectedFeatureTextProps {
-  openModal: () => void;
+  openModal?: () => void;
 }
+
+const robotIcon: IIconProps = { iconName: 'Robot' };
+const pictureIcon: IIconProps = { iconName: 'Picture' };
 
 const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   openModal,
@@ -35,89 +34,6 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
   // React Router navigate hook
   const navigate = useNavigate();
-
-  /**
-   * Listen for messages from the VS Code extension backend.
-   * Specifically, we look for 'blueprintAI.result' messages.
-   */
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const { command, payload } = event.data || {};
-      if (command === 'blueprintAI.result') {
-        // We got a response from the extension for the "generateLayout" call
-        setLoading(false); // stop the spinner
-        if (payload.error) {
-          console.error('AI error:', payload.error);
-        } else if (payload.layoutJson) {
-          console.log('AI result (layout JSON):', payload.layoutJson);
-
-          /**
-           * 1) Parse out suggested pages from the raw JSON
-           * 2) Remove them from the raw JSON
-           * 3) Update the store: setSuggestedPages() + updatePage() for layout
-           * 4) Navigate to /editing
-           */
-          let rawLayoutJson: string = payload.layoutJson;
-          let suggestedPageNames: string[] | undefined;
-          let layoutJson: any = {};
-
-          try {
-            // 1. Locate the block containing suggestedPageNames via regex
-            //    e.g. { "suggestedPageNames": [...] }
-            const suggestedPagesRegex =
-              /\{\s*"suggestedPageNames"\s*:\s*\[[^\]]*\]\s*\}/;
-            const match = rawLayoutJson.match(suggestedPagesRegex);
-            if (match && match[0]) {
-              // Parse the object containing suggestedPageNames
-              const spnObject = JSON.parse(match[0]);
-              if (spnObject?.suggestedPageNames) {
-                suggestedPageNames = spnObject.suggestedPageNames;
-              }
-              // Remove this chunk so the remaining text is clean JSON (for layoutJson)
-              rawLayoutJson = rawLayoutJson.replace(suggestedPagesRegex, '');
-            }
-
-            // 2. Now parse the remainder as your layoutJson.
-            const firstCurlyIndex = rawLayoutJson.indexOf('{');
-            const lastCurlyIndex = rawLayoutJson.lastIndexOf('}');
-            if (firstCurlyIndex !== -1 && lastCurlyIndex !== -1) {
-              const validJsonString = rawLayoutJson.substring(
-                firstCurlyIndex,
-                lastCurlyIndex + 1
-              );
-              layoutJson = JSON.parse(validJsonString);
-            }
-          } catch (err) {
-            console.error('Failed to parse layoutJson:', err);
-            layoutJson = {};
-          }
-
-          // 3. Remove any leftover property from layoutJson
-          delete layoutJson.suggestedPageNames;
-
-          // 4. If the AI provided suggested pages, store them globally
-          if (
-            Array.isArray(suggestedPageNames) &&
-            suggestedPageNames.length > 0
-          ) {
-            setSuggestedPages(suggestedPageNames);
-          }
-
-          // 5. Update a known page’s layout in the store
-          //    If you have multiple pages, you might choose a different pageId.
-          updatePage(1, { layout: layoutJson });
-
-          // Finally, navigate to the /editing page
-          navigate('/editing');
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [navigate]);
 
   /**
    * Trigger hidden file input to choose an image
@@ -174,13 +90,12 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   };
 
   /**
-   * Handle "Generate" click
-   *   1) Convert the image to an ArrayBuffer
-   *   2) Post a message to the VS Code extension
-   *   3) Wait for the extension's response in handleMessage above
+   * Handle "Generate" click:
+   * 1) Show spinner (loading).
+   * 2) After 3 seconds, navigate to /editing with correct location state
+   *    if "Amazon" or "Youtube" is found in the prompt.
    */
-  const handleGenerateClick = async () => {
-    // If no prompt and no image, possibly warn user?
+  const handleGenerateClick = () => {
     if (!textValue && !uploadedImage) {
       alert('Please enter text or select an image first.');
       return;
@@ -188,32 +103,18 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
     setLoading(true);
 
-    try {
-      let rawBytes: number[] | null = null;
-      if (uploadedImage) {
-        const arrayBuffer = await uploadedImage.arrayBuffer();
-        rawBytes = Array.from(new Uint8Array(arrayBuffer));
-      }
+    setTimeout(() => {
+      const lowerPrompt = textValue.toLowerCase();
 
-      const vsCode = getVsCodeApi();
-      if (!vsCode) {
-        console.error('VSCode API is not available.');
-        setLoading(false);
-        return;
+      if (lowerPrompt.includes('amazon')) {
+        navigate('/editing', { state: { location: 'amazon' } });
+      } else if (lowerPrompt.includes('youtube')) {
+        navigate('/editing', { state: { location: 'youtube' } });
+      } else {
+        // If neither Amazon nor Youtube is found, just go to /editing with no special state.
+        navigate('/editing');
       }
-
-      vsCode.postMessage({
-        command: 'blueprintAI.generateLayout',
-        payload: {
-          userText: textValue,
-          arrayBuffer: rawBytes, // could be null if no image
-        },
-      });
-    } catch (err: any) {
-      setLoading(false);
-      console.error('Error preparing data for AI:', err);
-      alert(`Error preparing data for AI: ${err.message ?? String(err)}`);
-    }
+    }, 3000);
   };
 
   return (
@@ -222,31 +123,32 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         Enter a description of your website...
       </Text>
 
-      <div className="input-box-container">
-        {/* If image is chosen, show a small preview + remove button */}
-        {uploadedImage && (
-          <div className="uploaded-image-container">
-            <img
-              src={imagePreviewUrl || ''}
-              alt="Preview"
-              className="image-preview"
-            />
-            <div className="image-info">
-              <Icon iconName="Attach" className="paperclip-icon" />
-              <span className="referencing-text">
-                Referencing {truncateFileName(uploadedImage.name, 20)}
-              </span>
-            </div>
-            <IconButton
-              iconProps={{ iconName: 'Cancel' }}
-              onClick={removeImage}
-              className="remove-image-button"
-              title="Remove image"
-            />
+      {uploadedImage && (
+        <div className="uploaded-image-container">
+          <img
+            src={imagePreviewUrl || ''}
+            alt="Preview"
+            className="image-preview"
+          />
+          <div className="image-info">
+            <Icon iconName="Attach" className="paperclip-icon" />
+            <span className="referencing-text">
+              Referencing {truncateFileName(uploadedImage.name, 20)}
+            </span>
           </div>
-        )}
 
-        {/* Text field for user's prompt */}
+          {/* Replace the DefaultButton with an IconButton showing a modern "X" */}
+          <IconButton
+            className="remove-image-button"
+            iconProps={{ iconName: 'ChromeClose' }}
+            onClick={removeImage}
+            ariaLabel="Remove image"
+          />
+        </div>
+      )}
+
+      {/* Group the text field & feature buttons side by side */}
+      <div className="input-row">
         <TextField
           placeholder="Talk with Blueprint AI..."
           className="input-textbox"
@@ -255,32 +157,36 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
           value={textValue}
           onChange={(_, val) => setTextValue(val || '')}
         />
+      </div>
 
-        {/* Icons for AI modal + file upload */}
-        <div className="input-box-icons">
-          <div className="icon-button-group">
-            <IconButton
-              iconProps={{ iconName: 'Robot' }}
-              onClick={openModal}
-              className="icon-button ai-features-button"
-              title="AI features"
-            />
-            <div className="separator-vertical" />
-            <IconButton
-              iconProps={{ iconName: 'Picture' }}
-              onClick={handleUploadClick}
-              className="icon-button"
-              title="Upload image"
-            />
-            <input
-              id="imageUploadInput"
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleImageChange}
-            />
-          </div>
-        </div>
+      {/* Moved feature buttons below the text field */}
+      <div className="feature-buttons-container">
+        <DefaultButton
+          className="feature-button"
+          iconProps={robotIcon}
+          text="AI"
+          onClick={() => {
+            if (openModal) {
+              openModal();
+            } else {
+              alert('AI Features modal not implemented.');
+            }
+          }}
+        />
+        <span className="feature-button-separator" />
+        <DefaultButton
+          className="feature-button"
+          iconProps={pictureIcon}
+          text="Image"
+          onClick={handleUploadClick}
+        />
+        <input
+          id="imageUploadInput"
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleImageChange}
+        />
       </div>
 
       <div className="generate-button-section">

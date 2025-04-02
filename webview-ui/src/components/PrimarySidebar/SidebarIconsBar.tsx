@@ -16,12 +16,7 @@ import './sidebarStyles.css';
 interface SidebarIconsBarProps {
   activeTab: string | null;
   onTabClick: (key: string) => void;
-  onActionClick?: (key: string) => void; // Optional external callback
-
-  isAiSidebarOpen: boolean;
-  setIsAiSidebarOpen: (open: boolean) => void;
-  isAiSidebarDetached: boolean;
-  setIsAiSidebarDetached: (detached: boolean) => void;
+  onActionClick?: (key: string) => void;
 }
 
 const tabs = [
@@ -39,10 +34,6 @@ const sidebarActions: { key: string; icon: string; title: string }[] = [
   { key: 'export', icon: 'OpenInNewWindow', title: 'Export' },
 ];
 
-/**
- * This is the style function for our icon.
- * If disabled is true, we color it gray; otherwise, it remains default (inherit).
- */
 const getIconStyles = (disabled: boolean) => ({
   root: {
     fontSize: 30,
@@ -50,10 +41,6 @@ const getIconStyles = (disabled: boolean) => ({
   },
 });
 
-/**
- * A small modal that lets the user import JSON either by pasting
- * into a text area or uploading a file.
- */
 const ImportModal: React.FC<{
   onClose: () => void;
   onImport: (data: string) => void;
@@ -73,7 +60,6 @@ const ImportModal: React.FC<{
   };
 
   const handleImportClick = () => {
-    // Attempt to import whatever is currently in `jsonText`.
     if (jsonText.trim()) {
       onImport(jsonText.trim());
     }
@@ -110,10 +96,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
   activeTab,
   onTabClick,
   onActionClick,
-  isAiSidebarOpen,
-  setIsAiSidebarOpen,
-  isAiSidebarDetached,
-  setIsAiSidebarDetached,
 }) => {
   const { actions, query, canUndo, canRedo } = useEditor((_, query) => ({
     canUndo: query.history.canUndo(),
@@ -125,11 +107,9 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
 
   const handleActionClick = (key: string) => {
-    // Invoke external callback if provided
     if (onActionClick) {
       onActionClick(key);
     }
-
     switch (key) {
       case 'undo':
         actions.history.undo();
@@ -154,22 +134,12 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
     }
   };
 
-  /**
-   * Called when the user finishes importing in the ImportModal.
-   * We simply deserialize the passed-in JSON into the Craft editor.
-   */
   const handleImportFinish = (importedData: string) => {
     actions.deserialize(importedData);
   };
 
-  /**
-   * Serialize the editor state and download it as a .json file.
-   * Uses the File System Access API if available; otherwise falls back to <a> download.
-   */
   const handleDownload = async () => {
     const json = query.serialize();
-
-    // Check if the File System Access API is supported
     if ('showSaveFilePicker' in window) {
       try {
         const opts = {
@@ -181,7 +151,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
             },
           ],
         };
-        // Casting to any to avoid TS errors on new API
         const handle = await (window as any).showSaveFilePicker(opts);
         const writable = await handle.createWritable();
         await writable.write(json);
@@ -195,7 +164,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
           'Enter a file name (including .json extension):',
           'craftjs_data.json'
         ) || 'craftjs_data.json';
-
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -211,7 +179,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
   return (
     <>
       <div className="icon-bar-container">
-        {/* Top Tabs */}
         <div className="top-section">
           {tabs.map((tab) => {
             const isActive = tab.key === activeTab;
@@ -231,8 +198,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
                     <IconButton
                       iconProps={{
                         iconName: tab.icon,
-                        // Removed title to prevent default browser tooltip
-                        // Keep ariaLabel for accessibility
                         styles: { root: { fontSize: 30 } },
                       }}
                       ariaLabel={tab.title}
@@ -242,40 +207,8 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
               </TooltipHost>
             );
           })}
-          {/* AI ICON now in the same section with tabs */}
-          <TooltipHost
-            content="AI Assistant"
-            directionalHint={DirectionalHint.rightCenter}
-          >
-            <div
-              className={`sidebar-item ${
-                isAiSidebarOpen && !isAiSidebarDetached
-                  ? 'sidebar-item-active'
-                  : ''
-              }`}
-              onClick={() => {
-                if (!isAiSidebarOpen) {
-                  setIsAiSidebarDetached(false);
-                }
-                setIsAiSidebarOpen(!isAiSidebarOpen);
-              }}
-            >
-              <div className="icon-container">
-                <IconButton
-                  iconProps={{
-                    iconName: isAiSidebarDetached
-                      ? 'PlugDisconnected'
-                      : 'Robot',
-                    styles: { root: { fontSize: 30 } },
-                  }}
-                  ariaLabel="Toggle AI Sidebar"
-                />
-              </div>
-            </div>
-          </TooltipHost>
         </div>
 
-        {/* Bottom Actions */}
         <div className="bottom-section">
           <div className="double-separator">
             <div className="line1"></div>
@@ -283,14 +216,12 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
           </div>
 
           {sidebarActions.map((act) => {
-            // We'll just dim the icon if undo/redo is unavailable
             let isDimmed = false;
             if (act.key === 'undo') {
               isDimmed = !canUndo;
             } else if (act.key === 'redo') {
               isDimmed = !canRedo;
             }
-
             return (
               <TooltipHost
                 key={act.key}
@@ -299,14 +230,9 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
               >
                 <div
                   className="sidebar-item"
-                  // Prevent onClick if it's undo/redo but not possible
                   onClick={() => {
-                    if (
-                      (act.key === 'undo' && !canUndo) ||
-                      (act.key === 'redo' && !canRedo)
-                    ) {
-                      return;
-                    }
+                    if (act.key === 'undo' && !canUndo) return;
+                    if (act.key === 'redo' && !canRedo) return;
                     handleActionClick(act.key);
                   }}
                 >
@@ -314,8 +240,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
                     <IconButton
                       iconProps={{
                         iconName: act.icon,
-                        // Removed title to prevent default browser tooltip
-                        // Keep ariaLabel for accessibility
                         styles: getIconStyles(isDimmed),
                       }}
                       ariaLabel={act.title}
@@ -328,7 +252,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
         </div>
       </div>
 
-      {/* Modal for Export Menu */}
       <Modal
         isOpen={showExportMenu}
         onDismiss={() => setShowExportMenu(false)}
@@ -341,7 +264,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
         <SaveModal isOpen={true} onClose={() => setShowSaveModal(false)} />
       )}
 
-      {/* Modal for Importing JSON */}
       <Modal
         isOpen={showImportModal}
         onDismiss={() => setShowImportModal(false)}

@@ -1,8 +1,10 @@
 .selected-feature-text-container {
   background-color: #ffffff;
-  padding: 60px 40px;
+  /* Increase horizontal padding a bit to make it wider rather than taller */
+  padding: 40px 60px;
   margin: 20px auto;
-  max-width: 800px;
+  /* Increase max-width to make the container itself wider */
+  max-width: 1000px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   text-align: center;
@@ -16,60 +18,7 @@
   margin-bottom: 10px;
   width: 100%;
   max-width: 600px;
-}
-
-.input-box-container {
-  position: relative;
-  width: 100%;
-  max-width: 600px;
-  margin-bottom: 20px;
-}
-
-.input-textbox {
-  width: 100%;
-}
-
-.input-textbox .ms-TextField-fieldGroup {
-  border-radius: 8px;
-  border: 1px solid #c8c8c8;
-  background-color: #f9f9f9;
-}
-
-.input-textbox .ms-TextField-fieldGroup:hover {
-  border-color: #5c2d91;
-}
-
-.input-textbox .ms-TextField-field:focus {
-  border-color: #5c2d91;
-}
-
-.input-box-icons {
-  display: flex;
-  position: absolute;
-  bottom: 0px;
-  left: 10px;
-  align-items: center;
-  gap: 10px;
-}
-
-.ai-features-text {
-  color: #5c2d91;
-  font-weight: 500;
-}
-
-.icon-button-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.icon-button {
-  color: #5c2d91;
-  font-size: 18px;
-}
-
-.icon-button:hover {
-  color: #3e1a6a;
+  /* margin: 0 auto 10px; */
 }
 
 .uploaded-image-container {
@@ -78,7 +27,8 @@
   background-color: #f0f0f0;
   padding: 10px;
   border-radius: 5px;
-  margin-bottom: 10px;
+  margin: 10px auto;
+  max-width: 600px;
 }
 
 .image-preview {
@@ -109,11 +59,74 @@
 }
 
 .remove-image-button {
+  border: 1px solid #5c2d91;
+  background-color: #ffffff;
   color: #5c2d91;
 }
 
 .remove-image-button:hover {
+  background-color: #f3eafe;
+  border-color: #3e1a6a;
   color: #3e1a6a;
+}
+
+/* New container that places the text field & feature buttons side-by-side */
+.input-row {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin: 20px auto;
+  max-width: 900px; /* Adjust as needed for overall width */
+}
+
+/* Make the text field take remaining space in the row */
+.input-textbox {
+  flex: 1;
+}
+
+.input-textbox .ms-TextField-fieldGroup {
+  border-radius: 8px;
+  border: 1px solid #c8c8c8;
+  background-color: #f9f9f9;
+}
+
+.input-textbox .ms-TextField-fieldGroup:hover {
+  border-color: #5c2d91;
+}
+
+.input-textbox .ms-TextField-field:focus {
+  border-color: #5c2d91;
+}
+
+/* Remove or override any existing border styling on .feature-button */
+.feature-button {
+  border: none;
+  background-color: transparent;
+  color: #5c2d91;
+  box-shadow: none;
+}
+
+/* Update the hover state to keep it subtle */
+.feature-button:hover {
+  background-color: #f3eafe;
+  color: #3e1a6a;
+}
+
+/* Ensure the feature buttons container is row-aligned and centered */
+.feature-buttons-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* Simple vertical separator between the two buttons */
+.feature-button-separator {
+  display: inline-block;
+  width: 1px;
+  height: 24px;
+  margin: 0 8px;
+  background-color: #ccc;
 }
 
 .generate-button-section {

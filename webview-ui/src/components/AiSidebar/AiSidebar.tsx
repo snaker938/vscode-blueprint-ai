@@ -1,126 +1,55 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useEditor } from '@craftjs/core';
-import { getVsCodeApi } from '../CreateWithImagination/ExtraComponents/SelectedFeature/utils/vscodeApi';
-import './AiSidebar.css';
 
-/**
- * Props for the AiSidebar component
- */
 export interface AiSidebarProps {
-  /**
-   * Optional callback for submitting AI requests, e.g. "Chat with Blueprint AI".
-   */
-  onSubmitChat?: (message: string) => void;
-
-  /**
-   * Whether the sidebar is currently detached from the main layout.
-   */
-  isDetached?: boolean;
-
-  /**
-   * Called to detach the sidebar from the main layout.
-   */
-  onDetach?: () => void;
-
-  /**
-   * Called to re-dock the sidebar into the main layout.
-   */
-  onDock?: () => void;
-
-  /**
-   * Called to close/hide the sidebar completely.
-   */
+  isOpen: boolean;
   onClose?: () => void;
+  showAcceptChanges?: boolean;
+  onGenerate?: (userInput: string, uploadedImage: File | null) => void;
+  onAcceptChanges?: () => void;
+  onRejectChanges?: () => void;
 }
 
-/**
- * A redesigned AiSidebar that references the currently selected Craft node
- * via the `useEditor` hook, rather than `useNode`. This avoids the error
- * "You can only use useNode in the context of <Editor />" when the AiSidebar
- * is not rendered as a direct child of a Craft node.
- */
 export const AiSidebar: React.FC<AiSidebarProps> = ({
-  onSubmitChat,
-  isDetached,
-  onDetach,
-  onDock,
+  isOpen,
   onClose,
+  showAcceptChanges,
+  onGenerate,
+  onAcceptChanges,
+  onRejectChanges,
 }) => {
-  /**
-   * Get the selected node from the CraftJS Editor context.
-   * - If exactly one node is selected, we return its displayName as `selectedElementName`.
-   * - Otherwise, we consider nothing selected.
-   */
   const { selectedElementName, isSelected } = useEditor((state, query) => {
-    let elementName: string | undefined = undefined;
+    let elementName: string | undefined;
     let selected = false;
-
-    // If there's exactly one selected node, get its display name
     if (state.events.selected && state.events.selected.size === 1) {
       selected = true;
       const nodeId = Array.from(state.events.selected)[0];
       if (nodeId) {
         const node = query.node(nodeId).get();
-        if (node && node.data && node.data.displayName) {
+        if (node?.data?.displayName) {
           elementName = node.data.displayName;
         }
       }
     }
-
     return {
       selectedElementName: elementName,
       isSelected: selected,
     };
   });
 
-  // Text prompt state
   const [userInput, setUserInput] = useState('');
-
-  // Image file & local preview
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-
-  // Loading state (e.g. for showing a spinner/text)
-  const [loading, setLoading] = useState(false);
-
-  // Hidden file input ref
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  /**
-   * Listen for AI responses from the VS Code extension (if you need to).
-   * We won't do anything else when response is received.
-   */
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const { command, payload } = event.data || {};
-      if (command === 'blueprintAI.result') {
-        setLoading(false);
-        console.log('AI response received:', payload);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, []);
-
-  /**
-   * Trigger hidden file input to choose an image
-   */
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  /**
-   * Handle user selecting a file
-   */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-
-      // Basic validation
       if (!file.type.startsWith('image/')) {
         alert('Please upload a valid image file.');
         return;
@@ -129,10 +58,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
         alert('File size exceeds 5MB limit.');
         return;
       }
-
       setUploadedImage(file);
-
-      // For preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviewUrl(reader.result as string);
@@ -141,17 +67,11 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
     }
   };
 
-  /**
-   * Remove the selected image
-   */
   const removeImage = () => {
     setUploadedImage(null);
     setImagePreviewUrl(null);
   };
 
-  /**
-   * Helper to truncate long file names
-   */
   const truncateFileName = (name: string, maxLength: number) => {
     if (name.length <= maxLength) return name;
     const extension = name.slice(name.lastIndexOf('.'));
@@ -159,165 +79,153 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
     return `${truncatedName}...${extension}`;
   };
 
-  /**
-   * Reset the text prompt and remove the uploaded image
-   */
   const handleClearAll = () => {
     setUserInput('');
     removeImage();
   };
 
-  /**
-   * Send AI request to the backend (VS Code extension) with the text + optional image
-   */
-  const handleGenerateClick = async () => {
+  const handleGenerateClick = () => {
     if (!userInput && !uploadedImage) {
       alert('Please enter text or upload an image first.');
       return;
     }
-
-    setLoading(true);
-
-    try {
-      let rawBytes: number[] | null = null;
-      if (uploadedImage) {
-        const arrayBuffer = await uploadedImage.arrayBuffer();
-        rawBytes = Array.from(new Uint8Array(arrayBuffer));
-      }
-
-      const vsCode = getVsCodeApi();
-      if (!vsCode) {
-        console.error('VSCode API is not available.');
-        setLoading(false);
-        return;
-      }
-
-      vsCode.postMessage({
-        command: 'blueprintAI.generateLayout',
-        payload: {
-          userText: userInput,
-          arrayBuffer: rawBytes, // can be null if no image
-        },
-      });
-    } catch (err) {
-      console.error('Error preparing data for AI:', err);
-      alert('An error occurred while sending data to AI. Check console.');
-      setLoading(false);
-    }
-
-    // Optionally also submit user input to the parent or some chat callback
-    if (onSubmitChat) {
-      onSubmitChat(userInput);
+    if (onGenerate) {
+      onGenerate(userInput, uploadedImage);
     }
   };
 
   return (
-    <div className="ai-sidebar">
-      {/* A small draggable handle for the detached case */}
-      {isDetached && <div className="ai-sidebar-drag-handle" />}
-
-      {/* Top bar with docking/detach and close icons */}
-      <div className="ai-sidebar-header-bar">
-        <div className="ai-sidebar-header-icons">
-          {isDetached ? (
-            <button
-              className="icon-button"
-              onClick={onDock}
-              title="Dock Sidebar"
-            >
-              {/* Dock icon (inline SVG) */}
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="2" y="2" width="20" height="20" rx="2"></rect>
-                <path d="M2 12h20"></path>
-              </svg>
-            </button>
-          ) : (
-            <button
-              className="icon-button"
-              onClick={onDetach}
-              title="Detach Sidebar"
-            >
-              {/* Detach icon (inline SVG) */}
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="2" y="2" width="20" height="20" rx="2"></rect>
-                <path d="M2 7h20"></path>
-              </svg>
-            </button>
-          )}
-
+    <div
+      className={`ai-sidebar ${isOpen ? 'open' : ''}`}
+      style={{
+        display: isOpen ? 'flex' : 'none',
+        flexDirection: 'column',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          padding: '16px',
+          borderBottom: '1px solid #eee',
+        }}
+      >
+        <h2
+          style={{
+            margin: 0,
+            fontWeight: 600,
+            fontSize: '1.3rem',
+            color: '#333',
+          }}
+        >
+          Blueprint AI
+        </h2>
+        <p style={{ margin: '4px 0 0', fontSize: '0.9rem', color: '#555' }}>
+          Generate new designs or refine existing ones.
+        </p>
+        {onClose && (
           <button
-            className="icon-button"
             onClick={onClose}
-            title="Close Sidebar"
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              border: 'none',
+              background: 'transparent',
+              fontSize: '18px',
+              cursor: 'pointer',
+            }}
           >
-            {/* Close icon (inline SVG) */}
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            ✕
           </button>
-        </div>
-
-        <div className="ai-sidebar-title">
-          <h2>Blueprint AI</h2>
-          <p>Generate and refine designs</p>
-        </div>
+        )}
       </div>
-
-      {/* Selected element reference from useEditor */}
-      {isSelected && selectedElementName ? (
-        <div className="ai-sidebar-reference">
-          <span>Targeting element:</span> <strong>{selectedElementName}</strong>
-        </div>
-      ) : (
-        <div className="ai-sidebar-reference ai-sidebar-reference-inactive">
-          No element selected
-        </div>
-      )}
-
-      {/* Image upload section */}
-      <div className="ai-sidebar-upload-section">
-        <label className="ai-sidebar-label">Image (Optional)</label>
+      <div
+        style={{
+          padding: '16px',
+          borderBottom: '1px solid #eee',
+        }}
+      >
+        <h4
+          style={{
+            margin: 0,
+            fontSize: '1rem',
+            fontWeight: 600,
+            color: '#444',
+          }}
+        >
+          Selected Element
+        </h4>
+        {isSelected && selectedElementName ? (
+          <p style={{ margin: '6px 0 0', color: '#333', fontSize: '0.9rem' }}>
+            Currently referencing: <strong>{selectedElementName}</strong>
+          </p>
+        ) : (
+          <p style={{ margin: '6px 0 0', color: '#999', fontSize: '0.9rem' }}>
+            No element selected
+          </p>
+        )}
+      </div>
+      <div
+        style={{
+          padding: '16px',
+          borderBottom: '1px solid #eee',
+        }}
+      >
+        <h4
+          style={{
+            margin: 0,
+            fontSize: '1rem',
+            fontWeight: 600,
+            color: '#444',
+          }}
+        >
+          Image Upload
+        </h4>
+        <p style={{ margin: '6px 0', color: '#555', fontSize: '0.85rem' }}>
+          Optionally include a reference image.
+        </p>
         {uploadedImage ? (
-          <div className="ai-sidebar-upload-preview">
+          <div
+            style={{
+              position: 'relative',
+              border: '1px solid #ccc',
+              marginTop: '8px',
+            }}
+          >
             <img
               src={imagePreviewUrl || ''}
               alt="User upload"
-              className="ai-sidebar-image-preview"
+              style={{
+                width: '100%',
+                display: 'block',
+                objectFit: 'cover',
+              }}
             />
-            <div className="ai-sidebar-upload-info">
-              <span>{truncateFileName(uploadedImage.name, 18)}</span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '6px 8px',
+                backgroundColor: '#fafafa',
+                borderTop: '1px solid #ccc',
+              }}
+            >
+              <span style={{ fontSize: '0.85rem', color: '#555' }}>
+                Referencing{' '}
+                <em style={{ fontStyle: 'italic', color: '#777' }}>
+                  {truncateFileName(uploadedImage.name, 20)}
+                </em>
+              </span>
               <button
-                className="ai-sidebar-upload-remove"
                 onClick={removeImage}
-                title="Remove image"
+                style={{
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: '#d00',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                }}
               >
                 Remove
               </button>
@@ -325,13 +233,19 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
           </div>
         ) : (
           <button
-            className="ai-sidebar-upload-button"
+            style={{
+              width: '100%',
+              border: '1px dashed #aaa',
+              padding: '10px',
+              cursor: 'pointer',
+              marginTop: '8px',
+              backgroundColor: '#fff',
+            }}
             onClick={handleUploadClick}
           >
-            Upload Image
+            Upload an Image
           </button>
         )}
-
         <input
           ref={fileInputRef}
           type="file"
@@ -340,42 +254,136 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
           onChange={handleImageChange}
         />
       </div>
-
-      {/* Prompt text area */}
-      <div className="ai-sidebar-prompt-section">
-        <label htmlFor="ai-sidebar-textarea" className="ai-sidebar-label">
-          Prompt
-        </label>
+      <div
+        style={{
+          padding: '16px',
+          borderBottom: '1px solid #eee',
+        }}
+      >
+        <h4
+          style={{
+            margin: 0,
+            fontSize: '1rem',
+            fontWeight: 600,
+            color: '#444',
+          }}
+        >
+          AI Prompt
+        </h4>
+        <p style={{ margin: '6px 0', color: '#555', fontSize: '0.85rem' }}>
+          Briefly describe the changes or designs you want to generate.
+        </p>
         <textarea
-          id="ai-sidebar-textarea"
-          className="ai-sidebar-textarea"
-          placeholder="Describe what you want to design..."
+          placeholder="Describe your desired features..."
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
           rows={4}
+          style={{
+            width: '100%',
+            padding: '8px',
+            boxSizing: 'border-box',
+            resize: 'none',
+            fontSize: '0.9rem',
+          }}
         />
       </div>
-
-      {/* Actions */}
-      <div className="ai-sidebar-action-buttons">
+      <div
+        style={{
+          padding: '16px',
+          borderBottom: '1px solid #eee',
+          display: 'flex',
+          gap: '8px',
+        }}
+      >
         <button
-          className="ai-sidebar-generate-button"
           onClick={handleGenerateClick}
-          disabled={loading}
+          style={{
+            flex: 1,
+            backgroundColor: '#6942f5',
+            color: '#fff',
+            border: 'none',
+            padding: '10px 0',
+            cursor: 'pointer',
+            borderRadius: '4px',
+            fontSize: '0.9rem',
+          }}
         >
-          {loading ? 'Generating...' : 'Generate'}
+          Generate
         </button>
         <button
-          className="ai-sidebar-clear-button"
           onClick={handleClearAll}
-          disabled={loading}
+          style={{
+            backgroundColor: '#bbb',
+            color: '#fff',
+            border: 'none',
+            padding: '10px 16px',
+            cursor: 'pointer',
+            borderRadius: '4px',
+            fontSize: '0.9rem',
+          }}
         >
           Clear
         </button>
       </div>
-
-      {/* Loading indicator */}
-      {loading && <div className="ai-sidebar-loading">Sending to AI...</div>}
+      {showAcceptChanges && (
+        <div
+          style={{
+            padding: '16px',
+            margin: '16px',
+            border: '1px solid #ccc',
+            background: '#f9f9f9',
+            borderRadius: '4px',
+          }}
+        >
+          <h3
+            style={{
+              marginTop: 0,
+              fontSize: '1rem',
+              fontWeight: 600,
+              color: '#333',
+            }}
+          >
+            Accept These Changes?
+          </h3>
+          <p
+            style={{ fontSize: '0.9rem', color: '#555', margin: '6px 0 12px' }}
+          >
+            We have generated new suggestions based on your prompt. Would you
+            like to accept them?
+          </p>
+          <div>
+            <button
+              onClick={onAcceptChanges}
+              style={{
+                backgroundColor: '#28a745',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                marginRight: '6px',
+                borderRadius: '4px',
+                fontSize: '0.9rem',
+              }}
+            >
+              Accept
+            </button>
+            <button
+              onClick={onRejectChanges}
+              style={{
+                backgroundColor: '#f44336',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                fontSize: '0.9rem',
+              }}
+            >
+              Reject
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
