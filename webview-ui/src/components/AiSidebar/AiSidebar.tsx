@@ -107,10 +107,11 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
     // Show the continuous loading overlay.
     setIsLoading(true);
 
-    // Simulate an asynchronous call. You can replace the 3s timeout with your actual async logic.
+    // Simulate an asynchronous call. Replace the 3s timeout with real logic.
     setTimeout(() => {
       setIsLoading(false);
       onGenerate?.(userInput, uploadedImage);
+      // Ensure we show the generated preview.
       setShowGenerated(true);
     }, 3000);
   };
@@ -118,12 +119,12 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
   /**
    * X button inside the generated preview
    * - Hide preview
-   * (Previously, we also cleared the text & called onRejectChanges. That cleared the message.)
    */
   const handleCloseGeneratedView = () => {
     setShowGenerated(false);
-    // setUserInput('');            // <-- Removed to preserve the prompt and avoid clearing the message
-    // onRejectChanges?.();         // <-- Removed so it doesn't trigger a "reject" action automatically
+    // (Previously, we also cleared text & triggered "reject", but that caused confusion.)
+    // setUserInput('');
+    // onRejectChanges?.();
   };
 
   /**
@@ -290,7 +291,8 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
         </div>
 
         {/* ---------- EITHER SHOW PROMPT UI OR GENERATED PREVIEW ---------- */}
-        {!showGenerated && (
+        {/* Only show the prompt UI if we haven't generated yet */}
+        {!showGenerated && !showAcceptChanges && (
           <>
             {/* ---------- IMAGE UPLOAD SECTION ---------- */}
             <div
@@ -465,7 +467,12 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
         )}
 
         {/* ---------- GENERATED PREVIEW SECTION ---------- */}
-        {showGenerated && (
+        {/*
+          We now show the generated preview if EITHER:
+          - local state "showGenerated" is true, OR
+          - the parent wants to show "Accept/Reject" (showAcceptChanges === true)
+        */}
+        {(showGenerated || showAcceptChanges) && (
           <div
             style={{
               padding: '16px',
