@@ -118,13 +118,12 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
   /**
    * X button inside the generated preview
    * - Hide preview
-   * - Clear text
-   * - Treat it as a reject
+   * (Previously, we also cleared the text & called onRejectChanges. That cleared the message.)
    */
   const handleCloseGeneratedView = () => {
     setShowGenerated(false);
-    setUserInput('');
-    onRejectChanges?.();
+    // setUserInput('');            // <-- Removed to preserve the prompt and avoid clearing the message
+    // onRejectChanges?.();         // <-- Removed so it doesn't trigger a "reject" action automatically
   };
 
   /**

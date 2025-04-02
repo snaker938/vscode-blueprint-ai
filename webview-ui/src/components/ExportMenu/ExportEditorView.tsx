@@ -5,6 +5,8 @@ import {
   PivotItem,
   PrimaryButton,
   DefaultButton,
+  Dropdown,
+  IDropdownOption,
 } from '@fluentui/react';
 import Editor from '@monaco-editor/react';
 
@@ -54,7 +56,8 @@ interface ExportEditorViewProps {
  *    - <pageName>.html
  *    - <pageName>.css
  *    - All images from ../LocalPages/Page1 as binary files
- * 4) Places "Back to Editor" and "Download as Zip" next to each other.
+ * 4) Places "Back to Editor" and "Download as Zip" next to each other,
+ *    plus a dropdown to indicate what we're "exporting to" (just for looks).
  * 5) Uses a wide layout (90vw) so the editor is fairly wide.
  */
 const ExportEditorView: React.FC<ExportEditorViewProps> = ({
@@ -162,12 +165,27 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
     saveAs(content, `${pageName}.zip`);
   };
 
+  // Dropdown options (purely for looks, no logic attached)
+  const exportOptions: IDropdownOption[] = [
+    { key: 'htmlCss', text: 'HTML, CSS and CSS' },
+    { key: 'winui', text: 'WinUI' },
+    { key: 'dotnet', text: '.NET' },
+  ];
+
   return (
     <Stack
       tokens={{ childrenGap: 10 }}
-      styles={{ root: { padding: 16, width: '90vw', margin: '0 auto' } }}
+      // Ensure overflow is visible so Monaco tooltips aren't clipped
+      styles={{
+        root: {
+          padding: 16,
+          width: '90vw',
+          margin: '0 auto',
+          overflow: 'visible',
+        },
+      }}
     >
-      {/* Top row: "Back to Editor" & "Download as Zip" next to each other */}
+      {/* Top row: "Back to Editor", "Download as Zip", and the look-only dropdown */}
       <Stack horizontal tokens={{ childrenGap: 16 }}>
         <DefaultButton
           iconProps={{ iconName: 'Back' }}
@@ -179,13 +197,20 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
           text="Download as Zip"
           onClick={downloadPageFilesAsZip}
         />
+        <Dropdown
+          // Just for looks, no onChange or anything else
+          placeholder="Exporting to..."
+          defaultSelectedKey="htmlCss"
+          options={exportOptions}
+          styles={{ dropdown: { width: 180 } }}
+        />
       </Stack>
 
       {/* Single pivot for the one page */}
-      <Pivot>
+      <Pivot styles={{ root: { overflow: 'visible' } }}>
         <PivotItem headerText={pageName} itemKey={pageId}>
           {/* Nested pivot for HTML/CSS editors */}
-          <Pivot>
+          <Pivot styles={{ root: { overflow: 'visible' } }}>
             <PivotItem headerText="HTML" itemKey="html">
               <Editor
                 width="100%"
@@ -194,6 +219,10 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
                 value={htmlCode}
                 onChange={(val) => {
                   if (val !== undefined) setHtmlCode(val);
+                }}
+                options={{
+                  // Ensures suggestion widgets follow the editor correctly in a modal
+                  fixedOverflowWidgets: true,
                 }}
               />
             </PivotItem>
@@ -206,6 +235,9 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
                 value={cssCode}
                 onChange={(val) => {
                   if (val !== undefined) setCssCode(val);
+                }}
+                options={{
+                  fixedOverflowWidgets: true,
                 }}
               />
             </PivotItem>
