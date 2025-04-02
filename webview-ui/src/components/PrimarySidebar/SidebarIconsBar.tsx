@@ -242,18 +242,18 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
               </TooltipHost>
             );
           })}
-        </div>
-
-        {/* NEW AI ICON SECTION (SEPARATE FROM TABS) */}
-        <div className="ai-section">
+          {/* AI ICON now in the same section with tabs */}
           <TooltipHost
             content="AI Assistant"
             directionalHint={DirectionalHint.rightCenter}
           >
             <div
-              className="sidebar-item"
+              className={`sidebar-item ${
+                isAiSidebarOpen && !isAiSidebarDetached
+                  ? 'sidebar-item-active'
+                  : ''
+              }`}
               onClick={() => {
-                // Toggle open/closed. If opening, ensure it's pinned by default
                 if (!isAiSidebarOpen) {
                   setIsAiSidebarDetached(false);
                 }
@@ -261,7 +261,6 @@ export const SidebarIconsBar: React.FC<SidebarIconsBarProps> = ({
               }}
             >
               <div className="icon-container">
-                {/* Change icon depending on isAiSidebarDetached */}
                 <IconButton
                   iconProps={{
                     iconName: isAiSidebarDetached

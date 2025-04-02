@@ -1,5 +1,3 @@
-// Navigation/index.tsx
-
 import {
   CSSProperties,
   FC,
@@ -9,7 +7,6 @@ import {
   useRef,
 } from 'react';
 import { useNode } from '@craftjs/core';
-import { Resizer } from '../Utils/Resizer'; // Adjust import if needed
 import { NavigationProperties } from './NavigationProperties';
 
 // 1) Import from the new store
@@ -87,15 +84,15 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     getSelectedPageId()
   );
 
+  /**
+   * Controls whether the sidebar (if selected) is collapsed or not.
+   */
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
-  const [effectiveNavType, setEffectiveNavType] = useState<
-    'navbar' | 'sidebar'
-  >(navType || 'navbar');
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   /**
-   * 3) Subscribe to store changes (pages + suggested pages).
+   * 3) Subscribe to store changes (pages).
    */
   useEffect(() => {
     const handlePagesChange = () => {
@@ -137,35 +134,13 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
   }, []);
 
   /**
-   * Decide if we need a “sidebar” layout (e.g. if brand + links can’t fit horizontally).
+   * Decide if we’re in sidebar mode based on the navType prop alone.
    */
-  useEffect(() => {
-    const measure = () => {
-      if (navType === 'sidebar') {
-        setEffectiveNavType('sidebar');
-        return;
-      }
-      const el = containerRef.current;
-      if (!el) return;
-
-      if (el.scrollWidth > el.clientWidth) {
-        setEffectiveNavType('sidebar');
-        setIsCollapsed(true);
-      } else {
-        setEffectiveNavType('navbar');
-      }
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => {
-      window.removeEventListener('resize', measure);
-    };
-  }, [navType, pages, displayName]);
+  const isSidebar = navType === 'sidebar';
 
   /**
    * Compute final width if it’s a collapsible sidebar
    */
-  const isSidebar = effectiveNavType === 'sidebar';
   const finalWidth = isSidebar
     ? collapsible
       ? isCollapsed
@@ -182,11 +157,9 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
     padding,
   };
 
-  /**
-   * Different styling for “navbar” vs “sidebar”
-   */
   let containerStyle: CSSProperties = {};
   if (!isSidebar) {
+    // NAVBAR STYLE
     containerStyle = {
       ...baseContainerStyle,
       display: 'flex',
@@ -197,6 +170,7 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
       overflow: 'hidden',
     };
   } else {
+    // SIDEBAR STYLE
     containerStyle = {
       ...baseContainerStyle,
       position: 'relative',
@@ -300,29 +274,14 @@ export const Navigation: FC<INavigationProps> & { craft?: any } = (
   );
 
   /**
-   * If not a sidebar, we wrap in Resizer for direct resizing in Craft.js.
+   * Single return – no resizing, no auto-convert between navbar & sidebar
    */
-  if (!isSidebar) {
-    return (
-      <Resizer
-        ref={(ref) => ref && connectors.connect(ref)}
-        propKey={{ width: 'width', height: 'height' }}
-        style={containerStyle}
-      >
-        <div ref={containerRef} style={{ display: 'flex', width: '100%' }}>
-          {brandBlock}
-          {pagesBlock}
-        </div>
-      </Resizer>
-    );
-  } else {
-    return (
-      <div ref={containerRef} style={containerStyle}>
-        {brandBlock}
-        {pagesBlock}
-      </div>
-    );
-  }
+  return (
+    <div ref={containerRef} style={containerStyle}>
+      {brandBlock}
+      {pagesBlock}
+    </div>
+  );
 };
 
 /** Configure how Craft.js sees this component. */

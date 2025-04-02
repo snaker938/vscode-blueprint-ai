@@ -18,14 +18,11 @@ import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
 import { TextProps, RenderMode, LinkType } from './index';
 
 /**
- * Import your page-store helpers
+ * Import your store helpers (NEW)
  */
-// import {
-//   getGlobalPages,
-//   subscribeGlobalPagesChange,
-// } from '../../PrimarySidebar/PagesTab/pageStore';
+import { getPages, subscribePageChange } from '../../../store/store';
 
-/**
+/**ls
  * A small helper to display margin/padding controls with a Slider + TextInput for each side.
  */
 function SpacingControl({
@@ -77,7 +74,6 @@ function SpacingControl({
 
 /**
  * A helper to show a single numeric slider + text input.
- * We’ll use it for fontWeight, but it could be reused for other numeric props.
  */
 function SingleValueSlider({
   label,
@@ -126,12 +122,8 @@ function SingleValueSlider({
 
 /**
  * Export the settings panel for our Text component.
- * This component is referenced in TextComponent.craft.related.settings.
  */
 export const TextProperties: React.FC = () => {
-  /**
-   * Access the current component's props and the setProp action from Craft.js
-   */
   const {
     actions: { setProp },
 
@@ -176,7 +168,6 @@ export const TextProperties: React.FC = () => {
     // NEW RESIZER PROP
     enableResizer,
   } = useNode((node) => ({
-    // Destructure node.data.props so we can display/update them
     renderMode: node.data.props.renderMode,
     fontSize: node.data.props.fontSize,
     textAlign: node.data.props.textAlign,
@@ -216,15 +207,15 @@ export const TextProperties: React.FC = () => {
   }));
 
   /**************************************************************************
-   * Replace pageVersion with direct pages state for the dropdown
+   * Hook up to our new store instead of older globalPage calls
    **************************************************************************/
-  const [pages, setPages] = useState(() => getGlobalPages());
+  const [pages, setPages] = useState(() => getPages());
 
   useEffect(() => {
-    // Subscribe to changes in the global pages array
-    const unsubscribe = subscribeGlobalPagesChange(() => {
-      // Whenever globalPages changes, update our local `pages` state
-      setPages(getGlobalPages());
+    // Subscribe to changes in the pages array from our store
+    const unsubscribe = subscribePageChange(() => {
+      // Whenever pages change in the store, update our local state
+      setPages(getPages());
     });
     return unsubscribe;
   }, []);
@@ -263,9 +254,6 @@ export const TextProperties: React.FC = () => {
     }));
   }, [pages]);
 
-  /**************************************************************************
-   * Render
-   **************************************************************************/
   return (
     <React.Fragment>
       {/* --- Rendering Mode Section --- */}
@@ -301,7 +289,6 @@ export const TextProperties: React.FC = () => {
           />
         </Item>
 
-        {/* If using textbox mode, placeholder + other textbox props might be relevant */}
         {renderMode === 'textbox' && (
           <Item>
             <TextInput
@@ -323,7 +310,6 @@ export const TextProperties: React.FC = () => {
             options={textAlignOptions}
           />
         </Item>
-        {/* Font Weight with slider + text input */}
         <Item>
           <SingleValueSlider
             label="Font Weight"
@@ -474,7 +460,6 @@ export const TextProperties: React.FC = () => {
               onChangeValue={(val) => handleChange('linkType', val as LinkType)}
             />
           </Item>
-          {/* If externalUrl, show only the Href input */}
           {linkType === 'externalUrl' && (
             <Item>
               <TextInput
@@ -484,8 +469,6 @@ export const TextProperties: React.FC = () => {
               />
             </Item>
           )}
-
-          {/* If page, show a dropdown of pages */}
           {linkType === 'page' && (
             <Item>
               <Dropdown
@@ -503,7 +486,6 @@ export const TextProperties: React.FC = () => {
 
       {/* --- Interactions Section (for multiline, disabled, readOnly) --- */}
       <Section title="Interactions" defaultExpanded={false}>
-        {/* Show multiline only if renderMode === 'textbox' */}
         {renderMode === 'textbox' && (
           <Item>
             <SwitchInput

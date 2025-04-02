@@ -1,24 +1,158 @@
 import React, { useState, useRef } from 'react';
 import { useNode } from '@craftjs/core';
+import { Grid } from '@mui/material';
+
+import { Section } from '../../PropertiesSidebar/UI/Section';
+import { Item } from '../../PropertiesSidebar/UI/Item';
+import { Slider } from '../../PropertiesSidebar/UI/Slider';
+import { TextInput } from '../../PropertiesSidebar/UI/TextInput';
+
+/**
+ * The interface for Image component props
+ */
+export interface ImagePropertiesProps {
+  /**
+   * The image source (base64, URL, etc.).
+   */
+  src?: string;
+  /**
+   * The alternative text displayed if the image cannot be shown.
+   */
+  alt?: string;
+  /**
+   * CSS width (e.g., "100px" or "auto").
+   */
+  width?: string;
+  /**
+   * CSS height (e.g., "100px" or "auto").
+   */
+  height?: string;
+  /**
+   * Margin as [top, right, bottom, left].
+   */
+  margin?: [number, number, number, number];
+  /**
+   * Padding as [top, right, bottom, left].
+   */
+  padding?: [number, number, number, number];
+  /**
+   * The amount of box-shadow blur (0 = no shadow).
+   */
+  shadow?: number;
+  /**
+   * The border-radius in pixels.
+   */
+  borderRadius?: number;
+  /**
+   * CSS shorthand for border (e.g., "1px solid #000").
+   */
+  border?: string;
+  /**
+   * Optional React children.
+   */
+  children?: React.ReactNode;
+}
+
+/**
+ * A small helper to enforce exactly four numeric values (top, right, bottom, left).
+ * If arr has fewer than 4 items, missing ones become 0.
+ * If arr has more than 4 items, the extras are ignored.
+ */
+function ensure4Values(arr: number[]): [number, number, number, number] {
+  const [top, right, bottom, left] = arr;
+  return [top ?? 0, right ?? 0, bottom ?? 0, left ?? 0];
+}
+
+/**
+ * A small helper to display margin/padding controls with a Slider + TextInput for each side.
+ * NOTE: We’ve removed the <Section> from inside this function to avoid nested sections.
+ */
+function SpacingControl({
+  label,
+  values,
+  onChangeValues,
+  max = 100,
+}: {
+  label: string;
+  values?: number[];
+  onChangeValues: (newValues: number[]) => void;
+  max?: number;
+}) {
+  // Fallback to [0,0,0,0] if values is undefined
+  const safeValues = values ?? [0, 0, 0, 0];
+
+  return (
+    <Grid container spacing={2}>
+      {['Top', 'Right', 'Bottom', 'Left'].map((pos, idx) => (
+        <Grid item xs={6} key={pos}>
+          <Slider
+            label={`${label} ${pos}`}
+            value={safeValues[idx]}
+            min={0}
+            max={max}
+            onChangeValue={(val) => {
+              const newVals = [...safeValues];
+              newVals[idx] = val;
+              onChangeValues(newVals);
+            }}
+            showValueInput={false}
+          />
+          <TextInput
+            label={pos}
+            type="number"
+            value={safeValues[idx].toString()}
+            onChangeValue={(val) => {
+              const num = parseInt(val, 10) || 0;
+              const newVals = [...safeValues];
+              newVals[idx] = num;
+              onChangeValues(newVals);
+            }}
+          />
+        </Grid>
+      ))}
+    </Grid>
+  );
+}
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB in bytes
 
-// The properties panel component for the CraftJS Image component
-export const ImageProperties: React.FC = () => {
-  // Access the current src prop and setProp action from CraftJS
+/**
+ * Properties panel for the CraftJS Image component.
+ */
+export const ImageProperties: React.FC<ImagePropertiesProps> = () => {
   const {
+    src,
+    alt,
+    width,
+    height,
+    margin,
+    padding,
+    shadow,
+    borderRadius,
+    border,
     actions: { setProp },
-    props: nodeProps,
   } = useNode((node) => ({
-    props: node.data.props,
+    src: node.data.props.src,
+    alt: node.data.props.alt,
+    width: node.data.props.width,
+    height: node.data.props.height,
+    margin: node.data.props.margin,
+    padding: node.data.props.padding,
+    shadow: node.data.props.shadow,
+    borderRadius: node.data.props.borderRadius,
+    border: node.data.props.border,
   }));
-  const currentSrc = (nodeProps.src as string) || '';
 
   const [error, setError] = useState<string | null>(null);
   const [tempUrl, setTempUrl] = useState<string>(''); // holds the URL input value
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle file selection from local disk
+  // For easy referencing in the UI
+  const currentSrc = src || '';
+
+  /**
+   * Handle file selection from local disk
+   */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -30,31 +164,29 @@ export const ImageProperties: React.FC = () => {
       setError(
         'Unsupported file type. Please upload a JPEG, PNG, GIF, or WebP image.'
       );
-      // Clear the file input so the user can re-select if needed
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       setError('File size exceeds 5MB limit. Please choose a smaller image.');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
-    // File is valid – proceed to read it as Base64 data URL
+    // File is valid – read it as Base64 data URL
     const reader = new FileReader();
     reader.onload = (loadEvent) => {
       const dataUrl = loadEvent.target?.result as string;
-      // Update the CraftJS node's src property with the base64 data URL
-      setProp(
-        (props: any) => {
-          props.src = dataUrl;
-        }, // update function
-        500
-      ); // throttle to avoid rapid state updates if needed
-      // Clear any previously entered URL, since we're now using an uploaded image
-      setTempUrl('');
+      setProp((props: ImagePropertiesProps) => {
+        props.src = dataUrl;
+      }, 500);
+      setTempUrl(''); // clear any previously entered URL
     };
     reader.onerror = () => {
       console.error('Error reading file as data URL');
@@ -62,23 +194,29 @@ export const ImageProperties: React.FC = () => {
         'Failed to read file. Please try again or use a different image.'
       );
     };
-    reader.readAsDataURL(file); // start reading the file (async)&#8203;:contentReference[oaicite:9]{index=9}
-    if (fileInputRef.current) fileInputRef.current.value = ''; // reset input
+    reader.readAsDataURL(file); // start reading the file (async)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // reset input
+    }
   };
 
-  // Handle manual URL input change
+  /**
+   * Handle manual URL input change
+   */
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTempUrl(e.target.value);
   };
 
-  // Apply the entered URL as the image source
+  /**
+   * Apply the entered URL as the image source
+   */
   const handleApplyUrl = () => {
     const url = tempUrl.trim();
     if (!url) {
       setError('Please enter an image URL.');
       return;
     }
-    // Basic URL format validation (must start with http and end with an image extension)
+    // Basic validation: must start with http(s) and end with an image extension
     const isImageUrl = /^https?:\/\/.+\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(
       url
     );
@@ -89,25 +227,25 @@ export const ImageProperties: React.FC = () => {
       return;
     }
     setError(null);
-    // Update the CraftJS node's src to the external URL
-    setProp((props: any) => {
+    setProp((props: ImagePropertiesProps) => {
       props.src = url;
     });
-    // (We do not reset tempUrl here, so it remains in the input field)
+    // We keep tempUrl so the user sees it in the input
   };
 
-  // Handle the AI Image button click (stub for now)
+  /**
+   * Handle the AI Image button click (stub for now)
+   */
   const handleUseAIImage = () => {
     console.log('Use AI Image (DALL·E) button clicked');
-    // Future implementation: integrate with AI image generation (e.g., fetch from DALL·E API)
+    // Future: Integrate with AI image generation (e.g., DALL·E API).
   };
 
   return (
     <div className="image-properties-panel">
-      {/* Image Preview and Actions */}
+      {/* IMAGE UPLOAD / PREVIEW SECTION */}
       {currentSrc ? (
         <div className="image-preview-section">
-          {/* Show a small preview of the current image */}
           <img
             src={currentSrc}
             alt="Selected"
@@ -118,7 +256,6 @@ export const ImageProperties: React.FC = () => {
               marginBottom: '0.5rem',
             }}
           />
-          {/* Replace and Remove buttons */}
           <div>
             <button type="button" onClick={() => fileInputRef.current?.click()}>
               Replace Image
@@ -127,12 +264,14 @@ export const ImageProperties: React.FC = () => {
               type="button"
               onClick={() => {
                 // Clear the image
-                setProp((props: any) => {
+                setProp((props: ImagePropertiesProps) => {
                   props.src = '';
                 });
                 setError(null);
-                setTempUrl(''); // optional: clear URL field as well
-                if (fileInputRef.current) fileInputRef.current.value = '';
+                setTempUrl('');
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
               }}
             >
               Remove Image
@@ -187,6 +326,122 @@ export const ImageProperties: React.FC = () => {
           {error}
         </p>
       )}
+
+      {/* BELOW: SECTIONS FOR OTHER IMAGE PROPS */}
+
+      <Section title="Basic Properties" defaultExpanded>
+        {/* Alt Text */}
+        <Item>
+          <TextInput
+            label="Alt Text"
+            value={alt || ''}
+            onChangeValue={(newVal) =>
+              setProp((props: ImagePropertiesProps) => {
+                props.alt = newVal;
+              })
+            }
+          />
+        </Item>
+
+        {/* Width / Height */}
+        <Item>
+          <TextInput
+            label="Width"
+            value={width || ''}
+            onChangeValue={(val) =>
+              setProp((props: ImagePropertiesProps) => {
+                props.width = val;
+              })
+            }
+            helperText='e.g. "100px", "50%", or "auto"'
+          />
+        </Item>
+        <Item>
+          <TextInput
+            label="Height"
+            value={height || ''}
+            onChangeValue={(val) =>
+              setProp((props: ImagePropertiesProps) => {
+                props.height = val;
+              })
+            }
+            helperText='e.g. "100px", "auto"'
+          />
+        </Item>
+      </Section>
+
+      <Section title="Spacing" defaultExpanded={false}>
+        <Item>
+          <SpacingControl
+            label="Margin"
+            values={margin}
+            onChangeValues={(vals) =>
+              setProp((props: ImagePropertiesProps) => {
+                // Ensure exactly 4 values
+                props.margin = ensure4Values(vals);
+              })
+            }
+          />
+        </Item>
+        <Item>
+          <SpacingControl
+            label="Padding"
+            values={padding}
+            onChangeValues={(vals) =>
+              setProp((props: ImagePropertiesProps) => {
+                // Ensure exactly 4 values
+                props.padding = ensure4Values(vals);
+              })
+            }
+          />
+        </Item>
+      </Section>
+
+      <Section title="Styling" defaultExpanded={false}>
+        {/* Shadow */}
+        <Item>
+          <Slider
+            label="Shadow"
+            value={shadow ?? 0}
+            min={0}
+            max={100}
+            onChangeValue={(val) =>
+              setProp((props: ImagePropertiesProps) => {
+                props.shadow = val;
+              })
+            }
+          />
+        </Item>
+
+        {/* Border Radius */}
+        <Item>
+          <Slider
+            label="Border Radius"
+            value={borderRadius ?? 0}
+            min={0}
+            max={100}
+            onChangeValue={(val) =>
+              setProp((props: ImagePropertiesProps) => {
+                props.borderRadius = val;
+              })
+            }
+          />
+        </Item>
+
+        {/* Border */}
+        <Item>
+          <TextInput
+            label="Border"
+            value={border || ''}
+            onChangeValue={(val) =>
+              setProp((props: ImagePropertiesProps) => {
+                props.border = val;
+              })
+            }
+            helperText='e.g. "1px solid #000"'
+          />
+        </Item>
+      </Section>
     </div>
   );
 };

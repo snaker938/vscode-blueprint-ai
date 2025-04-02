@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+// import { useEffect } from 'react';
+import { useState } from 'react';
 import { Editor, Frame, Element, useEditor } from '@craftjs/core';
-import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
+// import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
 import { PropertiesSidebar } from '../../components/PropertiesSidebar/PropertiesSidebar';
 import { RenderNode } from '../../components/UserComponents/Utils/RenderNode';
 
-import { getPageById, getSuggestedPages } from '../../store/store';
+// import { getPageById, getSuggestedPages } from '../../store/store';
 
-import { parseAiOutput } from '../../components/CreateWithImagination/ExtraComponents/SelectedFeature/utils/AiParser';
+// import { parseAiOutput } from '../../components/CreateWithImagination/ExtraComponents/SelectedFeature/utils/AiParser';
 
 import './MainInterface.css';
 import { Button } from '../../components/UserComponents/Button';
@@ -17,11 +19,11 @@ import { Video } from '../../components/UserComponents/Video';
 import { StarRating } from '../../components/UserComponents/StarRating';
 import { SearchBox } from '../../components/UserComponents/SearchBox';
 import { Slider } from '../../components/UserComponents/Slider';
-import { Image } from '../../components/UserComponents/Image';
+// import { Image } from '../../components/UserComponents/Image';
 
 // Example modal component import
 // Adjust this import path depending on your actual file structure
-import SuggestedPages from '../../components/SuggestedPages/SuggestedPages';
+// import SuggestedPages from '../../components/SuggestedPages/SuggestedPages';
 
 /**
  * A wrapper that detects clicks on empty canvas space to unselect all nodes.
@@ -79,32 +81,32 @@ export const DroppableCanvas: React.FC<{ initialData?: any }> = ({
 
 const MainInterface: React.FC = () => {
   // Local state controlling whether the SuggestedPages modal is open
-  const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
+  // const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isAiSidebarDetached, setIsAiSidebarDetached] = useState(false);
 
-  // On component mount, load Page #1’s layout from the store
-  // and also check if we have suggested pages
-  useEffect(() => {
-    const suggested = getSuggestedPages();
-    if (suggested && suggested.length > 0) {
-      setIsSuggestedOpen(true);
-    }
-  }, []);
+  // // On component mount, load Page #1’s layout from the store
+  // // and also check if we have suggested pages
+  // useEffect(() => {
+  //   const suggested = getSuggestedPages();
+  //   if (suggested && suggested.length > 0) {
+  //     setIsSuggestedOpen(true);
+  //   }
+  // }, []);
 
-  // Fetch Page #1
-  const page1 = getPageById(1);
+  // // Fetch Page #1
+  // const page1 = getPageById(1);
 
-  // Convert the stored layout into a CraftJS-serialized tree
-  let parsedTree = null;
-  if (page1 && page1.layout) {
-    try {
-      parsedTree = parseAiOutput(JSON.stringify(page1.layout));
-    } catch (err) {
-      console.error('Failed to parse page1 layout:', err);
-    }
-  }
+  // // Convert the stored layout into a CraftJS-serialized tree
+  // let parsedTree = null;
+  // if (page1 && page1.layout) {
+  //   try {
+  //     parsedTree = parseAiOutput(JSON.stringify(page1.layout));
+  //   } catch (err) {
+  //     console.error('Failed to parse page1 layout:', err);
+  //   }
+  // }
 
   return (
     <Editor
@@ -117,25 +119,25 @@ const MainInterface: React.FC = () => {
         SearchBox,
         Slider,
         Button,
-        Image,
+        // Image,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >
       <div className="main-interface-container">
         {/* PrimarySidebar on the left */}
         <aside className="sidebar left-sidebar">
-          <PrimarySidebar
+          {/* <PrimarySidebar
             isAiSidebarOpen={isAiSidebarOpen}
             setIsAiSidebarOpen={setIsAiSidebarOpen}
             isAiSidebarDetached={isAiSidebarDetached}
             setIsAiSidebarDetached={setIsAiSidebarDetached}
-          />
+          /> */}
         </aside>
 
         {/* The droppable canvas area */}
         <main className="editor-canvas-area">
           <CanvasBorderWrapper>
-            <DroppableCanvas initialData={parsedTree} />
+            <DroppableCanvas initialData={{}} />
           </CanvasBorderWrapper>
         </main>
 
@@ -150,9 +152,9 @@ const MainInterface: React.FC = () => {
         </aside>
 
         {/* Show the SuggestedPages modal if isSuggestedOpen is true */}
-        {isSuggestedOpen && (
+        {/* {isSuggestedOpen && (
           <SuggestedPages onClose={() => setIsSuggestedOpen(false)} />
-        )}
+        )} */}
       </div>
     </Editor>
   );

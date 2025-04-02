@@ -111,7 +111,6 @@ export const ElementsList: React.FC = () => {
   const smartItems = [
     { key: 'container', icon: 'CubeShape', name: 'Container' },
     { key: 'text', icon: 'AlignLeft', name: 'Text' },
-    { key: 'icon', icon: 'Emoji2', name: 'Icon' },
     { key: 'navigation', icon: 'NavigateForward', name: 'Navigation' },
     { key: 'button', icon: 'ButtonControl', name: 'Button' },
   ];
