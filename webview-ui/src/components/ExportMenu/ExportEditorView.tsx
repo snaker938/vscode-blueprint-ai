@@ -11,15 +11,35 @@ import Editor from '@monaco-editor/react';
 // For zipping:
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { css as beautifyCss } from 'js-beautify'; // for optional CSS formatting
+import { css as beautifyCss } from 'js-beautify';
+
+/**
+ * Attempt to import all .png/.jpg/.jpeg images from "../LocalPages/Page1"
+ * using `require.context`. If it's not supported, we'll log a warning
+ * and simply produce an empty list of images.
+ */
+let localImages: string[] = [];
+try {
+  // Helper to retrieve all required files
+  const importAll = (context: any) => context.keys().map(context);
+
+  // Use require.context if available
+  const r = (require as any).context(
+    '../LocalPages/Page1',
+    false,
+    /\.(png|jpe?g)$/
+  );
+  localImages = importAll(r);
+} catch (err) {
+  console.warn('require.context is not supported in this environment:', err);
+}
 
 interface ExportEditorViewProps {
   pageId: string;
   pageName: string;
   /** The initial HTML to display in the editor */
   initialHtml: string;
-  /** For this example, we will generate the CSS automatically from computed styles,
-   * but you can still provide some initial CSS or an empty string. */
+  /** We'll add computed CSS to this initial CSS */
   initialCss: string;
   /** Called when clicking "Back to Editor" */
   onBack: () => void;
@@ -29,9 +49,13 @@ interface ExportEditorViewProps {
  * A component that:
  * 1) Shows two Monaco Editor tabs (HTML/CSS).
  * 2) Gathers computed CSS for #droppable-canvas-border and its children,
- *    storing it in the "CSS" tab automatically.
- * 3) Allows downloading these two as a zip file (no JS).
- * 4) Uses a wide layout (90vw) so the editor is fairly wide.
+ *    storing it in the "CSS" tab automatically (beautified).
+ * 3) Lets user download a .zip containing:
+ *    - <pageName>.html
+ *    - <pageName>.css
+ *    - All images from ../LocalPages/Page1 as binary files
+ * 4) Places "Back to Editor" and "Download as Zip" next to each other.
+ * 5) Uses a wide layout (90vw) so the editor is fairly wide.
  */
 const ExportEditorView: React.FC<ExportEditorViewProps> = ({
   pageId,
@@ -40,36 +64,32 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
   initialCss,
   onBack,
 }) => {
-  // Local states for code in each editor
+  // State for code in each editor
   const [htmlCode, setHtmlCode] = useState(initialHtml);
   const [cssCode, setCssCode] = useState(initialCss);
 
-  // Set the initial code from props on mount
+  // Set initial code from props on mount
   useEffect(() => {
     setHtmlCode(initialHtml);
     setCssCode(initialCss);
   }, [initialHtml, initialCss]);
 
   /**
-   * On mount, gather computed styles for #droppable-canvas-border and its children,
-   * then build a CSS string that we store in state.
+   * On mount, gather computed styles from #droppable-canvas-border + children
+   * and append them to the existing CSS string.
    */
   useEffect(() => {
     const container = document.getElementById('droppable-canvas-border');
     if (!container) return;
 
-    // Grab all elements inside (including the container itself)
+    // All elements including container
     const allEls = [container, ...container.querySelectorAll('*')];
 
-    // Assign a data attribute for unique identification
-    allEls.forEach((el, i) => {
-      el.setAttribute('data-export-index', String(i));
-    });
+    // Give each element a unique data attribute
+    allEls.forEach((el, i) => el.setAttribute('data-export-index', String(i)));
 
     let computedCss = '';
-    // Build a rule for each element
     allEls.forEach((el, i) => {
-      // If it's the container itself:
       const selector =
         i === 0
           ? '#droppable-canvas-border[data-export-index="0"]'
@@ -87,29 +107,57 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
       computedCss += rule;
     });
 
-    // Remove the data attributes from the DOM
+    // Remove data attributes from the DOM
     allEls.forEach((el) => el.removeAttribute('data-export-index'));
 
-    // Optionally beautify the computed CSS
+    // Beautify the computed CSS
     const finalCss = beautifyCss(computedCss, {
       indent_size: 2,
       preserve_newlines: true,
     });
 
-    // Update the editor’s CSS with the computed/beautified style
+    // Append to whatever CSS we already had
     setCssCode(
       (prev) => `${prev}\n\n/* --- Computed CSS Below --- */\n\n${finalCss}`
     );
   }, []);
 
   /**
-   * Creates a Zip file with the HTML and CSS, then triggers download.
+   * Fetch each local image, convert to Blob, add to zip
+   */
+  const addImagesToZip = async (zip: JSZip) => {
+    for (const url of localImages) {
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+
+        // Extract the filename from the URL, e.g. "image.png"
+        const segments = url.split('/');
+        const filename = segments[segments.length - 1];
+
+        // Add to the zip
+        zip.file(filename, blob);
+      } catch (error) {
+        console.warn('Error fetching image:', url, error);
+      }
+    }
+  };
+
+  /**
+   * Creates a Zip file with HTML, CSS, plus all images from ../LocalPages/Page1,
+   * then triggers download.
    */
   const downloadPageFilesAsZip = async () => {
     const zip = new JSZip();
+
+    // Add HTML + CSS
     zip.file(`${pageName}.html`, htmlCode);
     zip.file(`${pageName}.css`, cssCode);
 
+    // Add images (if any)
+    await addImagesToZip(zip);
+
+    // Generate + download
     const content = await zip.generateAsync({ type: 'blob' });
     saveAs(content, `${pageName}.zip`);
   };
@@ -117,29 +165,26 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
   return (
     <Stack
       tokens={{ childrenGap: 10 }}
-      // Make the area much wider (e.g. 90% of the viewport width).
       styles={{ root: { padding: 16, width: '90vw', margin: '0 auto' } }}
     >
-      {/* Back button to return to main interface */}
-      <DefaultButton
-        iconProps={{ iconName: 'Back' }}
-        text="Back to Editor"
-        onClick={onBack}
-      />
+      {/* Top row: "Back to Editor" & "Download as Zip" next to each other */}
+      <Stack horizontal tokens={{ childrenGap: 16 }}>
+        <DefaultButton
+          iconProps={{ iconName: 'Back' }}
+          text="Back to Editor"
+          onClick={onBack}
+        />
+        <PrimaryButton
+          iconProps={{ iconName: 'Download' }}
+          text="Download as Zip"
+          onClick={downloadPageFilesAsZip}
+        />
+      </Stack>
 
-      {/* Single pivot item for this one page */}
+      {/* Single pivot for the one page */}
       <Pivot>
         <PivotItem headerText={pageName} itemKey={pageId}>
-          {/* Download as Zip button */}
-          <div style={{ textAlign: 'right', margin: '8px 0' }}>
-            <PrimaryButton
-              iconProps={{ iconName: 'Download' }}
-              text="Download as Zip"
-              onClick={downloadPageFilesAsZip}
-            />
-          </div>
-
-          {/* Nested pivot for HTML/CSS (NO JS tab) */}
+          {/* Nested pivot for HTML/CSS editors */}
           <Pivot>
             <PivotItem headerText="HTML" itemKey="html">
               <Editor

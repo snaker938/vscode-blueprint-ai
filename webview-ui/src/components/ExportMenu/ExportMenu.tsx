@@ -1,27 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { useEditor } from '@craftjs/core';
 import { Checkbox, PrimaryButton, IconButton } from '@fluentui/react';
-import { html as beautifyHtml } from 'js-beautify'; // for HTML formatting
+import { html as beautifyHtml } from 'js-beautify'; // For HTML formatting
 
-// If you have a store for pages, you can import from there.
-// For demonstration, we just define a Page type here.
+import ExportEditorView from './ExportEditorView';
+import './ExportMenu.css'; // optional styling
+
 interface Page {
   id: number;
   name: string;
   thumbnail?: string;
 }
 
-import ExportEditorView from './ExportEditorView';
-
-import './ExportMenu.css';
-
 interface ExportMenuProps {
   onClose: () => void;
 }
 
 /**
- * In a real application, you might pull pages from a Redux store,
- * or craftjs or your own store. Here, we define a single mock page.
+ * In a real application, you might pull pages from Redux or your custom store.
+ * Here, we define a single mock page.
  */
 const MOCK_PAGE: Page = {
   id: 1,
@@ -30,21 +27,14 @@ const MOCK_PAGE: Page = {
 };
 
 const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
-  /**
-   * Local states for folder path, “select all” toggle, etc.
-   * Since we only have one page, we can keep it simple.
-   */
   const [folderPath, setFolderPath] = useState('Choose folder');
   const [selectAll, setSelectAll] = useState(true);
 
-  /**
-   * Craft.js editor info for generating “dummy stats” (optional).
-   * In a real app, you could compute actual stats here.
-   */
+  // Get craft.js info (optional). In a real app, gather actual stats or remove.
   const { nodes } = useEditor((state) => ({ nodes: state.nodes }));
   const nodeCount = Object.keys(nodes).length;
 
-  // Some made-up numbers for demonstration.
+  // Some random stats for the right panel
   const randomSeed = useMemo(() => Math.floor(Math.random() * 500), []);
   const totalSize = useMemo(
     () => (nodeCount * 2 + randomSeed).toFixed(1),
@@ -60,52 +50,44 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
     [nodeCount, randomSeed]
   );
 
-  /**
-   * Simulates picking a folder in a file input (folder mode).
-   */
   const onFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    // Not all browsers fully support webkitdirectory; this is just for demonstration.
+    // Not all browsers fully support directory picking.
     setFolderPath(e.target.files[0].webkitRelativePath || 'Selected folder');
   };
 
-  /**
-   * Handle toggling "Select All" pages (though we only have one page).
-   */
+  // Toggling "select all" for the single page
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
   };
 
-  /**
-   * When the user clicks "Export," we want to:
-   * 1) Grab the HTML from `#droppable-canvas-border`
-   * 2) Beautify/format it
-   * 3) Pass that + some initial CSS to `ExportEditorView`.
-   */
+  // For toggling the Editor View
   const [showEditorView, setShowEditorView] = useState(false);
 
-  // Data to pass to ExportEditorView
+  // Data to pass into ExportEditorView
   const [pageHtml, setPageHtml] = useState('');
   const [pageCss, setPageCss] = useState('');
 
+  /**
+   * 1) Get the raw HTML from #droppable-canvas-border
+   * 2) Beautify the HTML
+   * 3) Provide some initial CSS
+   * 4) Switch to ExportEditorView
+   */
   const handleExport = () => {
     const canvasEl = document.getElementById('droppable-canvas-border');
-    // Raw HTML from the container
     const rawHtml = canvasEl
       ? canvasEl.outerHTML
       : '<div>No content found</div>';
 
-    // Format the HTML into multiple lines with indentation
+    // Beautify the HTML
     const formattedHtml = beautifyHtml(rawHtml, {
       indent_size: 2,
       preserve_newlines: true,
-      // You can adjust other options as you like
     });
 
-    // Provide some default CSS to start with; the actual computed CSS
-    // will be gathered by ExportEditorView.
-    const defaultCss = `/* Example default CSS for your page. 
-   Insert or override as needed. */
+    // Some default CSS (the computed CSS will be appended in ExportEditorView)
+    const defaultCss = `/* Example default CSS for your page. Adjust as needed. */
 body {
   margin: 0;
   padding: 0;
@@ -114,15 +96,10 @@ body {
 
     setPageHtml(formattedHtml);
     setPageCss(defaultCss);
-
-    // Show the ExportEditorView
     setShowEditorView(true);
   };
 
-  /**
-   * Renders the standard export menu,
-   * or the ExportEditorView if "Export" was clicked.
-   */
+  // If user clicked "Export," we switch to the Editor screen
   if (showEditorView) {
     return (
       <ExportEditorView
@@ -135,6 +112,7 @@ body {
     );
   }
 
+  // Otherwise, render the standard ExportMenu UI
   return (
     <div className="export-menu-container">
       <div className="export-menu-header">
@@ -168,7 +146,7 @@ body {
       <div className="export-menu-body">
         <div className="export-left-panel">
           <h3>Select pages to export:</h3>
-          {/* Single page selection for demonstration */}
+          {/* Single page for the example */}
           <div className="pages-list">
             <div key={MOCK_PAGE.id} className="page-card">
               <div className="page-thumbnail">
@@ -213,10 +191,11 @@ body {
               <span>Time To Export:</span> <span>{timeToExport} seconds</span>
             </div>
           </div>
+
           <PrimaryButton
             className="export-button"
             text="Export"
-            disabled={!selectAll} // For demonstration, only enable if selected
+            disabled={!selectAll}
             onClick={handleExport}
           />
         </div>
