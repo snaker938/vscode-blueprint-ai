@@ -527,8 +527,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
               }}
             >
               <h5 style={{ margin: '0 0 4px', fontWeight: 'bold' }}>
-                Your Prompt: Remove the "Books" category component entirely.
-                Replace it with a new "Trending" category component
+                Your Prompt: previousPrompt
               </h5>
               <p style={{ margin: 0, color: '#333' }}>{userInput}</p>
             </div>

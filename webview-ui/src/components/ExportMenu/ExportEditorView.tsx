@@ -16,24 +16,24 @@ import { saveAs } from 'file-saver';
 import { css as beautifyCss } from 'js-beautify';
 
 /**
- * Attempt to import all .png/.jpg/.jpeg images from "../LocalPages/Page1"
- * using `require.context`. If it's not supported, we'll log a warning
- * and simply produce an empty list of images.
+ * Extract image URLs from the HTML that match:
+ * /src/components/LocalPages/Page1/<anything>.png or .jpg or .jpeg
+ * Possibly ending with ?someQueryParam
+ *
+ * Example matches:
+ * /src/components/LocalPages/Page1/amazonLogo.png
+ * /src/components/LocalPages/Page1/heroBanner.png?t=1743675251970
  */
-let localImages: string[] = [];
-try {
-  // Helper to retrieve all required files
-  const importAll = (context: any) => context.keys().map(context);
-
-  // Use require.context if available
-  const r = (require as any).context(
-    '../LocalPages/Page1',
-    false,
-    /\.(png|jpe?g)$/
-  );
-  localImages = importAll(r);
-} catch (err) {
-  console.warn('require.context is not supported in this environment:', err);
+function extractLocalImageUrlsFromHtml(html: string): string[] {
+  // - We require /src/components/LocalPages/Page1/
+  // - Then some file name
+  // - Then .png or .jpg or .jpeg
+  // - Optionally (?) a query string like ?t=123
+  const regex =
+    /\/src\/components\/LocalPages\/Page1\/[^\s"']+\.(?:png|jpe?g)(\?[^\s"']+)?/gi;
+  const matches = html.match(regex) || [];
+  // Make them unique (in case repeated)
+  return Array.from(new Set(matches));
 }
 
 interface ExportEditorViewProps {
@@ -55,9 +55,9 @@ interface ExportEditorViewProps {
  * 3) Lets user download a .zip containing:
  *    - <pageName>.html
  *    - <pageName>.css
- *    - All images from ../LocalPages/Page1 as binary files
- * 4) Places "Back to Editor" and "Download as Zip" next to each other,
- *    plus a dropdown to indicate what we're "exporting to" (just for looks).
+ *    - All images from /src/components/LocalPages/Page1/ that appear in the HTML
+ *      (placed in the same folder as the HTML in the ZIP)
+ * 4) Has a "Back to Editor" and "Download as Zip" button, plus a dummy dropdown
  * 5) Uses a wide layout (90vw) so the editor is fairly wide.
  */
 const ExportEditorView: React.FC<ExportEditorViewProps> = ({
@@ -83,7 +83,12 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
    */
   useEffect(() => {
     const container = document.getElementById('droppable-canvas-border');
-    if (!container) return;
+    if (!container) {
+      console.log(
+        '[ExportEditorView] No element found with ID "droppable-canvas-border".'
+      );
+      return;
+    }
 
     // All elements including container
     const allEls = [container, ...container.querySelectorAll('*')];
@@ -123,51 +128,103 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
     setCssCode(
       (prev) => `${prev}\n\n/* --- Computed CSS Below --- */\n\n${finalCss}`
     );
+
+    console.log(
+      '[ExportEditorView] Computed CSS was appended. Length of computed CSS:',
+      finalCss.length
+    );
   }, []);
 
   /**
-   * Fetch each local image, convert to Blob, add to zip
+   * Fetch each local image by its full path (including any ?query),
+   * convert to Blob, and add to the ZIP in the same folder as <pageName>.html.
    */
-  const addImagesToZip = async (zip: JSZip) => {
-    for (const url of localImages) {
+  const addImagesToZip = async (zip: JSZip, imageUrls: string[]) => {
+    console.log(
+      `[ExportEditorView] addImagesToZip called. imageUrls length: ${imageUrls.length}`
+    );
+    console.log('[ExportEditorView] imageUrls array:', imageUrls);
+
+    for (const url of imageUrls) {
+      console.log(`[ExportEditorView] Attempting to fetch image: ${url}`);
       try {
         const response = await fetch(url);
+        if (!response.ok) {
+          console.warn(
+            `[ExportEditorView] Failed HTTP fetch for: ${url}. Status: ${response.status}`
+          );
+          continue;
+        }
+
         const blob = await response.blob();
 
-        // Extract the filename from the URL, e.g. "image.png"
+        // Example url: /src/components/LocalPages/Page1/heroBanner.png?t=123
+        // We only want the final filename, e.g. "heroBanner.png"
         const segments = url.split('/');
-        const filename = segments[segments.length - 1];
+        const lastSegment = segments[segments.length - 1]; // "heroBanner.png?t=123"
+        // If there's a query, remove it so the file is saved as "heroBanner.png"
+        const [filename] = lastSegment.split('?');
 
-        // Add to the zip
         zip.file(filename, blob);
+
+        console.log(
+          `[ExportEditorView] Fetched & added image to ZIP: ${filename}. Blob size: ${blob.size}`
+        );
       } catch (error) {
-        console.warn('Error fetching image:', url, error);
+        console.warn(`[ExportEditorView] Error fetching image: ${url}`, error);
       }
     }
+    console.log('[ExportEditorView] Finished addImagesToZip()');
   };
 
   /**
-   * Creates a Zip file with HTML, CSS, plus all images from ../LocalPages/Page1,
-   * then triggers download.
+   * Creates a Zip file with:
+   * 1) HTML (with references replaced so images point to filename only)
+   * 2) CSS
+   * 3) Any images found in the HTML
    */
   const downloadPageFilesAsZip = async () => {
+    console.log('[ExportEditorView] downloadPageFilesAsZip called.');
+
+    // 1) Find the /src/components/LocalPages/Page1/... images in the HTML
+    const imagesInHtml = extractLocalImageUrlsFromHtml(htmlCode);
+
+    // 2) Remove the "/src/components/LocalPages/Page1/" prefix from <img src>
+    //    e.g. "/src/components/LocalPages/Page1/heroBanner.png?t=123" -> "heroBanner.png?t=123"
+    //    This ensures the final <img src="heroBanner.png?t=123">
+    const updatedHtml = htmlCode.replace(
+      /\/src\/components\/LocalPages\/Page1\//g,
+      ''
+    );
+    console.log('[ExportEditorView] Updated HTML references for images.');
+
+    // 3) Build the zip
     const zip = new JSZip();
 
-    // Add HTML + CSS
-    zip.file(`${pageName}.html`, htmlCode);
+    // - Add updated HTML
+    zip.file(`${pageName}.html`, updatedHtml);
+    console.log(
+      '[ExportEditorView] Added HTML file to zip:',
+      `${pageName}.html`
+    );
+
+    // - Add CSS
     zip.file(`${pageName}.css`, cssCode);
+    console.log('[ExportEditorView] Added CSS file to zip:', `${pageName}.css`);
 
-    // Add images (if any)
-    await addImagesToZip(zip);
+    // - Add images (if any)
+    await addImagesToZip(zip, imagesInHtml);
 
-    // Generate + download
+    // 4) Generate + download
+    console.log('[ExportEditorView] Generating ZIP content.');
     const content = await zip.generateAsync({ type: 'blob' });
+    console.log('[ExportEditorView] Triggering file download.');
     saveAs(content, `${pageName}.zip`);
   };
 
-  // Dropdown options (purely for looks, no logic attached)
+  // Dropdown options (purely for looks)
   const exportOptions: IDropdownOption[] = [
-    { key: 'htmlCss', text: 'HTML, CSS and CSS' },
+    { key: 'htmlCss', text: 'HTML & CSS' },
     { key: 'winui', text: 'WinUI' },
     { key: 'dotnet', text: '.NET' },
   ];
@@ -198,7 +255,7 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
           onClick={downloadPageFilesAsZip}
         />
         <Dropdown
-          // Just for looks, no onChange or anything else
+          // Just for looks, no onChange
           placeholder="Exporting to..."
           defaultSelectedKey="htmlCss"
           options={exportOptions}
@@ -221,7 +278,7 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
                   if (val !== undefined) setHtmlCode(val);
                 }}
                 options={{
-                  // Ensures suggestion widgets follow the editor correctly in a modal
+                  // Ensures suggestion widgets follow the editor in a modal
                   fixedOverflowWidgets: true,
                 }}
               />
