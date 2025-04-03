@@ -1,846 +1,658 @@
 import React from 'react';
+import placeholder from './PlaceholderImage.png'; // Single placeholder image
 
-// Image imports assume these files exist in the same directory
-import amazonLogo from './amazon-logo.png';
-import heroBanner from './hero-banner.jpg';
-import categoryElectronics from './category-electronics.png';
-import categoryFashion from './category-fashion.png';
-import categoryHomeKitchen from './category-home-kitchen.png';
-import placeholderImage from './PlaceholderImage.png'; // New placeholder image
-import featuredProduct1 from './featured-product1.png';
-import featuredProduct2 from './featured-product2.png';
-import featuredProduct3 from './featured-product3.png';
-import dealItem1 from './deal-item1.png';
-import dealItem2 from './deal-item2.png';
-import dealItem3 from './deal-item3.png';
-import giftCard1 from './gift-card1.png';
-import giftCard2 from './gift-card2.png';
-import giftCard3 from './gift-card3.png';
-
-// Extend React.FC with a craft property to satisfy Craft.js (if you're using Craft.js)
-type ChangedHomeType = React.FC & {
+// Extend React.FC with a craft property if you're using Craft.js
+type AmazonHomeType = React.FC & {
   craft?: {
     displayName: string;
     rules?: Record<string, unknown>;
   };
 };
 
-const ChangedHome: ChangedHomeType = () => {
+/**
+ * Minimal image component with a small overlay
+ * that displays alt text in the bottom-left corner.
+ */
+const PreviewImage: React.FC<{
+  alt: string;
+  width?: string | number;
+  height?: string | number;
+  containerStyle?: React.CSSProperties;
+}> = ({ alt, width = '100%', height = 'auto', containerStyle }) => {
   return (
     <div
       style={{
-        fontFamily: 'Arial, sans-serif',
-        backgroundColor: '#fafafa',
-        maxWidth: '1200px', // limit layout width
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
+        position: 'relative',
+        width,
+        height,
+        ...containerStyle,
       }}
     >
-      {/* ================= Header ================= */}
-      <header
+      <img
+        src={placeholder}
+        alt={alt}
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          background: 'linear-gradient(45deg, #232F3E, #414E5A)',
-          color: '#fff',
-          padding: '14px 20px',
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          display: 'block',
         }}
-      >
-        <img
-          src={amazonLogo}
-          alt="AI Prompt: 'Minimal Amazon-style company logo, dark text on a bright rectangle'"
-          style={{ marginRight: '20px', height: '40px' }}
-        />
-        <h1
-          style={{
-            fontSize: '1.75rem',
-            margin: 0,
-            fontWeight: 'bold',
-          }}
-        >
-          Amazon
-        </h1>
-      </header>
-
-      {/* ================= Search / Navigation Area ================= */}
+      />
       <div
         style={{
+          position: 'absolute',
+          bottom: '0',
+          left: '0',
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          color: '#fff',
+          padding: '4px 8px',
+          fontSize: '0.75rem',
+          borderTopRightRadius: '6px',
+        }}
+      >
+        {alt}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * A revised AmazonHome component:
+ * - Fewer text-heavy sections removed; more images added
+ * - 'Need Help' section removed
+ * - New 'Trending Products' section introduced
+ * - Color scheme remains consistent with Amazon branding
+ */
+const AmazonHome: AmazonHomeType = () => {
+  return (
+    <div
+      style={{
+        fontFamily: '"Helvetica Neue", Arial, sans-serif',
+        backgroundColor: '#f3f3f3',
+        color: '#111',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+      }}
+    >
+      {/* ================= HEADER ================= */}
+      <header
+        style={{
+          backgroundColor: '#232F3E',
+          padding: '1rem 2rem',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        {/* Amazon Logo */}
+        <div style={{ marginRight: '1rem', width: '80px', height: '40px' }}>
+          <PreviewImage
+            alt="AI Prompt: 'Simple Amazon text logo with an orange arrow underneath, white background'"
+            width="80px"
+            height="40px"
+          />
+        </div>
+        <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem' }}>Amazon</h1>
+      </header>
+
+      {/* ================= NAV / SEARCH ================= */}
+      <nav
+        style={{
+          backgroundColor: '#37475A',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '10px 20px',
-          backgroundColor: '#f3f3f3',
+          padding: '0.75rem 2rem',
         }}
       >
         <input
           type="text"
-          placeholder="Search..."
+          placeholder="Search Amazon..."
           style={{
-            width: '400px',
-            padding: '8px',
+            width: '50%',
+            padding: '0.5rem',
             borderRadius: '4px',
             border: '1px solid #ccc',
-            fontSize: '1rem',
+            marginRight: '0.5rem',
           }}
         />
         <button
           type="button"
           style={{
-            marginLeft: '8px',
-            backgroundColor: '#febd69',
-            border: '1px solid #f3a847',
+            backgroundColor: '#FFA41C',
+            border: 'none',
             borderRadius: '4px',
-            padding: '8px 16px',
+            padding: '0.5rem 1rem',
             cursor: 'pointer',
             fontWeight: 'bold',
-            color: '#333',
-            fontSize: '1rem',
           }}
         >
           Search
         </button>
-      </div>
+      </nav>
 
-      {/* ================= Main Content ================= */}
-      <div
-        style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}
-      >
-        {/* Hero Banner */}
+      {/* ================= MAIN CONTENT ================= */}
+      <main style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+        {/* 1) HERO SECTION */}
         <section
           style={{
-            marginBottom: '20px',
-            textAlign: 'center',
-            border: '1px solid #ddd',
-            borderRadius: '6px',
-            padding: '10px',
-            background: '#ffffff',
+            width: '100%',
+            height: '250px',
+            position: 'relative',
+            marginBottom: '1.5rem',
           }}
         >
-          <h2
-            style={{
-              margin: '10px 0',
-              color: '#232F3E',
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              textAlign: 'center',
-            }}
-          >
-            Big Sale
-          </h2>
-          <img
-            src={heroBanner}
-            alt="AI Prompt: 'A wide, vibrant e-commerce hero banner with special deals, minimal Amazon style, bright color palette, 3D product shapes'"
-            style={{ width: '100%', maxWidth: '1200px', height: 'auto' }}
+          <PreviewImage
+            alt="AI Prompt: 'Large Amazon hero banner featuring new deals, bright orange CTA, mixture of product silhouettes'"
+            containerStyle={{ width: '100%', height: '250px' }}
           />
-        </section>
-
-        {/* Categories */}
-        <section
-          style={{
-            marginBottom: '20px',
-            border: '1px solid #ddd',
-            borderRadius: '6px',
-            padding: '10px',
-            background: 'linear-gradient(45deg, #ffe6e6, #ffd1dc)',
-            textAlign: 'center',
-          }}
-        >
-          <h2
-            style={{
-              marginBottom: '10px',
-              color: '#232F3E',
-              fontSize: '1.4rem',
-              fontWeight: 'bold',
-              textAlign: 'center',
-            }}
-          >
-            Shop by Category
-          </h2>
-          <p
-            style={{
-              margin: '0 0 10px',
-              color: '#444',
-              fontSize: '1rem',
-              textAlign: 'center',
-            }}
-          >
-            Browse an extensive range of products organized by category. Whether
-            you're looking for the latest tech, fashionable outfits, cozy home
-            essentials, or exploring trending categories, we have you covered.
-          </p>
           <div
             style={{
-              display: 'flex',
-              gap: '20px',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            {/* Category: Electronics */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '180px',
-                textAlign: 'center',
-              }}
-            >
-              <img
-                src={categoryElectronics}
-                alt="AI Prompt: 'Iconic electronics category illustration with tech gadgets and circuit patterns'"
-                style={{
-                  width: '180px',
-                  height: '180px',
-                  objectFit: 'contain',
-                }}
-              />
-              <p style={{ marginTop: '10px', fontWeight: 500 }}>Electronics</p>
-            </div>
-
-            {/* Category: Fashion */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '180px',
-                textAlign: 'center',
-              }}
-            >
-              <img
-                src={categoryFashion}
-                alt="AI Prompt: 'Fashion category illustration with trendy clothes, shoes, and bright pop colors'"
-                style={{
-                  width: '180px',
-                  height: '180px',
-                  objectFit: 'contain',
-                }}
-              />
-              <p style={{ marginTop: '10px', fontWeight: 500 }}>Fashion</p>
-            </div>
-
-            {/* Category: Home & Kitchen */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '180px',
-                textAlign: 'center',
-              }}
-            >
-              <img
-                src={categoryHomeKitchen}
-                alt="AI Prompt: 'Home and kitchen category image with cozy living room decor and cookingware'"
-                style={{
-                  width: '180px',
-                  height: '180px',
-                  objectFit: 'contain',
-                }}
-              />
-              <p style={{ marginTop: '10px', fontWeight: 500 }}>
-                Home &amp; Kitchen
-              </p>
-            </div>
-
-            {/* Category: Trending Categories (replaces Books) */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '180px',
-                textAlign: 'center',
-
-                // Distinct dotted border to signify this changed section
-                border: '2px dotted #d25e5e',
-                borderRadius: '6px',
-                padding: '10px',
-                position: 'relative',
-              }}
-            >
-              {/* A small label indicating it's changed from the original */}
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-10px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  backgroundColor: '#d25e5e',
-                  color: '#fff',
-                  fontSize: '0.75rem',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontWeight: 'bold',
-                }}
-              >
-                CHANGED SECTION
-              </span>
-              <div style={{ position: 'relative' }}>
-                <img
-                  src={placeholderImage}
-                  alt="Trending categories placeholder"
-                  style={{
-                    width: '180px',
-                    height: '180px',
-                    objectFit: 'contain',
-                  }}
-                />
-                {/* Call-to-action button overlayed on the image */}
-                <button
-                  type="button"
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    padding: '8px 16px',
-                    backgroundColor: '#2a9d8f',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    border: '2px solid #fff',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  View Trending
-                </button>
-              </div>
-              <p style={{ marginTop: '10px', fontWeight: 500 }}>
-                Trending Categories
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            style={{
-              marginTop: '15px',
-              backgroundColor: '#ff8ba7',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '8px 16px',
-              cursor: 'pointer',
+              position: 'absolute',
+              bottom: '1rem',
+              left: '2rem',
               color: '#fff',
-              fontWeight: 'bold',
-              fontSize: '1rem',
             }}
           >
-            See All Categories
-          </button>
+            <h2 style={{ margin: 0, fontSize: '1.75rem' }}>
+              Explore Top Deals
+            </h2>
+            <p style={{ margin: '0.5rem 0' }}>
+              Don't miss out on today's exclusive offers.
+            </p>
+            <button
+              type="button"
+              style={{
+                backgroundColor: '#FFA41C',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '0.5rem 1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+              }}
+            >
+              Shop Now
+            </button>
+          </div>
         </section>
 
-        {/* Featured Products */}
+        {/* 2) ABOUT AMAZON */}
         <section
           style={{
-            marginBottom: '20px',
-            border: '1px solid #ddd',
+            margin: '0 2rem 1.5rem',
+            backgroundColor: '#fff',
             borderRadius: '6px',
-            padding: '10px',
-            background: 'linear-gradient(45deg, #f4f9ff, #e2eefc)',
-            textAlign: 'center',
-          }}
-        >
-          <h2
-            style={{
-              marginBottom: '10px',
-              color: '#232F3E',
-              fontSize: '1.4rem',
-              fontWeight: 'bold',
-              textAlign: 'center',
-            }}
-          >
-            Featured Products
-          </h2>
-          <p
-            style={{
-              margin: '0 0 10px',
-              color: '#444',
-              fontSize: '1rem',
-              textAlign: 'center',
-            }}
-          >
-            Discover our curated selection of top-rated items and exciting new
-            arrivals.
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              gap: '20px',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-            }}
-          >
-            {/* Product 1 */}
-            <div
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '200px',
-                padding: '10px',
-                backgroundColor: '#fefefe',
-                textAlign: 'center',
-              }}
-            >
-              <img
-                src={featuredProduct1}
-                alt="AI Prompt: 'Minimal product shot of a sleek tech gadget on a white background, angled lighting'"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                }}
-              />
-              <p style={{ marginTop: '10px' }}>Product 1</p>
-              <p
-                style={{
-                  fontWeight: 'bold',
-                  color: '#444',
-                  fontSize: '1.1rem',
-                }}
-              >
-                $19.99
-              </p>
-              <button
-                type="button"
-                style={{
-                  backgroundColor: '#febd69',
-                  border: '1px solid #f3a847',
-                  borderRadius: '4px',
-                  padding: '6px 10px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  color: '#333',
-                }}
-              >
-                Add to Cart
-              </button>
-            </div>
-            {/* Product 2 */}
-            <div
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '200px',
-                padding: '10px',
-                backgroundColor: '#fefefe',
-                textAlign: 'center',
-              }}
-            >
-              <img
-                src={featuredProduct2}
-                alt="AI Prompt: 'Compact product arrangement for a wearable accessory, pastel background, styled lighting'"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                }}
-              />
-              <p style={{ marginTop: '10px' }}>Product 2</p>
-              <p
-                style={{
-                  fontWeight: 'bold',
-                  color: '#444',
-                  fontSize: '1.1rem',
-                }}
-              >
-                $29.99
-              </p>
-              <button
-                type="button"
-                style={{
-                  backgroundColor: '#febd69',
-                  border: '1px solid #f3a847',
-                  borderRadius: '4px',
-                  padding: '6px 10px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  color: '#333',
-                }}
-              >
-                Add to Cart
-              </button>
-            </div>
-            {/* Product 3 */}
-            <div
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '200px',
-                padding: '10px',
-                backgroundColor: '#fefefe',
-                textAlign: 'center',
-              }}
-            >
-              <img
-                src={featuredProduct3}
-                alt="AI Prompt: 'High-quality product photo of a household item with bright color pop, playful arrangement'"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                }}
-              />
-              <p style={{ marginTop: '10px' }}>Product 3</p>
-              <p
-                style={{
-                  fontWeight: 'bold',
-                  color: '#444',
-                  fontSize: '1.1rem',
-                }}
-              >
-                $39.99
-              </p>
-              <button
-                type="button"
-                style={{
-                  backgroundColor: '#febd69',
-                  border: '1px solid #f3a847',
-                  borderRadius: '4px',
-                  padding: '6px 10px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  color: '#333',
-                }}
-              >
-                Add to Cart
-              </button>
-            </div>
-          </div>
-          <button
-            type="button"
-            style={{
-              marginTop: '15px',
-              backgroundColor: '#73bbff',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              color: '#fff',
-              fontWeight: 'bold',
-              fontSize: '1rem',
-            }}
-          >
-            Browse More Products
-          </button>
-        </section>
-
-        {/* Deals of the Day */}
-        <section
-          style={{
-            marginBottom: '20px',
-            border: '1px solid #ddd',
-            borderRadius: '6px',
-            padding: '10px',
+            padding: '1rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            background: 'linear-gradient(45deg, #fff7e0, #ffe9c6)',
-            textAlign: 'center',
+            gap: '1rem',
+            alignItems: 'flex-start',
           }}
         >
-          <h2
+          <div style={{ flex: '1' }}>
+            <h3
+              style={{
+                fontSize: '1.25rem',
+                color: '#232F3E',
+                marginBottom: '0.75rem',
+                borderBottom: '1px solid #ddd',
+                paddingBottom: '0.5rem',
+              }}
+            >
+              About Amazon
+            </h3>
+            <p style={{ margin: '0.5rem 0' }}>
+              Amazon is a global e-commerce platform offering millions of
+              products across categories such as electronics, fashion, home, and
+              more. We’re dedicated to providing convenience, variety, and
+              competitive pricing, aiming to be Earth’s most customer-centric
+              company.
+            </p>
+            <p style={{ margin: '0.5rem 0' }}>
+              From everyday essentials to the latest tech, you’ll find almost
+              anything on Amazon. Our world-class logistics and innovation keep
+              us at the forefront of online retail, ensuring a smooth and
+              seamless shopping experience.
+            </p>
+          </div>
+          <div style={{ width: '220px', flexShrink: 0 }}>
+            <PreviewImage
+              alt="AI Prompt: 'Corporate Amazon building or headquarters, daytime shot, large Amazon signage'"
+              containerStyle={{ width: '220px', height: '160px' }}
+            />
+          </div>
+        </section>
+
+        {/* 3) OUR SERVICES */}
+        <section
+          style={{
+            margin: '0 2rem 1.5rem',
+            backgroundColor: '#fff',
+            borderRadius: '6px',
+            padding: '1rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}
+        >
+          <h3
             style={{
+              fontSize: '1.25rem',
               color: '#232F3E',
-              fontSize: '1.4rem',
-              fontWeight: 'bold',
-              margin: 0,
-              textAlign: 'center',
+              marginBottom: '0.75rem',
+              borderBottom: '1px solid #ddd',
+              paddingBottom: '0.5rem',
             }}
           >
-            Deals of the Day
-          </h2>
-          <p
-            style={{
-              margin: 0,
-              color: '#444',
-              fontSize: '1rem',
-              textAlign: 'center',
-            }}
-          >
-            Don’t miss these limited-time offers on must-have products. Grab
-            them now before they’re gone!
-          </p>
+            Our Services
+          </h3>
+
           <div
             style={{
-              display: 'flex',
-              gap: '20px',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: '1rem',
+            }}
+          >
+            {/* Service 1 */}
+            <div
+              style={{
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
+                textAlign: 'center',
+              }}
+            >
+              <PreviewImage
+                alt="AI Prompt: 'Icon representing Amazon Prime membership, with a small Amazon smile or arrow'"
+                width="100%"
+                height="80px"
+              />
+              <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
+                Amazon Prime
+              </h4>
+              <p style={{ fontSize: '0.9rem', margin: 0 }}>
+                Fast shipping, streaming, exclusive deals, and more.
+              </p>
+            </div>
+            {/* Service 2 */}
+            <div
+              style={{
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
+                textAlign: 'center',
+              }}
+            >
+              <PreviewImage
+                alt="AI Prompt: 'Grocery bag icon with Amazon branding, representing Amazon Fresh service'"
+                width="100%"
+                height="80px"
+              />
+              <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
+                Amazon Fresh
+              </h4>
+              <p style={{ fontSize: '0.9rem', margin: 0 }}>
+                Groceries delivered straight to your door.
+              </p>
+            </div>
+            {/* Service 3 */}
+            <div
+              style={{
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
+                textAlign: 'center',
+              }}
+            >
+              <PreviewImage
+                alt="AI Prompt: 'Healthcare or pharmacy icon, minimal style, Amazon color palette'"
+                width="100%"
+                height="80px"
+              />
+              <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
+                Amazon Pharmacy
+              </h4>
+              <p style={{ fontSize: '0.9rem', margin: 0 }}>
+                Manage prescriptions and shop health products.
+              </p>
+            </div>
+            {/* Service 4 */}
+            <div
+              style={{
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
+                textAlign: 'center',
+              }}
+            >
+              <PreviewImage
+                alt="AI Prompt: 'Simplistic line art of an AWS cloud, referencing Amazon Web Services'"
+                width="100%"
+                height="80px"
+              />
+              <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
+                Amazon Web Services
+              </h4>
+              <p style={{ fontSize: '0.9rem', margin: 0 }}>
+                Cloud computing solutions for businesses worldwide.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 4) DEALS & OFFERS */}
+        <section
+          style={{
+            margin: '0 2rem 1.5rem',
+            backgroundColor: '#fff',
+            borderRadius: '6px',
+            padding: '1rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}
+        >
+          <h3
+            style={{
+              fontSize: '1.25rem',
+              color: '#232F3E',
+              marginBottom: '0.75rem',
+              borderBottom: '1px solid #ddd',
+              paddingBottom: '0.5rem',
+            }}
+          >
+            Deals &amp; Offers
+          </h3>
+          <p style={{ margin: '0.5rem 0 1rem' }}>
+            We regularly post limited-time offers and special discounts across
+            all categories. Check out the deals below and find something new to
+            enjoy.
+          </p>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '1rem',
             }}
           >
             {/* Deal 1 */}
             <div
               style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '200px',
-                padding: '10px',
-                backgroundColor: '#fefefe',
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
               }}
             >
-              <img
-                src={dealItem1}
-                alt="AI Prompt: 'An everyday household item with a bold discount label, bright red sale text'"
-                style={{ width: '100%', height: 'auto' }}
+              <PreviewImage
+                alt="AI Prompt: 'An Amazon device (e.g., Echo Dot) on a clean background, discounted price tag'"
+                width="100%"
+                height="100px"
               />
-              <p style={{ marginTop: '10px' }}>Deal Item 1</p>
-              <p
+              <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
+                Echo Dot
+              </h4>
+              <p style={{ margin: '0.25rem 0' }}>
+                <span style={{ fontWeight: 'bold' }}>$29.99</span>{' '}
+                <span
+                  style={{
+                    textDecoration: 'line-through',
+                    color: '#666',
+                    fontSize: '0.9rem',
+                    marginLeft: '0.5rem',
+                  }}
+                >
+                  $49.99
+                </span>
+              </p>
+              <button
+                type="button"
                 style={{
-                  color: 'red',
+                  backgroundColor: '#FFA41C',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
                   fontWeight: 'bold',
-                  fontSize: '1.1rem',
                 }}
               >
-                $9.99
-              </p>
-              <p
-                style={{
-                  textDecoration: 'line-through',
-                  color: '#999',
-                  fontSize: '0.9rem',
-                  marginBottom: '8px',
-                }}
-              >
-                $14.99
-              </p>
+                Buy Now
+              </button>
             </div>
             {/* Deal 2 */}
             <div
               style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '200px',
-                padding: '10px',
-                backgroundColor: '#fefefe',
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
               }}
             >
-              <img
-                src={dealItem2}
-                alt="AI Prompt: 'Stylish tech accessory on sale, discount label with bright highlight colors'"
-                style={{ width: '100%', height: 'auto' }}
+              <PreviewImage
+                alt="AI Prompt: 'Kitchen appliance (e.g., blender) on white background, with a sale label'"
+                width="100%"
+                height="100px"
               />
-              <p style={{ marginTop: '10px' }}>Deal Item 2</p>
-              <p
+              <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
+                Blender
+              </h4>
+              <p style={{ margin: '0.25rem 0' }}>
+                <span style={{ fontWeight: 'bold' }}>$19.99</span>{' '}
+                <span
+                  style={{
+                    textDecoration: 'line-through',
+                    color: '#666',
+                    fontSize: '0.9rem',
+                    marginLeft: '0.5rem',
+                  }}
+                >
+                  $34.99
+                </span>
+              </p>
+              <button
+                type="button"
                 style={{
-                  color: 'red',
+                  backgroundColor: '#FFA41C',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
                   fontWeight: 'bold',
-                  fontSize: '1.1rem',
                 }}
               >
-                $19.99
-              </p>
-              <p
-                style={{
-                  textDecoration: 'line-through',
-                  color: '#999',
-                  fontSize: '0.9rem',
-                  marginBottom: '8px',
-                }}
-              >
-                $29.99
-              </p>
+                Buy Now
+              </button>
             </div>
             {/* Deal 3 */}
             <div
               style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '200px',
-                padding: '10px',
-                backgroundColor: '#fefefe',
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
               }}
             >
-              <img
-                src={dealItem3}
-                alt="AI Prompt: 'Small but attractive item with a big clearance discount, cheerful background'"
-                style={{ width: '100%', height: 'auto' }}
+              <PreviewImage
+                alt="AI Prompt: 'Book set with bright covers, special discount tag, product on plain background'"
+                width="100%"
+                height="100px"
               />
-              <p style={{ marginTop: '10px' }}>Deal Item 3</p>
-              <p
+              <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
+                Book Set
+              </h4>
+              <p style={{ margin: '0.25rem 0' }}>
+                <span style={{ fontWeight: 'bold' }}>$14.99</span>{' '}
+                <span
+                  style={{
+                    textDecoration: 'line-through',
+                    color: '#666',
+                    fontSize: '0.9rem',
+                    marginLeft: '0.5rem',
+                  }}
+                >
+                  $24.99
+                </span>
+              </p>
+              <button
+                type="button"
                 style={{
-                  color: 'red',
+                  backgroundColor: '#FFA41C',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
                   fontWeight: 'bold',
-                  fontSize: '1.1rem',
                 }}
               >
-                $4.99
-              </p>
-              <p
-                style={{
-                  textDecoration: 'line-through',
-                  color: '#999',
-                  fontSize: '0.9rem',
-                  marginBottom: '8px',
-                }}
-              >
-                $9.99
-              </p>
+                Buy Now
+              </button>
             </div>
           </div>
-          <button
-            type="button"
-            style={{
-              marginTop: '10px',
-              backgroundColor: '#ffab53',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              color: '#fff',
-              fontWeight: 'bold',
-              fontSize: '1rem',
-              alignSelf: 'center',
-            }}
-          >
-            See More Deals
-          </button>
         </section>
 
-        {/* Gift Cards */}
+        {/* 5) PRIME MEMBERSHIP */}
         <section
           style={{
-            marginBottom: '20px',
-            border: '1px solid #ddd',
+            margin: '0 2rem 1.5rem',
+            backgroundColor: '#fff',
             borderRadius: '6px',
-            padding: '10px',
+            padding: '1rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             display: 'flex',
-            flexDirection: 'column',
-            background: 'linear-gradient(45deg, #e0fff5, #c6ffea)',
-            textAlign: 'center',
+            gap: '1rem',
+            alignItems: 'flex-start',
           }}
         >
-          <h2
+          <div style={{ flex: '1' }}>
+            <h3
+              style={{
+                fontSize: '1.25rem',
+                color: '#232F3E',
+                marginBottom: '0.75rem',
+                borderBottom: '1px solid #ddd',
+                paddingBottom: '0.5rem',
+              }}
+            >
+              Amazon Prime
+            </h3>
+            <p style={{ margin: '0.5rem 0' }}>
+              Prime is more than just fast shipping. Enjoy exclusive access to
+              Prime Video, over two million songs on Prime Music, special deals,
+              free games with Prime Gaming, and more.
+            </p>
+            <p style={{ margin: '0.5rem 0' }}>
+              Members also benefit from secure photo storage, early access to
+              Lightning Deals, and a host of other perks—all included under one
+              membership.
+            </p>
+            <button
+              type="button"
+              style={{
+                backgroundColor: '#FFA41C',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '0.5rem 1rem',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                marginTop: '0.5rem',
+              }}
+            >
+              Learn More
+            </button>
+          </div>
+          <div style={{ width: '220px', flexShrink: 0 }}>
+            <PreviewImage
+              alt="AI Prompt: 'Amazon Prime membership banner, listing perks like streaming and shipping benefits'"
+              containerStyle={{ width: '220px', height: '160px' }}
+            />
+          </div>
+        </section>
+
+        {/* 6) TRENDING PRODUCTS */}
+        <section
+          style={{
+            margin: '0 2rem 2rem',
+            backgroundColor: '#fff',
+            borderRadius: '6px',
+            padding: '1rem',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}
+        >
+          <h3
             style={{
+              fontSize: '1.25rem',
               color: '#232F3E',
-              fontSize: '1.4rem',
-              fontWeight: 'bold',
-              margin: 0,
-              textAlign: 'center',
+              marginBottom: '0.75rem',
+              borderBottom: '1px solid #ddd',
+              paddingBottom: '0.5rem',
             }}
           >
-            Gift Cards
-          </h2>
-          <p
-            style={{
-              margin: 0,
-              color: '#444',
-              fontSize: '1rem',
-              textAlign: 'center',
-            }}
-          >
-            Give the gift that’s always right. Our wide range of gift cards
-            makes every occasion special.
+            Trending Products
+          </h3>
+          <p style={{ margin: '0.5rem 0 1rem' }}>
+            Check out some of our most popular picks right now.
           </p>
           <div
             style={{
-              display: 'flex',
-              gap: '20px',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              marginTop: '10px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              gap: '1rem',
             }}
           >
-            {/* Gift Card 1 */}
-            <div
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '180px',
-                padding: '10px',
-                textAlign: 'center',
-                backgroundColor: '#fefefe',
-              }}
-            >
-              <img
-                src={giftCard1}
-                alt="AI Prompt: 'Gift card design with minimal Amazon style, confetti, bright and cheerful layout'"
-                style={{ width: '100%', height: 'auto' }}
-              />
-              <p style={{ marginTop: '10px' }}>Gift Card 1</p>
-            </div>
-            {/* Gift Card 2 */}
-            <div
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '180px',
-                padding: '10px',
-                textAlign: 'center',
-                backgroundColor: '#fefefe',
-              }}
-            >
-              <img
-                src={giftCard2}
-                alt="AI Prompt: 'Modern gift card featuring abstract shapes and bold Amazon color palette, gradient background'"
-                style={{ width: '100%', height: 'auto' }}
-              />
-              <p style={{ marginTop: '10px' }}>Gift Card 2</p>
-            </div>
-            {/* Gift Card 3 */}
-            <div
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                width: '180px',
-                padding: '10px',
-                textAlign: 'center',
-                backgroundColor: '#fefefe',
-              }}
-            >
-              <img
-                src={giftCard3}
-                alt="AI Prompt: 'Minimal line-art gift card with small Amazon logo, pastel background, celebratory ribbons'"
-                style={{ width: '100%', height: 'auto' }}
-              />
-              <p style={{ marginTop: '10px' }}>Gift Card 3</p>
-            </div>
+            {Array.from({ length: 6 }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  backgroundColor: '#f3f3f3',
+                  borderRadius: '6px',
+                  padding: '1rem',
+                  textAlign: 'center',
+                }}
+              >
+                <PreviewImage
+                  alt={`AI Prompt: 'Trending product #${
+                    i + 1
+                  } with unique packaging and clean background'`}
+                  width="100%"
+                  height="100px"
+                />
+                <h4 style={{ margin: '0.5rem 0', color: '#232F3E' }}>
+                  Product #{i + 1}
+                </h4>
+                <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
+                  From $9.99
+                </p>
+                <button
+                  type="button"
+                  style={{
+                    backgroundColor: '#FFA41C',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '0.5rem 1rem',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  View
+                </button>
+              </div>
+            ))}
           </div>
-          <button
-            type="button"
-            style={{
-              marginTop: '10px',
-              backgroundColor: '#3ed598',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              color: '#fff',
-              fontWeight: 'bold',
-              fontSize: '1rem',
-              alignSelf: 'center',
-            }}
-          >
-            Explore More Gift Cards
-          </button>
         </section>
-      </div>
+      </main>
 
-      {/* ================= Footer ================= */}
+      {/* ================= FOOTER ================= */}
       <footer
         style={{
-          background: 'linear-gradient(45deg, #232F3E, #2c4052)',
-          color: '#fff',
+          backgroundColor: '#232F3E',
+          padding: '1rem',
           textAlign: 'center',
-          padding: '20px',
-          marginTop: '20px',
+          color: '#fff',
         }}
       >
-        <p style={{ margin: 0, fontSize: '1rem', fontWeight: 'bold' }}>
-          © 2025 Amazon
-        </p>
+        <p style={{ margin: 0, fontSize: '0.9rem' }}>© 2025 Amazon</p>
       </footer>
     </div>
   );
 };
 
-// Register component for Craft.js (if needed)
-ChangedHome.craft = {
-  displayName: 'ChangedHome',
-  // rules: {
-  //   canMove: () => false,
-  //   canDrag: () => false,
-  // },
+AmazonHome.craft = {
+  displayName: 'AmazonHome',
 };
 
-export default ChangedHome;
+export default AmazonHome;

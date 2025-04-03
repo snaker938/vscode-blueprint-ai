@@ -18,10 +18,11 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
   onAcceptChanges,
   onRejectChanges,
 }) => {
-  // From CraftJS, get info about the currently selected element.
+  /** ---------- CRAFT.JS SELECTION INFO ---------- */
   const { selectedElementName, isSelected } = useEditor((state, query) => {
     let elementName: string | undefined;
     let selected = false;
+
     if (state.events.selected && state.events.selected.size === 1) {
       selected = true;
       const nodeId = Array.from(state.events.selected)[0];
@@ -32,53 +33,63 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
         }
       }
     }
+
     return {
       selectedElementName: elementName,
       isSelected: selected,
     };
   });
 
-  /** ---------- STATE ---------- */
+  /** ---------- LOCAL STATE ---------- */
   const [userInput, setUserInput] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
+  // Whether to show the generated preview
   const [showGenerated, setShowGenerated] = useState(false);
 
-  // State for showing a continuous-loading overlay.
+  // Let the user manually close the preview, even if the parent sets showAcceptChanges
+  const [previewClosed, setPreviewClosed] = useState(false);
+
+  // Overlay to show while "generating"
   const [isLoading, setIsLoading] = useState(false);
 
-  // A fixed message that appears after generating:
+  // Message to display once generation is complete
   const POST_GENERATE_MESSAGE =
     'I have removed the Books category and replaced it with a Trending categories image with a call to action button as requested.';
 
+  /** File input ref for hidden input */
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /** ---------- HANDLERS ---------- */
 
+  // File upload
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      // Basic validations
-      if (!file.type.startsWith('image/')) {
-        alert('Please upload a valid image file.');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds 5MB limit.');
-        return;
-      }
-      setUploadedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!e.target.files || !e.target.files[0]) return;
+
+    const file = e.target.files[0];
+
+    // Basic validations
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image file.');
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setUploadedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
@@ -93,63 +104,57 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
     return `${truncatedName}...${extension}`;
   };
 
+  // Clear text + image
   const handleClearAll = () => {
     setUserInput('');
     removeImage();
   };
 
+  // Generate button
   const handleGenerateClick = () => {
     if (!userInput && !uploadedImage) {
       alert('Please enter text or upload an image first.');
       return;
     }
 
-    // Show the continuous loading overlay.
+    // Show overlay
     setIsLoading(true);
 
-    // Simulate an asynchronous call. Replace the 3s timeout with real logic.
+    // Immediately show the preview with the user's prompt
+    setShowGenerated(true);
+    setPreviewClosed(false);
+
+    // Simulate an async call for 3s
     setTimeout(() => {
       setIsLoading(false);
+      // Notify parent
       onGenerate?.(userInput, uploadedImage);
-      // Ensure we show the generated preview.
-      setShowGenerated(true);
     }, 3000);
   };
 
-  /**
-   * X button inside the generated preview
-   * - Hide preview
-   */
+  // X button in the generated preview
   const handleCloseGeneratedView = () => {
     setShowGenerated(false);
-    // (Previously, we also cleared text & triggered "reject", but that caused confusion.)
-    // setUserInput('');
-    // onRejectChanges?.();
+    setPreviewClosed(true);
   };
 
-  /**
-   * Accept button inside the "Accept These Changes?" section
-   * - Hide preview
-   * - Clear text
-   * - Call onAcceptChanges if provided
-   */
+  // Accept button
   const handleAccept = () => {
     setShowGenerated(false);
-    setUserInput('');
+    setPreviewClosed(true);
     onAcceptChanges?.();
   };
 
-  /**
-   * Reject button inside the "Accept These Changes?" section
-   * - Hide preview
-   * - Clear text
-   * - Call onRejectChanges if provided
-   */
+  // Reject button
   const handleReject = () => {
     setShowGenerated(false);
-    setUserInput('');
+    setPreviewClosed(true);
     onRejectChanges?.();
   };
+
+  // If we haven't manually closed the preview, and either local generation or parent acceptance is true:
+  const isPreviewVisible =
+    !previewClosed && (showGenerated || showAcceptChanges);
 
   return (
     <>
@@ -167,7 +172,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
         `}
       </style>
 
-      {/* Overlay + Indeterminate Loading Bar when isLoading is true */}
+      {/* Overlay + Indeterminate Loading Bar */}
       {isLoading && (
         <div
           style={{
@@ -200,7 +205,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
               borderRadius: '5px',
             }}
           >
-            {/* The animated bar that continuously moves side-to-side */}
+            {/* The animated bar */}
             <div
               style={{
                 position: 'absolute',
@@ -221,6 +226,11 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
         style={{
           display: isOpen ? 'flex' : 'none',
           flexDirection: 'column',
+          width: '300px',
+          border: '1px solid #ddd',
+          background: '#fff',
+          height: '100%',
+          overflowY: 'auto',
         }}
       >
         {/* ---------- HEADER ---------- */}
@@ -290,9 +300,8 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
           )}
         </div>
 
-        {/* ---------- EITHER SHOW PROMPT UI OR GENERATED PREVIEW ---------- */}
-        {/* Only show the prompt UI if we haven't generated yet */}
-        {!showGenerated && !showAcceptChanges && (
+        {/* ---------- CONDITIONAL: SHOW PROMPT UI IF NOT SHOWING PREVIEW ---------- */}
+        {!isPreviewVisible && (
           <>
             {/* ---------- IMAGE UPLOAD SECTION ---------- */}
             <div
@@ -316,6 +325,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
               >
                 Optionally include a reference image.
               </p>
+
               {uploadedImage ? (
                 <div
                   style={{
@@ -467,18 +477,14 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
         )}
 
         {/* ---------- GENERATED PREVIEW SECTION ---------- */}
-        {/*
-          We now show the generated preview if EITHER:
-          - local state "showGenerated" is true, OR
-          - the parent wants to show "Accept/Reject" (showAcceptChanges === true)
-        */}
-        {(showGenerated || showAcceptChanges) && (
+        {isPreviewVisible && (
           <div
             style={{
               padding: '16px',
               borderBottom: '1px solid #eee',
             }}
           >
+            {/* Header Row with "Generated Preview" and the X button */}
             <div
               style={{
                 display: 'flex',
@@ -521,11 +527,10 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
               }}
             >
               <h5 style={{ margin: '0 0 4px', fontWeight: 'bold' }}>
-                Your Prompt:
+                Your Prompt: Remove the "Books" category component entirely.
+                Replace it with a new "Trending" category component
               </h5>
-              <p style={{ margin: 0, color: '#333' }}>
-                {userInput || '(No prompt)'}
-              </p>
+              <p style={{ margin: 0, color: '#333' }}>{userInput}</p>
             </div>
 
             {/* ---------- SHOW USER'S IMAGE (IF ANY) ---------- */}
