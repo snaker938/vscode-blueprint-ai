@@ -1,5 +1,7 @@
 import React from 'react';
-import placeholder from './PlaceholderImage.png'; // Single placeholder image
+
+// Single placeholder image
+import placeholder from './PlaceholderImage.png';
 
 // Extend React.FC with a craft property if you're using Craft.js
 type AmazonHomeType = React.FC & {
@@ -10,21 +12,19 @@ type AmazonHomeType = React.FC & {
 };
 
 /**
- * Minimal image component with a small overlay
- * that displays alt text in the bottom-left corner.
+ * ImageWrapper: displays a single placeholder image,
+ * and overlays the AI Prompt alt text in the bottom-left corner.
  */
-const PreviewImage: React.FC<{
+const ImageWrapper: React.FC<{
   alt: string;
-  width?: string | number;
-  height?: string | number;
   containerStyle?: React.CSSProperties;
-}> = ({ alt, width = '100%', height = 'auto', containerStyle }) => {
+  objectFit?: React.CSSProperties['objectFit'];
+}> = ({ alt, containerStyle, objectFit = 'cover' }) => {
   return (
     <div
       style={{
         position: 'relative',
-        width,
-        height,
+        overflow: 'hidden',
         ...containerStyle,
       }}
     >
@@ -34,34 +34,34 @@ const PreviewImage: React.FC<{
         style={{
           width: '100%',
           height: '100%',
-          objectFit: 'contain',
+          objectFit,
           display: 'block',
         }}
       />
+      {/* Overlay showing the AI prompt. */}
       <div
         style={{
           position: 'absolute',
-          bottom: '0',
-          left: '0',
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          bottom: 0,
+          left: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)',
           color: '#fff',
+          fontSize: '0.8rem',
           padding: '4px 8px',
-          fontSize: '0.75rem',
           borderTopRightRadius: '6px',
+          maxWidth: '90%',
+          wordBreak: 'break-word',
         }}
       >
-        {alt}
+        AI PROMPT: {alt}
       </div>
     </div>
   );
 };
 
 /**
- * A revised AmazonHome component:
- * - Fewer text-heavy sections removed; more images added
- * - 'Need Help' section removed
- * - New 'Trending Products' section introduced
- * - Color scheme remains consistent with Amazon branding
+ * AmazonHome component using placeholder images for all images,
+ * with visible AI Prompt alt text overlaid on each image.
  */
 const AmazonHome: AmazonHomeType = () => {
   return (
@@ -85,11 +85,11 @@ const AmazonHome: AmazonHomeType = () => {
         }}
       >
         {/* Amazon Logo */}
-        <div style={{ marginRight: '1rem', width: '80px', height: '40px' }}>
-          <PreviewImage
-            alt="AI Prompt: 'Simple Amazon text logo with an orange arrow underneath, white background'"
-            width="80px"
-            height="40px"
+        <div style={{ marginRight: '1rem' }}>
+          <ImageWrapper
+            alt="Simple Amazon text logo with an orange arrow underneath, white background"
+            containerStyle={{ width: '80px', height: '40px' }}
+            objectFit="contain"
           />
         </div>
         <h1 style={{ margin: 0, color: '#fff', fontSize: '1.5rem' }}>Amazon</h1>
@@ -133,46 +133,20 @@ const AmazonHome: AmazonHomeType = () => {
 
       {/* ================= MAIN CONTENT ================= */}
       <main style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-        {/* 1) HERO SECTION */}
+        {/* 1) HERO SECTION (stretched to fill container) */}
         <section
           style={{
             width: '100%',
             height: '250px',
-            position: 'relative',
             marginBottom: '1.5rem',
           }}
         >
-          <PreviewImage
-            alt="AI Prompt: 'Large Amazon hero banner featuring new deals, bright orange CTA, mixture of product silhouettes'"
-            containerStyle={{ width: '100%', height: '250px' }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '1rem',
-              left: '2rem',
-              color: '#fff',
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: '1.75rem' }}>
-              Explore Top Deals
-            </h2>
-            <p style={{ margin: '0.5rem 0' }}>
-              Don't miss out on today's exclusive offers.
-            </p>
-            <button
-              type="button"
-              style={{
-                backgroundColor: '#FFA41C',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '0.5rem 1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-              }}
-            >
-              Shop Now
-            </button>
+          <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+            <ImageWrapper
+              alt="Large Amazon hero banner featuring new deals, bright orange CTA, mixture of product silhouettes"
+              containerStyle={{ width: '100%', height: '100%' }}
+              objectFit="cover"
+            />
           </div>
         </section>
 
@@ -215,10 +189,11 @@ const AmazonHome: AmazonHomeType = () => {
               seamless shopping experience.
             </p>
           </div>
-          <div style={{ width: '220px', flexShrink: 0 }}>
-            <PreviewImage
-              alt="AI Prompt: 'Corporate Amazon building or headquarters, daytime shot, large Amazon signage'"
+          <div style={{ flexShrink: 0 }}>
+            <ImageWrapper
+              alt="Corporate Amazon building or headquarters, daytime shot, large Amazon signage"
               containerStyle={{ width: '220px', height: '160px' }}
+              objectFit="cover"
             />
           </div>
         </section>
@@ -261,10 +236,10 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <PreviewImage
-                alt="AI Prompt: 'Icon representing Amazon Prime membership, with a small Amazon smile or arrow'"
-                width="100%"
-                height="80px"
+              <ImageWrapper
+                alt="Icon representing Amazon Prime membership, with a small Amazon smile or arrow"
+                containerStyle={{ width: '100%', height: '80px' }}
+                objectFit="contain"
               />
               <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
                 Amazon Prime
@@ -282,10 +257,10 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <PreviewImage
-                alt="AI Prompt: 'Grocery bag icon with Amazon branding, representing Amazon Fresh service'"
-                width="100%"
-                height="80px"
+              <ImageWrapper
+                alt="Grocery bag icon with Amazon branding, representing Amazon Fresh service"
+                containerStyle={{ width: '100%', height: '80px' }}
+                objectFit="contain"
               />
               <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
                 Amazon Fresh
@@ -303,10 +278,10 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <PreviewImage
-                alt="AI Prompt: 'Healthcare or pharmacy icon, minimal style, Amazon color palette'"
-                width="100%"
-                height="80px"
+              <ImageWrapper
+                alt="Healthcare or pharmacy icon, minimal style, Amazon color palette"
+                containerStyle={{ width: '100%', height: '80px' }}
+                objectFit="contain"
               />
               <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
                 Amazon Pharmacy
@@ -324,10 +299,10 @@ const AmazonHome: AmazonHomeType = () => {
                 textAlign: 'center',
               }}
             >
-              <PreviewImage
-                alt="AI Prompt: 'Simplistic line art of an AWS cloud, referencing Amazon Web Services'"
-                width="100%"
-                height="80px"
+              <ImageWrapper
+                alt="Simplistic line art of an AWS cloud, referencing Amazon Web Services"
+                containerStyle={{ width: '100%', height: '80px' }}
+                objectFit="contain"
               />
               <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
                 Amazon Web Services
@@ -381,10 +356,10 @@ const AmazonHome: AmazonHomeType = () => {
                 padding: '1rem',
               }}
             >
-              <PreviewImage
-                alt="AI Prompt: 'An Amazon device (e.g., Echo Dot) on a clean background, discounted price tag'"
-                width="100%"
-                height="100px"
+              <ImageWrapper
+                alt="An Amazon device (e.g., Echo Dot) on a clean background, discounted price tag"
+                containerStyle={{ width: '100%', height: '150px' }}
+                objectFit="contain"
               />
               <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
                 Echo Dot
@@ -424,10 +399,10 @@ const AmazonHome: AmazonHomeType = () => {
                 padding: '1rem',
               }}
             >
-              <PreviewImage
-                alt="AI Prompt: 'Kitchen appliance (e.g., blender) on white background, with a sale label'"
-                width="100%"
-                height="100px"
+              <ImageWrapper
+                alt="Kitchen appliance (e.g., blender) on white background, with a sale label"
+                containerStyle={{ width: '100%', height: '150px' }}
+                objectFit="contain"
               />
               <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
                 Blender
@@ -467,10 +442,10 @@ const AmazonHome: AmazonHomeType = () => {
                 padding: '1rem',
               }}
             >
-              <PreviewImage
-                alt="AI Prompt: 'Book set with bright covers, special discount tag, product on plain background'"
-                width="100%"
-                height="100px"
+              <ImageWrapper
+                alt="Book set with bright covers, special discount tag, product on plain background"
+                containerStyle={{ width: '100%', height: '150px' }}
+                objectFit="contain"
               />
               <h4 style={{ margin: '0.75rem 0 0.5rem', color: '#232F3E' }}>
                 Book Set
@@ -555,10 +530,11 @@ const AmazonHome: AmazonHomeType = () => {
               Learn More
             </button>
           </div>
-          <div style={{ width: '220px', flexShrink: 0 }}>
-            <PreviewImage
-              alt="AI Prompt: 'Amazon Prime membership banner, listing perks like streaming and shipping benefits'"
+          <div style={{ flexShrink: 0 }}>
+            <ImageWrapper
+              alt="Amazon Prime membership banner, listing perks like streaming and shipping benefits"
               containerStyle={{ width: '220px', height: '160px' }}
+              objectFit="cover"
             />
           </div>
         </section>
@@ -594,44 +570,107 @@ const AmazonHome: AmazonHomeType = () => {
               gap: '1rem',
             }}
           >
-            {Array.from({ length: 6 }, (_, i) => (
-              <div
-                key={i}
+            <div
+              style={{
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
+                textAlign: 'center',
+              }}
+            >
+              <ImageWrapper
+                alt="Trending product #1 with unique packaging and clean background"
+                containerStyle={{ width: '100%', height: '120px' }}
+                objectFit="contain"
+              />
+              <h4 style={{ margin: '0.5rem 0', color: '#232F3E' }}>
+                Product #1
+              </h4>
+              <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
+                From $9.99
+              </p>
+              <button
+                type="button"
                 style={{
-                  backgroundColor: '#f3f3f3',
-                  borderRadius: '6px',
-                  padding: '1rem',
-                  textAlign: 'center',
+                  backgroundColor: '#FFA41C',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
                 }}
               >
-                <PreviewImage
-                  alt={`AI Prompt: 'Trending product #${
-                    i + 1
-                  } with unique packaging and clean background'`}
-                  width="100%"
-                  height="100px"
-                />
-                <h4 style={{ margin: '0.5rem 0', color: '#232F3E' }}>
-                  Product #{i + 1}
-                </h4>
-                <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
-                  From $9.99
-                </p>
-                <button
-                  type="button"
-                  style={{
-                    backgroundColor: '#FFA41C',
-                    border: 'none',
-                    borderRadius: '4px',
-                    padding: '0.5rem 1rem',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  View
-                </button>
-              </div>
-            ))}
+                View
+              </button>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
+                textAlign: 'center',
+              }}
+            >
+              <ImageWrapper
+                alt="Trending product #2 with unique packaging and clean background"
+                containerStyle={{ width: '100%', height: '120px' }}
+                objectFit="contain"
+              />
+              <h4 style={{ margin: '0.5rem 0', color: '#232F3E' }}>
+                Product #2
+              </h4>
+              <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
+                From $9.99
+              </p>
+              <button
+                type="button"
+                style={{
+                  backgroundColor: '#FFA41C',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                View
+              </button>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: '#f3f3f3',
+                borderRadius: '6px',
+                padding: '1rem',
+                textAlign: 'center',
+              }}
+            >
+              <ImageWrapper
+                alt="Trending product #3 with unique packaging and clean background"
+                containerStyle={{ width: '100%', height: '120px' }}
+                objectFit="contain"
+              />
+              <h4 style={{ margin: '0.5rem 0', color: '#232F3E' }}>
+                Product #3
+              </h4>
+              <p style={{ margin: '0.25rem 0', fontSize: '0.9rem' }}>
+                From $9.99
+              </p>
+              <button
+                type="button"
+                style={{
+                  backgroundColor: '#FFA41C',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                View
+              </button>
+            </div>
           </div>
         </section>
       </main>
