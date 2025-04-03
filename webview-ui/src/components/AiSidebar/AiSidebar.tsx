@@ -1,5 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useEditor } from '@craftjs/core';
+
+// Import the store utilities
+import {
+  getUserPrompt,
+  setUserPrompt,
+  subscribePromptChange,
+} from '../../store/store';
 
 export interface AiSidebarProps {
   isOpen: boolean;
@@ -41,6 +48,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
   });
 
   /** ---------- LOCAL STATE ---------- */
+  // Text area input (the user's "current" prompt while typing)
   const [userInput, setUserInput] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -53,6 +61,19 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
 
   // Overlay to show while "generating"
   const [isLoading, setIsLoading] = useState(false);
+
+  // Store-based prompt (what we display in the "Generated Preview" after Generate)
+  const [storePrompt, setStorePrompt] = useState(getUserPrompt());
+
+  // Listen to store changes so if userPrompt changes in the store, we see it here
+  useEffect(() => {
+    const unsubscribe = subscribePromptChange(() => {
+      setStorePrompt(getUserPrompt());
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Message to display once generation is complete
   const POST_GENERATE_MESSAGE =
@@ -117,18 +138,29 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
       return;
     }
 
+    // Capture the current user input locally so it doesn't get lost
+    const localUserInput = userInput;
+
     // Show overlay
     setIsLoading(true);
 
-    // Immediately show the preview with the user's prompt
-    setShowGenerated(true);
+    // Hide any previously shown preview
+    setShowGenerated(false);
     setPreviewClosed(false);
 
     // Simulate an async call for 3s
     setTimeout(() => {
+      // Once "generation" is done:
       setIsLoading(false);
+
+      // Store this prompt as the "previous prompt" in our global store
+      setUserPrompt(localUserInput);
+
+      // Now show the preview
+      setShowGenerated(true);
+
       // Notify parent
-      onGenerate?.(userInput, uploadedImage);
+      onGenerate?.(localUserInput, uploadedImage);
     }, 3000);
   };
 
@@ -426,10 +458,22 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
                 rows={4}
                 style={{
                   width: '100%',
-                  padding: '8px',
+                  padding: '10px',
                   boxSizing: 'border-box',
                   resize: 'none',
-                  fontSize: '0.9rem',
+                  fontSize: '0.95rem',
+                  fontFamily: 'inherit',
+                  color: '#333',
+                  backgroundColor: '#fff',
+                  border: '1px solid #ccc',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                  // width: '100%',
+                  // padding: '8px',
+                  // boxSizing: 'border-box',
+                  // resize: 'none',
+                  // fontSize: '0.9rem',
                 }}
               />
             </div>
@@ -516,7 +560,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
               </button>
             </div>
 
-            {/* ---------- SHOW USER'S PROMPT ---------- */}
+            {/* ---------- SHOW USER'S PROMPT FROM THE STORE ---------- */}
             <div
               style={{
                 marginBottom: '16px',
@@ -527,9 +571,9 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
               }}
             >
               <h5 style={{ margin: '0 0 4px', fontWeight: 'bold' }}>
-                Your Prompt: previousPrompt
+                Your Prompt:
               </h5>
-              <p style={{ margin: 0, color: '#333' }}>{userInput}</p>
+              <p style={{ margin: 0, color: '#333' }}>{storePrompt}</p>
             </div>
 
             {/* ---------- SHOW USER'S IMAGE (IF ANY) ---------- */}

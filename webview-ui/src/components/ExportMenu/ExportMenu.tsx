@@ -1,5 +1,4 @@
-import React, { useState, useMemo } from 'react';
-import { useEditor } from '@craftjs/core';
+import React, { useState } from 'react';
 import { Checkbox, PrimaryButton, IconButton } from '@fluentui/react';
 import { html as beautifyHtml } from 'js-beautify'; // For HTML formatting
 
@@ -30,25 +29,10 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
   const [folderPath, setFolderPath] = useState('Choose folder');
   const [selectAll, setSelectAll] = useState(true);
 
-  // Get craft.js info (optional). In a real app, gather actual stats or remove.
-  const { nodes } = useEditor((state) => ({ nodes: state.nodes }));
-  const nodeCount = Object.keys(nodes).length;
-
-  // Some random stats for the right panel
-  const randomSeed = useMemo(() => Math.floor(Math.random() * 500), []);
-  const totalSize = useMemo(
-    () => (nodeCount * 2 + randomSeed).toFixed(1),
-    [nodeCount, randomSeed]
-  );
-  const numberOfFiles = useMemo(() => nodeCount + 5, [nodeCount]);
-  const linesOfCode = useMemo(
-    () => nodeCount * 30 + randomSeed,
-    [nodeCount, randomSeed]
-  );
-  const timeToExport = useMemo(
-    () => nodeCount * 5 + randomSeed,
-    [nodeCount, randomSeed]
-  );
+  // Hard-coded stats
+  const totalSize = 22.1; // MB
+  const numberOfFiles = 16;
+  const linesOfCode = 102;
 
   const onFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -186,11 +170,10 @@ body {
             <div className="stat-line">
               <span>Lines of Code:</span> <span>{linesOfCode}</span>
             </div>
-            <hr />
-            <div className="stat-line">
-              <span>Time To Export:</span> <span>{timeToExport} seconds</span>
-            </div>
           </div>
+
+          {/* Separator element */}
+          <hr className="export-separator" />
 
           <PrimaryButton
             className="export-button"

@@ -25,6 +25,7 @@ type AmazonHomeType = React.FC & {
   craft?: {
     displayName: string;
     rules?: Record<string, unknown>;
+    isCanvas?: boolean;
   };
 };
 
@@ -638,7 +639,7 @@ const AmazonHome: AmazonHomeType = () => {
 };
 
 AmazonHome.craft = {
-  displayName: 'AmazonHome',
+  displayName: 'AmazonHomer',
 };
 
 export default AmazonHome;

@@ -8,6 +8,13 @@
   position: relative;
 }
 
+.export-separator {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 1rem 0;
+}
+
 /* Header row, with folder selection + close button */
 .export-menu-header {
   display: flex;

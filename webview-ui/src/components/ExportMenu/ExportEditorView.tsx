@@ -84,16 +84,10 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
   useEffect(() => {
     const container = document.getElementById('droppable-canvas-border');
     if (!container) {
-      console.log(
-        '[ExportEditorView] No element found with ID "droppable-canvas-border".'
-      );
       return;
     }
 
-    // All elements including container
     const allEls = [container, ...container.querySelectorAll('*')];
-
-    // Give each element a unique data attribute
     allEls.forEach((el, i) => el.setAttribute('data-export-index', String(i)));
 
     let computedCss = '';
@@ -115,23 +109,15 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
       computedCss += rule;
     });
 
-    // Remove data attributes from the DOM
     allEls.forEach((el) => el.removeAttribute('data-export-index'));
 
-    // Beautify the computed CSS
     const finalCss = beautifyCss(computedCss, {
       indent_size: 2,
       preserve_newlines: true,
     });
 
-    // Append to whatever CSS we already had
     setCssCode(
       (prev) => `${prev}\n\n/* --- Computed CSS Below --- */\n\n${finalCss}`
-    );
-
-    console.log(
-      '[ExportEditorView] Computed CSS was appended. Length of computed CSS:',
-      finalCss.length
     );
   }, []);
 
@@ -140,41 +126,24 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
    * convert to Blob, and add to the ZIP in the same folder as <pageName>.html.
    */
   const addImagesToZip = async (zip: JSZip, imageUrls: string[]) => {
-    console.log(
-      `[ExportEditorView] addImagesToZip called. imageUrls length: ${imageUrls.length}`
-    );
-    console.log('[ExportEditorView] imageUrls array:', imageUrls);
-
     for (const url of imageUrls) {
-      console.log(`[ExportEditorView] Attempting to fetch image: ${url}`);
       try {
         const response = await fetch(url);
         if (!response.ok) {
-          console.warn(
-            `[ExportEditorView] Failed HTTP fetch for: ${url}. Status: ${response.status}`
-          );
           continue;
         }
 
         const blob = await response.blob();
 
-        // Example url: /src/components/LocalPages/Page1/heroBanner.png?t=123
-        // We only want the final filename, e.g. "heroBanner.png"
         const segments = url.split('/');
-        const lastSegment = segments[segments.length - 1]; // "heroBanner.png?t=123"
-        // If there's a query, remove it so the file is saved as "heroBanner.png"
+        const lastSegment = segments[segments.length - 1];
         const [filename] = lastSegment.split('?');
 
         zip.file(filename, blob);
-
-        console.log(
-          `[ExportEditorView] Fetched & added image to ZIP: ${filename}. Blob size: ${blob.size}`
-        );
-      } catch (error) {
-        console.warn(`[ExportEditorView] Error fetching image: ${url}`, error);
+      } catch {
+        // Swallow fetch errors
       }
     }
-    console.log('[ExportEditorView] Finished addImagesToZip()');
   };
 
   /**
@@ -184,45 +153,22 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
    * 3) Any images found in the HTML
    */
   const downloadPageFilesAsZip = async () => {
-    console.log('[ExportEditorView] downloadPageFilesAsZip called.');
-
-    // 1) Find the /src/components/LocalPages/Page1/... images in the HTML
     const imagesInHtml = extractLocalImageUrlsFromHtml(htmlCode);
-
-    // 2) Remove the "/src/components/LocalPages/Page1/" prefix from <img src>
-    //    e.g. "/src/components/LocalPages/Page1/heroBanner.png?t=123" -> "heroBanner.png?t=123"
-    //    This ensures the final <img src="heroBanner.png?t=123">
     const updatedHtml = htmlCode.replace(
       /\/src\/components\/LocalPages\/Page1\//g,
       ''
     );
-    console.log('[ExportEditorView] Updated HTML references for images.');
 
-    // 3) Build the zip
     const zip = new JSZip();
-
-    // - Add updated HTML
     zip.file(`${pageName}.html`, updatedHtml);
-    console.log(
-      '[ExportEditorView] Added HTML file to zip:',
-      `${pageName}.html`
-    );
-
-    // - Add CSS
     zip.file(`${pageName}.css`, cssCode);
-    console.log('[ExportEditorView] Added CSS file to zip:', `${pageName}.css`);
 
-    // - Add images (if any)
     await addImagesToZip(zip, imagesInHtml);
 
-    // 4) Generate + download
-    console.log('[ExportEditorView] Generating ZIP content.');
     const content = await zip.generateAsync({ type: 'blob' });
-    console.log('[ExportEditorView] Triggering file download.');
     saveAs(content, `${pageName}.zip`);
   };
 
-  // Dropdown options (purely for looks)
   const exportOptions: IDropdownOption[] = [
     { key: 'htmlCss', text: 'HTML & CSS' },
     { key: 'winui', text: 'WinUI' },
@@ -232,7 +178,6 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
   return (
     <Stack
       tokens={{ childrenGap: 10 }}
-      // Ensure overflow is visible so Monaco tooltips aren't clipped
       styles={{
         root: {
           padding: 16,
@@ -242,7 +187,6 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
         },
       }}
     >
-      {/* Top row: "Back to Editor", "Download as Zip", and the look-only dropdown */}
       <Stack horizontal tokens={{ childrenGap: 16 }}>
         <DefaultButton
           iconProps={{ iconName: 'Back' }}
@@ -255,7 +199,6 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
           onClick={downloadPageFilesAsZip}
         />
         <Dropdown
-          // Just for looks, no onChange
           placeholder="Exporting to..."
           defaultSelectedKey="htmlCss"
           options={exportOptions}
@@ -263,10 +206,8 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
         />
       </Stack>
 
-      {/* Single pivot for the one page */}
       <Pivot styles={{ root: { overflow: 'visible' } }}>
         <PivotItem headerText={pageName} itemKey={pageId}>
-          {/* Nested pivot for HTML/CSS editors */}
           <Pivot styles={{ root: { overflow: 'visible' } }}>
             <PivotItem headerText="HTML" itemKey="html">
               <Editor
@@ -278,7 +219,6 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
                   if (val !== undefined) setHtmlCode(val);
                 }}
                 options={{
-                  // Ensures suggestion widgets follow the editor in a modal
                   fixedOverflowWidgets: true,
                 }}
               />

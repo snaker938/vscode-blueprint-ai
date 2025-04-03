@@ -10,12 +10,13 @@ export interface Page {
 
 /**
  * Define the shape of our entire store: all Pages, the selectedPageId,
- * and the suggested pages array.
+ * the suggested pages array, and now the user's prompt.
  */
 interface StoreState {
   pages: Page[];
   selectedPageId: number;
   suggestedPages: string[];
+  userPrompt: string;
 }
 
 /**
@@ -25,12 +26,12 @@ const STORAGE_KEY = 'blueprint-ai-data';
 
 /**
  * Default / initial state values.
- * (Equivalent of your old 'globalPages' + 'globalSelectedPageId' + 'suggestedPages'.)
  */
 let storeState: StoreState = {
   pages: [{ id: 1, name: 'Page 1', thumbnail: '', layout: {} }],
   selectedPageId: 1,
   suggestedPages: ['Account', 'Buy Again', 'Best Sellers', 'Returns & Orders'],
+  userPrompt: '', // Newly added
 };
 
 /**
@@ -39,7 +40,16 @@ let storeState: StoreState = {
 try {
   const savedData = localStorage.getItem(STORAGE_KEY);
   if (savedData) {
-    storeState = JSON.parse(savedData);
+    // Parse stored data
+    const parsedData = JSON.parse(savedData);
+
+    // Assign each field safely, so new fields won't cause errors if absent
+    storeState.pages = parsedData.pages || storeState.pages;
+    storeState.selectedPageId =
+      parsedData.selectedPageId || storeState.selectedPageId;
+    storeState.suggestedPages =
+      parsedData.suggestedPages || storeState.suggestedPages;
+    storeState.userPrompt = parsedData.userPrompt || storeState.userPrompt;
   }
 } catch (error) {
   console.warn('Failed to load store data from localStorage:', error);
@@ -69,19 +79,26 @@ export function getSuggestedPages(): string[] {
   return storeState.suggestedPages;
 }
 
+// NEW: Getter for the user's prompt
+export function getUserPrompt(): string {
+  return storeState.userPrompt;
+}
+
 /* ------------------------------------------------------------------
    SUBSCRIPTIONS
    ------------------------------------------------------------------ */
 
 /**
- * We can maintain separate listener arrays if you want fine-grained control:
+ * We maintain separate listener arrays for different store segments:
  *   - pageListeners: Notified when pages or suggested pages change
  *   - selectedPageListeners: Notified when the selectedPageId changes
+ *   - promptListeners: Notified when the userPrompt changes
  */
 type Listener = () => void;
 
 let pageListeners: Listener[] = [];
 let selectedPageListeners: Listener[] = [];
+let promptListeners: Listener[] = []; // NEW
 
 /** Call all listeners whenever `pages` or `suggestedPages` change. */
 function notifyPageListeners() {
@@ -91,6 +108,11 @@ function notifyPageListeners() {
 /** Call all listeners whenever `selectedPageId` changes. */
 function notifySelectedPageListeners() {
   selectedPageListeners.forEach((fn) => fn());
+}
+
+/** Call all listeners whenever `userPrompt` changes. */
+function notifyPromptListeners() {
+  promptListeners.forEach((fn) => fn());
 }
 
 /** Subscribe to page changes (pages array or suggested pages).
@@ -110,6 +132,16 @@ export function subscribeSelectedPageChange(listener: Listener): () => void {
   selectedPageListeners.push(listener);
   return () => {
     selectedPageListeners = selectedPageListeners.filter((l) => l !== listener);
+  };
+}
+
+/** Subscribe to changes in the user's prompt.
+ *  Returns an unsubscribe function.
+ */
+export function subscribePromptChange(listener: Listener): () => void {
+  promptListeners.push(listener);
+  return () => {
+    promptListeners = promptListeners.filter((l) => l !== listener);
   };
 }
 
@@ -143,8 +175,14 @@ export function setSelectedPageId(id: number) {
 /** Replace the suggested pages array. */
 export function setSuggestedPages(newPages: string[]) {
   storeState.suggestedPages = newPages;
-  // We’ll treat suggested pages as part of the “page” domain for notifications
+  // We'll treat suggested pages as part of the "page" domain for notifications
   notifyPageListeners();
+}
+
+/** NEW: Set the user's prompt, and notify any prompt subscribers. */
+export function setUserPrompt(newPrompt: string) {
+  storeState.userPrompt = newPrompt;
+  notifyPromptListeners();
 }
 
 /* ------------------------------------------------------------------
@@ -173,8 +211,10 @@ export function clearStoreFromLocalStorage() {
       'Best Sellers',
       'Returns & Orders',
     ],
+    userPrompt: '', // Reset to empty
   };
-  // Notify all page listeners and selected page listeners
+  // Notify all relevant listeners
   notifyPageListeners();
   notifySelectedPageListeners();
+  notifyPromptListeners(); // NEW
 }

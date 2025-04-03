@@ -24,6 +24,8 @@ import AmazonHomeYesImages from '../../components/LocalPages/Page1/yes-images';
 import ChangedHome from '../../components/LocalPages/Page1/changed-home';
 import AcceptChanges from '../../components/LocalPages/Page1/accept-changes';
 
+import '../../store/store';
+
 import './MainInterface.css';
 
 /**
@@ -66,7 +68,7 @@ const DroppableCanvas: React.FC<{ RootComponent: React.ElementType }> = ({
         canvas
         custom={{ isRootContainer: true }}
         width="800px"
-        height="3065px"
+        height="2595px"
         background="#ffffff"
         margin={[0, 0, 0, 0]}
         padding={[20, 20, 20, 20]}
