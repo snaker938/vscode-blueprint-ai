@@ -19,8 +19,6 @@ import { SearchBox } from '../../components/UserComponents/SearchBox';
 import { Slider } from '../../components/UserComponents/Slider';
 import { Image } from '../../components/UserComponents/Image';
 
-// Removed AmazonHomeNoImages, AmazonHomeYesImages, ChangedHome, AcceptChanges imports
-
 import {
   getSelectedPageId,
   subscribeSelectedPageChange,
@@ -82,9 +80,6 @@ const DroppableCanvas: React.FC<{ RootComponent: React.ElementType }> = ({
   );
 };
 
-/**
- * Simple modal that asks the user if they'd like to generate images via AI.
- */
 const AiImagesModal: React.FC<{
   onYes: () => void;
   onNo: () => void;
