@@ -19,10 +19,7 @@ import { SearchBox } from '../../components/UserComponents/SearchBox';
 import { Slider } from '../../components/UserComponents/Slider';
 import { Image } from '../../components/UserComponents/Image';
 
-import AmazonHomeNoImages from '../../components/LocalPages/Page1/no-images';
-import AmazonHomeYesImages from '../../components/LocalPages/Page1/yes-images';
-import ChangedHome from '../../components/LocalPages/Page1/changed-home';
-import AcceptChanges from '../../components/LocalPages/Page1/accept-changes';
+// Removed AmazonHomeNoImages, AmazonHomeYesImages, ChangedHome, AcceptChanges imports
 
 import {
   getSelectedPageId,
@@ -61,7 +58,8 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
 };
 
 /**
- * A component that sets up the chosen page within a Frame.
+ * A component that sets up a chosen page within a Frame.
+ * Here we just have a single (blank) container for demonstration.
  */
 const DroppableCanvas: React.FC<{ RootComponent: React.ElementType }> = ({
   RootComponent,
@@ -183,7 +181,7 @@ const AiImagesModal: React.FC<{
 };
 
 /**
- * A simple blank page if the selected page = 2 (just an empty area).
+ * A simple blank page if the selected page = 2 (or any other).
  */
 const BlankPage: React.FC = () => {
   return null;
@@ -193,21 +191,6 @@ const BlankPage: React.FC = () => {
  * Main editor interface component.
  */
 const MainInterface: React.FC = () => {
-  // Demo page references
-  const PageNoImages = AmazonHomeNoImages;
-  const PageYesImages = AmazonHomeYesImages;
-
-  /**
-   * If user accepted changes, we show ChangedHome.
-   * If user loaded AI images, we show AmazonHomeYesImages.
-   * Otherwise, we show AmazonHomeNoImages.
-   *
-   * BUT if the user clicks AI Generate, we'll display AcceptChanges.
-   */
-  const [isUsingYesImages, setIsUsingYesImages] = useState(false);
-  const [hasAcceptedChanges, setHasAcceptedChanges] = useState(false);
-  const [showAcceptChanges, setShowAcceptChanges] = useState(false);
-
   /**
    * Key used to force a complete unmount/remount of the <Editor>.
    * Each time we increment this key, it triggers a fresh editor instance.
@@ -234,27 +217,6 @@ const MainInterface: React.FC = () => {
     };
   }, []);
 
-  // Decide which page layout to display
-  const getRootComponent = (): React.ElementType => {
-    // If the user is on page 2, just show a blank canvas
-    if (currentPageId === 2) {
-      return BlankPage;
-    }
-
-    // If we've triggered the AI Generation, show the AcceptChanges layout:
-    if (showAcceptChanges) {
-      return AcceptChanges;
-    }
-
-    // If the user accepted changes, show the final "ChangedHome"
-    if (hasAcceptedChanges) {
-      return ChangedHome;
-    }
-
-    // Otherwise, show either "Yes Images" or "No Images" pages
-    return isUsingYesImages ? PageYesImages : PageNoImages;
-  };
-
   // Force a brand-new Editor by incrementing "editorKey"
   const reloadEditor = () => {
     setEditorKey((prevKey) => prevKey + 1);
@@ -265,14 +227,12 @@ const MainInterface: React.FC = () => {
    */
   const handleGenerateImagesYes = () => {
     setIsGenerating(true);
+
     // Simulate an async AI call
     setTimeout(() => {
       setIsGenerating(false);
-      setIsUsingYesImages(true);
       setShowModal(false);
-
-      // Force editor to re-mount
-      reloadEditor();
+      // Previously swapped pages, now just closing modal
     }, 3000);
   };
 
@@ -281,47 +241,20 @@ const MainInterface: React.FC = () => {
    */
   const handleGenerateImagesNo = () => {
     setShowModal(false);
-
-    // Force editor to re-mount so we load the "no images" layout fresh
-    reloadEditor();
+    // Previously swapped pages, now just closing modal
   };
 
   /**
-   * AI Sidebar triggers an AI generation
-   * -> Show AcceptChanges layout in place of the others
+   * Decide which page layout to display.
+   * Since we've removed the LocalPages, we simply show a BlankPage.
    */
-  const handleAiGenerate = () => {
-    console.log('AI Generate button clicked');
-
-    // Set the flag to display the AcceptChanges layout:
-    setShowAcceptChanges(true);
-    // Remount the editor so it displays AcceptChanges immediately:
-    reloadEditor();
-  };
-
-  /**
-   * The user accepts the AI changes
-   * -> Show the final "ChangedHome"
-   */
-  const handleAcceptChanges = () => {
-    console.log('Changes accepted!');
-    setShowAcceptChanges(false);
-    setHasAcceptedChanges(true);
-
-    // Force editor to re-mount with the "ChangedHome" layout
-    reloadEditor();
-  };
-
-  /**
-   * The user rejects/closes the AI changes
-   * -> Revert to the original layout (either with or without images)
-   */
-  const handleRejectChanges = () => {
-    console.log('Changes rejected or closed');
-    setShowAcceptChanges(false);
-
-    // Reload the editor to go back to the prior page
-    reloadEditor();
+  const getRootComponent = (): React.ElementType => {
+    // If the user is on page 2, just show a blank canvas
+    if (currentPageId === 2) {
+      return BlankPage;
+    }
+    // Otherwise, also show a blank page
+    return BlankPage;
   };
 
   return (
@@ -338,10 +271,6 @@ const MainInterface: React.FC = () => {
         Slider,
         Button,
         Image,
-        AmazonHomeNoImages,
-        AmazonHomeYesImages,
-        ChangedHome,
-        AcceptChanges,
         BlankPage,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
@@ -363,10 +292,7 @@ const MainInterface: React.FC = () => {
             <AiSidebar
               isOpen
               onClose={() => setIsAiSidebarOpen(false)}
-              onGenerate={handleAiGenerate}
-              showAcceptChanges={showAcceptChanges}
-              onAcceptChanges={handleAcceptChanges}
-              onRejectChanges={handleRejectChanges}
+              // Removed all references to generating or accepting local-page changes
             />
           )}
         </div>
