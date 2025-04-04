@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Editor, Frame, Element, useEditor } from '@craftjs/core';
 import { Icon, Modal, Spinner } from '@fluentui/react';
 
@@ -23,6 +23,11 @@ import AmazonHomeNoImages from '../../components/LocalPages/Page1/no-images';
 import AmazonHomeYesImages from '../../components/LocalPages/Page1/yes-images';
 import ChangedHome from '../../components/LocalPages/Page1/changed-home';
 import AcceptChanges from '../../components/LocalPages/Page1/accept-changes';
+
+import {
+  getSelectedPageId,
+  subscribeSelectedPageChange,
+} from '../../store/store';
 
 import '../../store/store';
 
@@ -178,6 +183,13 @@ const AiImagesModal: React.FC<{
 };
 
 /**
+ * A simple blank page if the selected page = 2 (just an empty area).
+ */
+const BlankPage: React.FC = () => {
+  return null;
+};
+
+/**
  * Main editor interface component.
  */
 const MainInterface: React.FC = () => {
@@ -208,8 +220,27 @@ const MainInterface: React.FC = () => {
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
+  // Track which page is currently selected in the store
+  const [currentPageId, setCurrentPageId] = useState(getSelectedPageId());
+
+  useEffect(() => {
+    // Subscribe to changes in selected page ID so we can re-render the editor
+    const unsubscribe = subscribeSelectedPageChange(() => {
+      setCurrentPageId(getSelectedPageId());
+      reloadEditor();
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   // Decide which page layout to display
   const getRootComponent = (): React.ElementType => {
+    // If the user is on page 2, just show a blank canvas
+    if (currentPageId === 2) {
+      return BlankPage;
+    }
+
     // If we've triggered the AI Generation, show the AcceptChanges layout:
     if (showAcceptChanges) {
       return AcceptChanges;
@@ -311,6 +342,7 @@ const MainInterface: React.FC = () => {
         AmazonHomeYesImages,
         ChangedHome,
         AcceptChanges,
+        BlankPage,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >
