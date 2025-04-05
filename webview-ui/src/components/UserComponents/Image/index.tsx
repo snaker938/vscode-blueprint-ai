@@ -1,13 +1,14 @@
+// Image/index.tsx
+
 import React from 'react';
 import { useNode } from '@craftjs/core';
 import { Resizer } from '../Utils/Resizer';
-import { ImageProperties } from './ImageProperties';
-// Import the placeholder image
-import placeholderSrc from './PlaceholderImage.png';
+import { SimpleProperties } from './ImageProperties';
 
-interface IImageProps {
-  src?: string;
-  alt?: string;
+/**
+ * Minimal props (no image-related properties anymore).
+ */
+interface BoxProps {
   width?: string;
   height?: string;
   margin?: [number, number, number, number];
@@ -18,9 +19,10 @@ interface IImageProps {
   children?: React.ReactNode;
 }
 
-const defaultProps: IImageProps = {
-  src: '',
-  alt: '',
+/**
+ * Default props for our simple box.
+ */
+const defaultProps: BoxProps = {
   width: '300px',
   height: '200px',
   margin: [0, 0, 0, 0],
@@ -30,10 +32,11 @@ const defaultProps: IImageProps = {
   border: 'none',
 };
 
-export const Image: React.FC<IImageProps> & { craft?: any } = (props) => {
+/**
+ * A simple "Box" component (formerly "Image") that no longer handles images.
+ */
+export const Image: React.FC<BoxProps> & { craft?: any } = (props) => {
   const {
-    src = '',
-    alt,
     width,
     height,
     margin = [0, 0, 0, 0],
@@ -46,12 +49,9 @@ export const Image: React.FC<IImageProps> & { craft?: any } = (props) => {
 
   const {
     connectors: { connect, drag },
-  } = useNode(); // get CraftJS connectors for this node
+  } = useNode();
 
-  // Fallback to the placeholder if src is empty
-  const effectiveSrc = src || placeholderSrc;
-
-  // Style for the resizable container (excluding margin, which is applied to outer wrapper)
+  // Style for the resizable container (excluding margin)
   const containerStyle: React.CSSProperties = {
     padding: `${padding[0]}px ${padding[1]}px ${padding[2]}px ${padding[3]}px`,
     boxShadow:
@@ -75,39 +75,17 @@ export const Image: React.FC<IImageProps> & { craft?: any } = (props) => {
         propKey={{ width: 'width', height: 'height' }}
         style={containerStyle}
       >
-        {/* Inner container to hold the image and children */}
+        {/* Simple container div that can hold children */}
         <div
           style={{
             position: 'relative',
             width: '100%',
             height: '100%',
-            borderRadius: borderRadius ? `${borderRadius}px` : undefined,
             overflow: 'hidden',
+            borderRadius: borderRadius ? `${borderRadius}px` : undefined,
           }}
         >
-          <img
-            src={effectiveSrc}
-            alt={alt || ''}
-            style={{
-              display: 'block',
-              width: '100%',
-              height: '100%',
-              // Use 'fill' to stretch the image, ignoring aspect ratio
-              objectFit: 'fill',
-            }}
-          />
-          {/* Child elements overlay */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-            }}
-          >
-            {children}
-          </div>
+          {children}
         </div>
       </Resizer>
     </div>
@@ -122,6 +100,6 @@ Image.craft = {
     canDrop: () => true,
   },
   related: {
-    settings: ImageProperties,
+    settings: SimpleProperties, // <-- The new properties panel
   },
 };

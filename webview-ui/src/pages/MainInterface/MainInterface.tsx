@@ -19,10 +19,7 @@ import { SearchBox } from '../../components/UserComponents/SearchBox';
 import { Slider } from '../../components/UserComponents/Slider';
 import { Image } from '../../components/UserComponents/Image';
 
-import {
-  getSelectedPageId,
-  subscribeSelectedPageChange,
-} from '../../store/store';
+import { subscribeSelectedPageChange } from '../../store/store';
 
 import '../../store/store';
 
@@ -59,9 +56,7 @@ const CanvasBorderWrapper: React.FC<React.PropsWithChildren<unknown>> = ({
  * A component that sets up a chosen page within a Frame.
  * Here we just have a single (blank) container for demonstration.
  */
-const DroppableCanvas: React.FC<{ RootComponent: React.ElementType }> = ({
-  RootComponent,
-}) => {
+const DroppableCanvas: React.FC = () => {
   return (
     <Frame>
       <Element
@@ -73,9 +68,7 @@ const DroppableCanvas: React.FC<{ RootComponent: React.ElementType }> = ({
         background="#ffffff"
         margin={[0, 0, 0, 0]}
         padding={[20, 20, 20, 20]}
-      >
-        <RootComponent />
-      </Element>
+      ></Element>
     </Frame>
   );
 };
@@ -176,13 +169,6 @@ const AiImagesModal: React.FC<{
 };
 
 /**
- * A simple blank page if the selected page = 2 (or any other).
- */
-const BlankPage: React.FC = () => {
-  return null;
-};
-
-/**
  * Main editor interface component.
  */
 const MainInterface: React.FC = () => {
@@ -198,13 +184,10 @@ const MainInterface: React.FC = () => {
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
-  // Track which page is currently selected in the store
-  const [currentPageId, setCurrentPageId] = useState(getSelectedPageId());
-
   useEffect(() => {
     // Subscribe to changes in selected page ID so we can re-render the editor
     const unsubscribe = subscribeSelectedPageChange(() => {
-      setCurrentPageId(getSelectedPageId());
+      // setCurrentPageId(getSelectedPageId());
       reloadEditor();
     });
     return () => {
@@ -239,19 +222,6 @@ const MainInterface: React.FC = () => {
     // Previously swapped pages, now just closing modal
   };
 
-  /**
-   * Decide which page layout to display.
-   * Since we've removed the LocalPages, we simply show a BlankPage.
-   */
-  const getRootComponent = (): React.ElementType => {
-    // If the user is on page 2, just show a blank canvas
-    if (currentPageId === 2) {
-      return BlankPage;
-    }
-    // Otherwise, also show a blank page
-    return BlankPage;
-  };
-
   return (
     // Render a new <Editor> each time "editorKey" changes
     <Editor
@@ -266,7 +236,6 @@ const MainInterface: React.FC = () => {
         Slider,
         Button,
         Image,
-        BlankPage,
       }}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
     >
@@ -284,18 +253,14 @@ const MainInterface: React.FC = () => {
         {/* AI Sidebar */}
         <div className="ai-sidebar-wrapper">
           {isAiSidebarOpen && (
-            <AiSidebar
-              isOpen
-              onClose={() => setIsAiSidebarOpen(false)}
-              // Removed all references to generating or accepting local-page changes
-            />
+            <AiSidebar isOpen onClose={() => setIsAiSidebarOpen(false)} />
           )}
         </div>
 
         {/* Main Canvas Area */}
         <main className="editor-canvas-area">
           <CanvasBorderWrapper>
-            <DroppableCanvas RootComponent={getRootComponent()} />
+            <DroppableCanvas />
           </CanvasBorderWrapper>
         </main>
 
