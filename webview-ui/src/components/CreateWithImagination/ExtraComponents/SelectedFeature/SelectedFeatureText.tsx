@@ -18,6 +18,11 @@ import './SelectedFeatureText.css';
 import returnedComponentString from './CustomComponentString';
 import { createCustomComponent } from './utils/CreateCustomComponent';
 import { useBlueprintContext } from '../../../../store/useBlueprintContext';
+import {
+  getSelectedPage,
+  getSelectedPageId,
+  updatePage,
+} from '../../../../store/store';
 // import { getSelectedPage, updatePage } from '../../../../store/store';
 
 interface SelectedFeatureTextProps {
@@ -100,12 +105,6 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
     return `${truncatedName}...${extension}`;
   };
 
-  /**
-   * When user clicks "Generate":
-   *  - Require some text or an image.
-   *  - Show loading for 3 seconds.
-   *  - Then navigate to "/editing".
-   */
   const handleGenerateClick = async () => {
     if (!textValue && !uploadedImage) {
       alert('Please enter text or select an image first.');
@@ -114,22 +113,77 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
     setLoading(true);
     try {
-      // 1) Create the custom component from our snippet
+      // 1) Create & register the component
       const generatedComponent = createCustomComponent(returnedComponentString);
-
       const customName = 'MyGeneratedCmp';
       registerCustomComponent(customName, generatedComponent);
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 2) Load the existing layout JSON
+      const pageId = getSelectedPageId();
+      const page = getSelectedPage();
+      const layoutJson = page && page.layout ? JSON.parse(page.layout) : {};
 
+      // 3) Insert a new node under layoutJson.ROOT
+      if (layoutJson.ROOT) {
+        const newNodeId = 'MyGeneratedCmpNode_' + Date.now(); // unique ID
+
+        // The new node is stored directly at layoutJson[newNodeId]
+        layoutJson[newNodeId] = {
+          type: { resolvedName: customName },
+          isCanvas: false,
+          props: {},
+          displayName: customName,
+          hidden: false,
+          parent: 'ROOT',
+          // Use "nodes" instead of "children" here
+          nodes: [],
+          linkedNodes: {},
+        };
+
+        // Then reference it in ROOT.nodes (not ROOT.children)
+        if (!layoutJson.ROOT.nodes) {
+          layoutJson.ROOT.nodes = [];
+        }
+        layoutJson.ROOT.nodes.push(newNodeId);
+      }
+
+      // 4) Save updated layout back to the store
+      updatePage(pageId, { layout: JSON.stringify(layoutJson) });
+
+      // 5) Navigate away after a short delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       navigate('/editing');
     } catch (err) {
       console.error('Failed to create custom component:', err);
     } finally {
-      // Hide the spinner (if you prefer to keep it until redirect, remove this)
       setLoading(false);
     }
   };
+
+  // const handleGenerateClick = async () => {
+  //   if (!textValue && !uploadedImage) {
+  //     alert('Please enter text or select an image first.');
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     // 1) Create the custom component from our snippet
+  //     const generatedComponent = createCustomComponent(returnedComponentString);
+
+  //     const customName = 'MyGeneratedCmp';
+  //     registerCustomComponent(customName, generatedComponent);
+
+  //     await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  //     navigate('/editing');
+  //   } catch (err) {
+  //     console.error('Failed to create custom component:', err);
+  //   } finally {
+  //     // Hide the spinner (if you prefer to keep it until redirect, remove this)
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="selected-feature-text-container">

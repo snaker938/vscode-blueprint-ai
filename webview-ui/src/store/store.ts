@@ -63,7 +63,9 @@ interface StoreState {
  * Default / initial state values.
  */
 let storeState: StoreState = {
-  pages: [{ id: 1, name: 'Page 1', thumbnail: '', layout: {} }],
+  pages: [
+    { id: 1, name: 'Page 1', thumbnail: '', layout: DEFAULT_LAYOUT_JSON },
+  ],
   selectedPageId: 1,
   suggestedPages: ['Account', 'Buy Again', 'Best Sellers', 'Returns & Orders'],
   userPrompt: '', // Newly added
