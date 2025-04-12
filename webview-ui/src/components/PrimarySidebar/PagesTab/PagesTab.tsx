@@ -13,7 +13,7 @@ import styled from 'styled-components';
 import './PagesTab.css';
 import SuggestedPages from '../../SuggestedPages/SuggestedPages';
 
-// Import everything you need from the new store
+// Import the store items
 import {
   Page,
   getPages,
@@ -24,7 +24,10 @@ import {
   subscribeSelectedPageChange,
 } from '../../../store/store';
 
-/* ------------------ Styled Components ------------------ */
+// NEW: Import our new PagesGrid
+import { PagesGrid } from './PagesGrid'; // Adjust path as needed
+
+/* ------------------ Styled Components (general) ------------------ */
 
 const Wrapper = styled.div`
   width: 300px;
@@ -53,59 +56,6 @@ const ActionIconsRow = styled.div`
   margin-bottom: 15px;
 `;
 
-const GridArea = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  padding: 0;
-  width: 100%;
-`;
-
-const PageCard = styled.div<{ selected: boolean }>`
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-
-  ${({ selected }) =>
-    selected &&
-    `
-      border-color: #4b3f72;
-      box-shadow: 0px 4px 8px rgba(75, 63, 114, 0.2);
-    `}
-
-  &:hover {
-    border-color: #4b3f72;
-    box-shadow: 0px 4px 8px rgba(75, 63, 114, 0.2);
-  }
-`;
-
-const PageThumbnail = styled.div`
-  width: 100%;
-  height: 80px;
-  background-color: #eaeaea;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const PageName = styled.div`
-  padding: 5px;
-  font-size: 14px;
-  color: #333333;
-  font-weight: 500;
-`;
-
-/* ------------------ Component ------------------ */
-
 const PagesTab: React.FC = () => {
   // Local state that mirrors the store
   const [pages, setPagesState] = useState<Page[]>(() => getPages());
@@ -120,37 +70,28 @@ const PagesTab: React.FC = () => {
   const [newPageName, setNewPageName] = useState('');
   const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
-  /**
-   * Subscribe to store changes so we can update our local state
-   * whenever pages or the selected page changes.
-   */
+  /** Subscribe to store changes so we can update our local state. */
   useEffect(() => {
     const unsubscribePages = subscribePageChange(() => {
-      // When pages or suggestedPages change, update local state
       setPagesState(getPages());
     });
 
     const unsubscribeSelected = subscribeSelectedPageChange(() => {
-      // When the selected page changes, update local state
       setSelectedPageIdState(getSelectedPageId());
     });
 
-    // Clean up subscriptions on unmount
     return () => {
       unsubscribePages();
       unsubscribeSelected();
     };
   }, []);
 
-  /**
-   * Add a new page. If no name given, default to "Page {pages.length + 1}".
-   */
+  /** Add a new page. */
   const handleAddPage = () => {
     let finalName = addPageName.trim();
     if (!finalName) {
       finalName = `Page ${pages.length + 1}`;
     }
-
     // Determine a new ID
     const maxId = pages.reduce((acc, p) => Math.max(acc, p.id), 0);
     const newId = maxId + 1;
@@ -159,7 +100,7 @@ const PagesTab: React.FC = () => {
     const newPage: Page = {
       id: newId,
       name: finalName,
-      thumbnail: '',
+      layout: '', // Or default JSON if you like
     };
 
     // Update the store
@@ -172,9 +113,7 @@ const PagesTab: React.FC = () => {
     setIsAddModalOpen(false);
   };
 
-  /**
-   * Rename the currently selected page.
-   */
+  /** Rename the currently selected page. */
   const handleRenamePage = () => {
     const finalName = newPageName.trim();
     if (!finalName) {
@@ -183,45 +122,33 @@ const PagesTab: React.FC = () => {
       return;
     }
 
-    // Update the page in the store
     const updatedPages = pages.map((p) =>
       p.id === selectedPageId ? { ...p, name: finalName } : p
     );
     setPages(updatedPages);
 
-    // Reset local state & close modal
     setNewPageName('');
     setIsRenameModalOpen(false);
   };
 
-  /**
-   * Delete the currently selected page, but don't allow if there's only one page left.
-   */
+  /** Delete page if more than one exists. */
   const handleDeletePage = () => {
     if (pages.length <= 1) return;
     const updated = pages.filter((p) => p.id !== selectedPageId);
     setPages(updated);
-
     if (updated.length) {
       setSelectedPageId(updated[0].id);
-    } else {
-      // If nothing left, re-add a default page
-      setSelectedPageId(1);
     }
   };
 
-  /**
-   * Reset to a single default page.
-   */
+  /** Reset to a single default page. */
   const handleResetPages = () => {
-    const defaultPages: Page[] = [{ id: 1, name: 'Page 1', thumbnail: '' }];
+    const defaultPages: Page[] = [{ id: 1, name: 'Page 1', layout: '' }];
     setPages(defaultPages);
     setSelectedPageId(1);
   };
 
-  /**
-   * When the user clicks a page card, set it as the selected page.
-   */
+  /** When user clicks a page card, set it as the selected page. */
   const handlePageClick = (id: number) => {
     setSelectedPageId(id);
   };
@@ -265,28 +192,14 @@ const PagesTab: React.FC = () => {
         />
       </ActionIconsRow>
 
-      <GridArea>
-        {pages.map((page) => (
-          <PageCard
-            key={page.id}
-            selected={page.id === selectedPageId}
-            onClick={() => handlePageClick(page.id)}
-          >
-            <PageThumbnail>
-              {page.thumbnail ? (
-                <img src={page.thumbnail} alt={page.name} />
-              ) : (
-                <div style={{ fontSize: '12px', color: '#888' }}>
-                  No Preview
-                </div>
-              )}
-            </PageThumbnail>
-            <PageName>{page.name}</PageName>
-          </PageCard>
-        ))}
-      </GridArea>
+      {/** REPLACE the old grid with the new PagesGrid */}
+      <PagesGrid
+        pages={pages}
+        selectedPageId={selectedPageId}
+        onSelectPage={handlePageClick}
+      />
 
-      {/* --- Add Page Modal --- */}
+      {/** --- Add Page Modal --- */}
       <Modal
         isOpen={isAddModalOpen}
         onDismiss={() => setIsAddModalOpen(false)}
@@ -318,7 +231,7 @@ const PagesTab: React.FC = () => {
         </div>
       </Modal>
 
-      {/* --- Rename Page Modal --- */}
+      {/** --- Rename Page Modal --- */}
       <Modal
         isOpen={isRenameModalOpen}
         onDismiss={() => setIsRenameModalOpen(false)}
@@ -350,7 +263,7 @@ const PagesTab: React.FC = () => {
         </div>
       </Modal>
 
-      {/* --- Suggested Pages Modal --- */}
+      {/** --- Suggested Pages Modal --- */}
       {isSuggestedOpen && (
         <SuggestedPages onClose={() => setIsSuggestedOpen(false)} />
       )}

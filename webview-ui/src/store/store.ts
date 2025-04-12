@@ -44,7 +44,6 @@ const DEFAULT_LAYOUT_JSON = JSON.stringify({
 export interface Page {
   id: number;
   name: string;
-  thumbnail?: string;
   layout?: any; // The CraftJS node tree (JSON)
 }
 
@@ -63,9 +62,7 @@ interface StoreState {
  * Default / initial state values.
  */
 let storeState: StoreState = {
-  pages: [
-    { id: 1, name: 'Page 1', thumbnail: '', layout: DEFAULT_LAYOUT_JSON },
-  ],
+  pages: [{ id: 1, name: 'Page 1', layout: DEFAULT_LAYOUT_JSON }],
   selectedPageId: 1,
   suggestedPages: ['Account', 'Buy Again', 'Best Sellers', 'Returns & Orders'],
   userPrompt: '', // Newly added
@@ -230,7 +227,7 @@ export function saveStoreToLocalStorage() {
 export function clearStoreFromLocalStorage() {
   // Reset in-memory state to defaults
   storeState = {
-    pages: [{ id: 1, name: 'Page 1', thumbnail: '', layout: {} }],
+    pages: [{ id: 1, name: 'Page 1', layout: {} }],
     selectedPageId: 1,
     suggestedPages: [
       'Account',

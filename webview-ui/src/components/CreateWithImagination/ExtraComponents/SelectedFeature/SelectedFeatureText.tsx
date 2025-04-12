@@ -160,31 +160,6 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
     }
   };
 
-  // const handleGenerateClick = async () => {
-  //   if (!textValue && !uploadedImage) {
-  //     alert('Please enter text or select an image first.');
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   try {
-  //     // 1) Create the custom component from our snippet
-  //     const generatedComponent = createCustomComponent(returnedComponentString);
-
-  //     const customName = 'MyGeneratedCmp';
-  //     registerCustomComponent(customName, generatedComponent);
-
-  //     await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  //     navigate('/editing');
-  //   } catch (err) {
-  //     console.error('Failed to create custom component:', err);
-  //   } finally {
-  //     // Hide the spinner (if you prefer to keep it until redirect, remove this)
-  //     setLoading(false);
-  //   }
-  // };
-
   return (
     <div className="selected-feature-text-container">
       <Text variant="mediumPlus" className="description-text" block>
