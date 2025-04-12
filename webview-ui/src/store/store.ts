@@ -20,9 +20,10 @@ interface StoreState {
 }
 
 /**
- * This key will be used when persisting to localStorage.
+ * This key was previously used for localStorage persistence.
+ * Keeping it commented out for reference.
  */
-const STORAGE_KEY = 'blueprint-ai-data';
+// const STORAGE_KEY = 'blueprint-ai-data';
 
 /**
  * Default / initial state values.
@@ -35,25 +36,9 @@ let storeState: StoreState = {
 };
 
 /**
- * On first load, try to read from localStorage to restore any previously saved data.
+ * We're no longer loading from localStorage.
+ * Using default values defined above.
  */
-try {
-  const savedData = localStorage.getItem(STORAGE_KEY);
-  if (savedData) {
-    // Parse stored data
-    const parsedData = JSON.parse(savedData);
-
-    // Assign each field safely, so new fields won't cause errors if absent
-    storeState.pages = parsedData.pages || storeState.pages;
-    storeState.selectedPageId =
-      parsedData.selectedPageId || storeState.selectedPageId;
-    storeState.suggestedPages =
-      parsedData.suggestedPages || storeState.suggestedPages;
-    storeState.userPrompt = parsedData.userPrompt || storeState.userPrompt;
-  }
-} catch (error) {
-  console.warn('Failed to load store data from localStorage:', error);
-}
 
 /* ------------------------------------------------------------------
    GETTERS
@@ -190,18 +175,19 @@ export function setUserPrompt(newPrompt: string) {
    ------------------------------------------------------------------ */
 
 /**
- * Save current store state to localStorage.
+ * This function no longer saves to localStorage.
+ * It's kept as a no-op to maintain API compatibility.
  */
 export function saveStoreToLocalStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(storeState));
+  // No-op function - we don't save to localStorage anymore
+  console.log('Store changes not saved to localStorage (disabled)');
 }
 
 /**
- * Clear localStorage, and optionally reset your in-memory store to defaults.
+ * Reset the store to defaults (no longer clears localStorage).
  */
 export function clearStoreFromLocalStorage() {
-  localStorage.removeItem(STORAGE_KEY);
-  // Reset in-memory state to defaults (optional, but recommended to avoid confusion).
+  // Reset in-memory state to defaults
   storeState = {
     pages: [{ id: 1, name: 'Page 1', thumbnail: '', layout: {} }],
     selectedPageId: 1,
@@ -216,5 +202,5 @@ export function clearStoreFromLocalStorage() {
   // Notify all relevant listeners
   notifyPageListeners();
   notifySelectedPageListeners();
-  notifyPromptListeners(); // NEW
+  notifyPromptListeners();
 }

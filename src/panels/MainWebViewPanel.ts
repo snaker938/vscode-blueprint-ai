@@ -209,6 +209,7 @@ export class MainWebViewPanel {
     const indexPath = vscode.Uri.joinPath(distUri, 'index.html');
     let html = await fs.promises.readFile(indexPath.fsPath, 'utf8');
 
+    // The rest is your existing _fixHtml
     html = this._fixHtml(html, webview, distUri);
     return html;
   }
@@ -220,32 +221,32 @@ export class MainWebViewPanel {
   ): string {
     const nonce = getNonce();
 
-    // Remove any <base> element
-    html = html.replace(/<base[^>]+>/, '');
-
-    // Remove existing CSP meta tag
+    // 1. Remove any <base> elements or existing CSP meta tags
+    html = html.replace(/<base[^>]*>/gi, '');
     html = html.replace(
       /<meta.*?http-equiv="Content-Security-Policy".*?>/gi,
       ''
     );
 
-    // Set the Content-Security-Policy
+    // 2. Insert our own CSP
     html = html.replace(
       /<head>/,
       `<head>
         <meta http-equiv="Content-Security-Policy" content="
-        default-src 'none';
-        img-src ${webview.cspSource} https: data:;
-        script-src 'nonce-${nonce}' ${webview.cspSource} 'self' 'unsafe-eval' https://cdn.jsdelivr.net;
-        style-src ${webview.cspSource} 'unsafe-inline' https://use.typekit.net;
-        font-src ${webview.cspSource} https: data:;
-        connect-src ${webview.cspSource} https: data:;
-        worker-src 'self' blob:;
+          default-src 'none';
+          img-src ${webview.cspSource} vscode-webview: https: data:;
+          script-src 'nonce-${nonce}' ${webview.cspSource} 'unsafe-eval' https://www.youtube.com https://*.youtube.com https://www.youtube-nocookie.com;
+          style-src ${webview.cspSource} 'unsafe-inline';
+          font-src ${webview.cspSource} https: data:;
+          connect-src ${webview.cspSource} https: data: https://*.youtube.com https://*.googlevideo.com https://www.youtube-nocookie.com;
+          frame-src https://www.youtube.com https://*.youtube.com https://*.googlevideo.com https://www.youtube-nocookie.com;
+          worker-src 'self' blob:;
+          media-src https://*.youtube.com https://*.googlevideo.com;
         ">
       `
     );
 
-    // Inject acquireVsCodeApi at top of <body>
+    // 3. Inject window.vscode at top of <body>
     html = html.replace(
       /<body[^>]*>/,
       `<body>
@@ -256,7 +257,7 @@ export class MainWebViewPanel {
         </script>`
     );
 
-    // Update script tags (add nonce, fix src)
+    // 4. Rewrite <script> tags
     html = html.replace(
       /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, src) => {
@@ -265,13 +266,12 @@ export class MainWebViewPanel {
         return `<script nonce="${nonce}" src="${scriptUri}">`;
       }
     );
-
-    // Add nonce to inline scripts
+    // Add nonce to inline <script>
     html = html.replace(/<script(?![^>]*\bsrc=)[^>]*>/gi, (match) => {
       return match.replace('<script', `<script nonce="${nonce}"`);
     });
 
-    // Update link tags
+    // 5. Rewrite <link> tags (CSS)
     html = html.replace(
       /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, href) => {
@@ -281,7 +281,7 @@ export class MainWebViewPanel {
       }
     );
 
-    // Update img tags
+    // 6. Rewrite <img> tags
     html = html.replace(
       /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, src) => {
@@ -291,7 +291,7 @@ export class MainWebViewPanel {
       }
     );
 
-    // Optional: update <a> tags if needed
+    // update <a> tags
     html = html.replace(
       /<a\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi,
       (match, attributes, href) => {

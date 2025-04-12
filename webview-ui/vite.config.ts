@@ -19,4 +19,5 @@ export default defineConfig({
       usePolling: true,
     },
   },
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg'],
 });

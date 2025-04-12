@@ -1,10 +1,11 @@
 /* main.tsx (or index.tsx) */
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'; // 1) Use react-router-dom
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import App from './App';
 import './global.css';
 
 import EditingInterface from './pages/MainInterface/MainInterface';
+import { BlueprintProvider } from './store/BlueprintContext';
 
 document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('root');
@@ -19,12 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const root = createRoot(container);
 
   root.render(
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/editing" element={<EditingInterface />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </BrowserRouter>
+    <BlueprintProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/editing" element={<EditingInterface />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </BrowserRouter>
+    </BlueprintProvider>
   );
 });

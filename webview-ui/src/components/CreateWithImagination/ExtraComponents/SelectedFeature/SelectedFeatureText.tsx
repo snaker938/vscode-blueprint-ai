@@ -1,3 +1,5 @@
+// SelectedFeatureText.tsx
+
 import React, { useState } from 'react';
 import {
   Text,
@@ -10,7 +12,12 @@ import {
   Icon,
 } from '@fluentui/react';
 import { useNavigate } from 'react-router-dom';
+
 import './SelectedFeatureText.css';
+
+import returnedComponentString from './CustomComponentString';
+import { createCustomComponent } from './utils/CreateCustomComponent';
+import { useBlueprintContext } from '../../../../store/useBlueprintContext';
 
 interface SelectedFeatureTextProps {
   openModal?: () => void;
@@ -22,17 +29,20 @@ const pictureIcon: IIconProps = { iconName: 'Picture' };
 const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   openModal,
 }) => {
-  // State: user's text prompt
+  // User-entered text prompt
   const [textValue, setTextValue] = useState<string>('');
 
-  // State: image file & local preview
+  // Image file & local preview
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
-  // UI loading indicator
+  // Loading indicator
   const [loading, setLoading] = useState<boolean>(false);
 
-  // React Router navigate hook
+  // Access your context and the setter to store the compiled component
+  const { setDynamicBlueprintComponent } = useBlueprintContext();
+
+  // React Router navigation
   const navigate = useNavigate();
 
   /**
@@ -90,31 +100,36 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   };
 
   /**
-   * Handle "Generate" click:
-   * 1) Show spinner (loading).
-   * 2) After 3 seconds, navigate to /editing with correct location state
-   *    if "Amazon" or "Youtube" is found in the prompt.
+   * When user clicks "Generate":
+   *  - Require some text or an image.
+   *  - Show loading for 3 seconds.
+   *  - Then navigate to "/editing".
    */
-  const handleGenerateClick = () => {
+  const handleGenerateClick = async () => {
     if (!textValue && !uploadedImage) {
       alert('Please enter text or select an image first.');
       return;
     }
 
     setLoading(true);
+    try {
+      // 1) Create the custom component from our snippet
+      const generatedComponent = createCustomComponent(returnedComponentString);
 
-    setTimeout(() => {
-      const lowerPrompt = textValue.toLowerCase();
+      // 2) Store it in context
+      setDynamicBlueprintComponent(() => generatedComponent);
 
-      if (lowerPrompt.includes('amazon')) {
-        navigate('/editing', { state: { location: 'amazon' } });
-      } else if (lowerPrompt.includes('youtube')) {
-        navigate('/editing', { state: { location: 'youtube' } });
-      } else {
-        // If neither Amazon nor Youtube is found, just go to /editing with no special state.
-        navigate('/editing');
-      }
-    }, 3000);
+      // 3) Simulate a 3-second loading delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 4) Navigate to /editing
+      navigate('/editing');
+    } catch (err) {
+      console.error('Failed to create custom component:', err);
+    } finally {
+      // Hide the spinner (if you prefer to keep it until redirect, remove this)
+      setLoading(false);
+    }
   };
 
   return (
@@ -136,8 +151,6 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
               Referencing {truncateFileName(uploadedImage.name, 20)}
             </span>
           </div>
-
-          {/* Replace the DefaultButton with an IconButton showing a modern "X" */}
           <IconButton
             className="remove-image-button"
             iconProps={{ iconName: 'ChromeClose' }}
@@ -147,7 +160,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         </div>
       )}
 
-      {/* Group the text field & feature buttons side by side */}
+      {/* User text input */}
       <div className="input-row">
         <TextField
           placeholder="Talk with Blueprint AI..."
@@ -159,7 +172,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         />
       </div>
 
-      {/* Moved feature buttons below the text field */}
+      {/* Feature buttons */}
       <div className="feature-buttons-container">
         <DefaultButton
           className="feature-button"
@@ -189,6 +202,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         />
       </div>
 
+      {/* Generate layout button */}
       <div className="generate-button-section">
         <PrimaryButton
           onClick={handleGenerateClick}

@@ -40,10 +40,6 @@ export const PrimarySidebar: React.FC = () => {
     }
   };
 
-  const handleActionClick = (actionKey: string) => {
-    console.log('[PrimarySidebar] action:', actionKey);
-  };
-
   const $isOpen = activeTab !== null;
 
   return (
@@ -51,11 +47,7 @@ export const PrimarySidebar: React.FC = () => {
       {/* The icons bar on the left, no forced width in CSS. 
           It's just as wide as the OuterWrapper if closed, or part of it if open. 
       */}
-      <SidebarIconsBar
-        activeTab={activeTab}
-        onTabClick={handleTabClick}
-        onActionClick={handleActionClick}
-      />
+      <SidebarIconsBar activeTab={activeTab} onTabClick={handleTabClick} />
 
       {/* If there's an active tab, show the content. Otherwise, none. */}
       {activeTab && (

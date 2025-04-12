@@ -1,5 +1,6 @@
 {
   "name": "vscode-blueprint-ai",
+  "publisher": "Microsoft",
   "displayName": "vscode-blueprint-ai",
   "description": "A VSCode extension written in TypeScript that leverages AI to generate clean, static HTML, CSS, and JavaScript webpages with a simple drag-and-drop interface.",
   "version": "0.0.1",

@@ -5,6 +5,7 @@ import {
   GUI_SUMMARY_META_PROMPT,
   FINAL_CRAFTJS_META_PROMPT,
 } from './blueprintAiPrompts';
+import { ACTUAL_FINAL_CRAFTJS_META_PROMPT } from '../testingComponents';
 
 /** Truncates a base64 string if it's too large. */
 function maybeTruncateBase64(base64?: string): string | undefined {
@@ -139,24 +140,24 @@ export async function getFinalCraftJsLayout(params: {
   uiSummary: string;
   guiSummary: string;
   openAiKey: string;
-}): Promise<string> {
+}) {
   const { userText, uiSummary, guiSummary, openAiKey } = params;
 
   // Combine the user instructions with any UI/GUI summaries
   const userContent = `
-USER INSTRUCTIONS:
-${userText}
+  USER INSTRUCTIONS:
+  ${userText}
 
-GUI SUMMARY (IF ANY):
-${guiSummary}
+  GUI SUMMARY (IF ANY):
+  ${guiSummary}
 
-UI / OCR TEXT SUMMARY (IF ANY):
-${uiSummary}
-`;
+  UI / OCR TEXT SUMMARY (IF ANY):
+  ${uiSummary}
+  `;
 
   // No screenshot => text-only model
   return callOpenAiChat({
-    systemPrompt: FINAL_CRAFTJS_META_PROMPT,
+    systemPrompt: ACTUAL_FINAL_CRAFTJS_META_PROMPT,
     userContent,
     openAiKey,
     hasScreenshot: false,
