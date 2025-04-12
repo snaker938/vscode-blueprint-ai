@@ -4,7 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { Editor, Frame, Element, Resolver } from '@craftjs/core';
 import { Icon } from '@fluentui/react';
 
-import { subscribeSelectedPageChange } from '../../store/store';
+import {
+  subscribeSelectedPageChange,
+  getSelectedPage,
+  updatePage,
+  getSelectedPageId,
+} from '../../store/store';
 import { useBlueprintContext } from '../../store/useBlueprintContext';
 
 import { PrimarySidebar } from '../../components/PrimarySidebar/PrimarySidebar';
@@ -28,36 +33,29 @@ import { CanvasBorderWrapper } from './Components/CanvasBorderWrapper';
 
 import './MainInterface.css';
 
-/**
- * A component that sets up the page’s Frame, with a root Container.
- * If a DynamicBlueprintComponent is available, render it directly.
- */
-const DroppableCanvas: React.FC = () => {
-  const { DynamicBlueprintComponent } = useBlueprintContext();
-
-  return (
-    <Frame>
-      <Element
-        is={Container}
-        canvas
-        custom={{ isRootContainer: true }}
-        width="800px"
-        height="2595px"
-        background="#ffffff"
-        margin={[0, 0, 0, 0]}
-        padding={[20, 20, 20, 20]}
-      >
-        {DynamicBlueprintComponent && <DynamicBlueprintComponent />}
-      </Element>
-    </Frame>
-  );
-};
+// A helper that returns the CraftJS resolver for "built-ins" plus dynamic
+function buildResolver(dynamicComponents: Record<string, React.FC>): Resolver {
+  return {
+    // built-ins
+    Container,
+    Text,
+    Navigation,
+    Video,
+    StarRating,
+    SearchBox,
+    Slider,
+    Button,
+    Image,
+    // dynamic
+    ...dynamicComponents,
+  };
+}
 
 /**
  * Main editor interface.
  */
 const MainInterface: React.FC = () => {
-  const { DynamicBlueprintComponent } = useBlueprintContext();
+  const { customComponents } = useBlueprintContext();
   const [editorKey, setEditorKey] = useState(0);
 
   // States for the initial AI modal, AI sidebar, and spinner
@@ -65,6 +63,12 @@ const MainInterface: React.FC = () => {
   const [showModal, setShowModal] = useState(true);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
+
+  const selectedPage = getSelectedPage();
+  // parse the page layout if it exists, or fallback to {}
+  const initialNodes = selectedPage?.layout
+    ? JSON.parse(selectedPage.layout)
+    : {};
 
   useEffect(() => {
     const unsubscribe = subscribeSelectedPageChange(() => {
@@ -92,29 +96,19 @@ const MainInterface: React.FC = () => {
     setShowModal(false);
   };
 
-  // Build a base resolver with your standard components
-  const baseResolver: Resolver = {
-    Container,
-    Text,
-    Navigation,
-    Video,
-    StarRating,
-    SearchBox,
-    Slider,
-    Button,
-    Image,
-  };
-
-  // Conditionally add your dynamic component if it exists
-  if (DynamicBlueprintComponent) {
-    baseResolver.DynamicBlueprintComponent = DynamicBlueprintComponent;
-  }
+  const currentResolver = buildResolver(customComponents);
 
   return (
     <Editor
       key={editorKey}
-      resolver={baseResolver}
+      resolver={currentResolver}
       onRender={(nodeProps) => <RenderNode {...nodeProps} />}
+      // Save to store whenever the user changes anything
+      onNodesChange={(query) => {
+        const jsonString = query.serialize();
+        const pageId = getSelectedPageId();
+        updatePage(pageId, { layout: jsonString });
+      }}
     >
       <div
         className={
@@ -136,7 +130,18 @@ const MainInterface: React.FC = () => {
         {/* Main Canvas Area */}
         <main className="editor-canvas-area">
           <CanvasBorderWrapper>
-            <DroppableCanvas />
+            <Frame data={initialNodes}>
+              <Element
+                is={Container}
+                canvas
+                custom={{ isRootContainer: true }}
+                width="800px"
+                height="2595px"
+                background="#ffffff"
+                margin={[0, 0, 0, 0]}
+                padding={[20, 20, 20, 20]}
+              />
+            </Frame>
           </CanvasBorderWrapper>
         </main>
 

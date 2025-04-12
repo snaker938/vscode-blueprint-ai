@@ -1,5 +1,45 @@
 // store.ts
 
+// Provide a default blank JSON:
+const DEFAULT_LAYOUT_JSON = JSON.stringify({
+  ROOT: {
+    type: { resolvedName: 'Container' },
+    isCanvas: true,
+    props: {
+      layoutType: 'container',
+      background: '#ffffff',
+      fillSpace: 'no',
+      width: '800px',
+      height: '2595px',
+      margin: [0, 0, 0, 0],
+      padding: [20, 20, 20, 20],
+      shadow: 5,
+      radius: 8,
+      border: {
+        borderStyle: 'solid',
+        borderColor: '#cccccc',
+        borderWidth: 1,
+      },
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      gap: 0,
+      flexWrap: 'nowrap',
+      columns: 2,
+      rows: 2,
+      rowGap: 10,
+      columnGap: 10,
+      justifyItems: 'stretch',
+      alignGridItems: 'stretch',
+    },
+    displayName: 'Container',
+    custom: { isRootContainer: true },
+    hidden: false,
+    nodes: [],
+    linkedNodes: {},
+  },
+});
+
 // Reuse your Page interface:
 export interface Page {
   id: number;
@@ -18,12 +58,6 @@ interface StoreState {
   suggestedPages: string[];
   userPrompt: string;
 }
-
-/**
- * This key was previously used for localStorage persistence.
- * Keeping it commented out for reference.
- */
-// const STORAGE_KEY = 'blueprint-ai-data';
 
 /**
  * Default / initial state values.
@@ -57,7 +91,12 @@ export function getSelectedPageId() {
 }
 
 export function getSelectedPage(): Page | undefined {
-  return getPageById(storeState.selectedPageId);
+  const page = getPageById(storeState.selectedPageId);
+  if (page && !page.layout) {
+    // If this page has no layout yet, initialize with the blank container
+    page.layout = DEFAULT_LAYOUT_JSON;
+  }
+  return page;
 }
 
 export function getSuggestedPages(): string[] {

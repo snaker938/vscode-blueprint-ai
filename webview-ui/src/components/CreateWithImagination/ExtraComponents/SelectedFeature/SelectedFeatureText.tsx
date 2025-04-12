@@ -18,6 +18,7 @@ import './SelectedFeatureText.css';
 import returnedComponentString from './CustomComponentString';
 import { createCustomComponent } from './utils/CreateCustomComponent';
 import { useBlueprintContext } from '../../../../store/useBlueprintContext';
+// import { getSelectedPage, updatePage } from '../../../../store/store';
 
 interface SelectedFeatureTextProps {
   openModal?: () => void;
@@ -40,7 +41,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   // Access your context and the setter to store the compiled component
-  const { setDynamicBlueprintComponent } = useBlueprintContext();
+  const { registerCustomComponent } = useBlueprintContext();
 
   // React Router navigation
   const navigate = useNavigate();
@@ -116,13 +117,11 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
       // 1) Create the custom component from our snippet
       const generatedComponent = createCustomComponent(returnedComponentString);
 
-      // 2) Store it in context
-      setDynamicBlueprintComponent(() => generatedComponent);
+      const customName = 'MyGeneratedCmp';
+      registerCustomComponent(customName, generatedComponent);
 
-      // 3) Simulate a 3-second loading delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // 4) Navigate to /editing
       navigate('/editing');
     } catch (err) {
       console.error('Failed to create custom component:', err);

@@ -1,16 +1,10 @@
 // BlueprintContext.tsx
 
-import React, {
-  createContext,
-  useState,
-  ReactNode,
-  Dispatch,
-  SetStateAction,
-} from 'react';
+import React, { createContext, useState, ReactNode } from 'react';
 
 export interface IBlueprintContext {
-  DynamicBlueprintComponent: React.FC | null;
-  setDynamicBlueprintComponent: Dispatch<SetStateAction<React.FC | null>>;
+  customComponents: Record<string, React.FC>;
+  registerCustomComponent: (name: string, comp: React.FC) => void;
 }
 
 const BlueprintContext = createContext<IBlueprintContext | undefined>(
@@ -24,12 +18,20 @@ interface BlueprintProviderProps {
 export const BlueprintProvider: React.FC<BlueprintProviderProps> = ({
   children,
 }) => {
-  const [DynamicBlueprintComponent, setDynamicBlueprintComponent] =
-    useState<React.FC | null>(null);
+  const [customComponents, setCustomComponents] = useState<
+    Record<string, React.FC>
+  >({});
+
+  const registerCustomComponent = (name: string, comp: React.FC) => {
+    setCustomComponents((prev) => ({
+      ...prev,
+      [name]: comp,
+    }));
+  };
 
   return (
     <BlueprintContext.Provider
-      value={{ DynamicBlueprintComponent, setDynamicBlueprintComponent }}
+      value={{ customComponents, registerCustomComponent }}
     >
       {children}
     </BlueprintContext.Provider>
