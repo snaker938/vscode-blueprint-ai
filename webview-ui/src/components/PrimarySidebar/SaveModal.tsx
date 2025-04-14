@@ -1,6 +1,4 @@
-// SaveModal.tsx
-
-import React, { useState } from 'react';
+import React from 'react';
 import { useEditor } from '@craftjs/core';
 import {
   Modal,
@@ -34,9 +32,6 @@ export const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose }) => {
   // Grab the serialized JSON from Craft
   const craftJsLayout = query.serialize();
 
-  // Toggle to show/hide JSON
-  const [showJson, setShowJson] = useState(false);
-
   // Icon for closing the modal
   const cancelIcon: IIconProps = { iconName: 'Cancel' };
 
@@ -66,6 +61,21 @@ export const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose }) => {
       () => alert('JSON copied to clipboard!'),
       (err) => console.error('Failed to copy JSON: ', err)
     );
+  };
+
+  /**
+   * Download JSON as a file
+   */
+  const handleDownloadJson = () => {
+    const blob = new Blob([craftJsLayout], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'page-layout.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -117,43 +127,64 @@ export const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose }) => {
             variant="medium"
             styles={{
               root: {
-                // Ensure the text can wrap normally
                 whiteSpace: 'normal',
                 wordWrap: 'break-word',
               },
             }}
           >
-            This will store or clear your current page layout (and suggested
-            pages) in one combined store using localStorage for persistence.
+            Manage your project layout with ease. This interface allows you to
+            save your current design configuration to a centralized store using
+            localStorage. You can also clear all data to start fresh at any
+            time.
           </Text>
 
-          <DefaultButton onClick={() => setShowJson(!showJson)}>
-            {showJson ? 'Hide JSON' : 'View JSON'}
-          </DefaultButton>
-
-          {showJson && (
-            <Stack tokens={{ childrenGap: 10 }}>
-              <div
-                style={{
-                  maxHeight: 300,
-                  overflowY: 'auto',
-                  border: `1px solid ${theme.palette.neutralLight}`,
-                  padding: 8,
-                  borderRadius: 4,
-                  backgroundColor: theme.palette.neutralLighterAlt,
-                }}
-              >
-                <TextField
-                  value={craftJsLayout}
-                  readOnly
-                  multiline
-                  resizable={false}
-                  autoAdjustHeight={false}
-                />
-              </div>
-              <DefaultButton onClick={handleCopyJson}>Copy JSON</DefaultButton>
+          {/* JSON Section */}
+          <Stack tokens={{ childrenGap: 10 }}>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              verticalAlign="center"
+            >
+              <Text variant="mediumPlus" styles={{ root: { fontWeight: 600 } }}>
+                Page Layout JSON
+              </Text>
+              <Stack horizontal tokens={{ childrenGap: 8 }}>
+                <DefaultButton
+                  iconProps={{ iconName: 'Copy' }}
+                  onClick={handleCopyJson}
+                >
+                  Copy JSON
+                </DefaultButton>
+                <DefaultButton
+                  iconProps={{ iconName: 'Download' }}
+                  onClick={handleDownloadJson}
+                >
+                  Download JSON
+                </DefaultButton>
+              </Stack>
             </Stack>
-          )}
+
+            <div
+              style={{
+                maxHeight: 400,
+                overflowY: 'auto',
+                border: `1px solid ${theme.palette.neutralLight}`,
+                padding: 8,
+                borderRadius: 4,
+                backgroundColor: theme.palette.neutralLighterAlt,
+              }}
+            >
+              <TextField
+                value={craftJsLayout}
+                readOnly
+                multiline
+                // Enable manual resizing
+                resizable
+                // Larger default height
+                rows={10}
+              />
+            </div>
+          </Stack>
         </Stack>
 
         {/* FOOTER */}
