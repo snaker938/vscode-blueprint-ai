@@ -1,13 +1,13 @@
 // PagesGrid.tsx
 
-import React, { useMemo, useRef, useState, useLayoutEffect } from 'react';
+import React, { useMemo, useRef, useLayoutEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Editor, Frame, Resolver } from '@craftjs/core';
 
 import { useBlueprintContext } from '../../../store/useBlueprintContext';
 import { Page } from '../../../store/store'; // Adjust relative path as needed
 
-// Import built-in components:
+// Import built-in user components:
 import { Container } from '../../UserComponents/Container';
 import { Text } from '../../UserComponents/Text';
 import { Navigation } from '../../UserComponents/Navigation';
@@ -21,7 +21,6 @@ import { Image } from '../../UserComponents/Image';
 /* ------------------------------------------------------------------ */
 /* 1) Utility to build the CraftJS resolver: built-in + dynamic comps */
 /* ------------------------------------------------------------------ */
-
 function buildResolver(dynamicComponents: Record<string, React.FC>): Resolver {
   return {
     Container,
@@ -69,11 +68,15 @@ const PageCard = styled.div<{ selected: boolean }>`
   }
 `;
 
+/**
+ * This is the container for the thumbnail preview.
+ * We'll fill it and clip any overflow.
+ */
 const ThumbnailWrapper = styled.div`
   width: 100%;
   height: 80px;
   background-color: #eaeaea;
-  position: relative;
+  position: relative; /* So the scaled content can be absolutely positioned */
   overflow: hidden;
 `;
 
@@ -118,39 +121,47 @@ export const PagesGrid: React.FC<PagesGridProps> = ({
 };
 
 /* ------------------------------------------------------------------ */
-/* 4) A “mini” CraftJS preview that scales to fit inside 80px height. */
+/* 4) Mini preview that measures the *actual* rendered content size   */
+/*    and then scales to fill the thumbnail, distorting if needed.    */
 /* ------------------------------------------------------------------ */
 
 interface MiniCraftPreviewProps {
   layoutJSON?: string;
 }
 
-const ScaledEditorWrapper = styled.div`
+/**
+ * Absolutely-positioned container that fills the thumbnail.
+ */
+const ScaledContent = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  transform-origin: top left;
+  /* fill the entire 80px container area */
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  transform-origin: top left; /* we scale from the top-left corner */
 `;
 
-//
-//  The “design canvas” below is the fixed-size area
-//  we assume your pages are roughly designed for.
-//
-const DesignCanvas = styled.div`
-  width: 1000px; /* adjust if your typical page width is different */
-  height: 800px; /* adjust if your typical page height is different */
-  background: white; /* for visual reference during dev, optional */
+/**
+ * The actual page content container (unscaled).
+ * We'll measure this in a "neutral" state, then apply transform scale.
+ */
+const PageContent = styled.div`
+  /* We keep this at transform: none for measuring initially. */
+  position: relative;
 `;
 
-const MiniCraftPreview: React.FC<MiniCraftPreviewProps> = ({ layoutJSON }) => {
+export const MiniCraftPreview: React.FC<MiniCraftPreviewProps> = ({
+  layoutJSON,
+}) => {
   const { customComponents } = useBlueprintContext();
   const currentResolver = useMemo(
     () => buildResolver(customComponents),
     [customComponents]
   );
 
-  // Safely parse the stored layout JSON:
+  // Safely parse the layout JSON:
   const data = useMemo(() => {
     if (!layoutJSON) return {};
     try {
@@ -160,38 +171,53 @@ const MiniCraftPreview: React.FC<MiniCraftPreviewProps> = ({ layoutJSON }) => {
     }
   }, [layoutJSON]);
 
-  // We’ll measure the ThumbnailWrapper’s size, then scale accordingly.
+  // Refs for measuring
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState<number>(0.1); // default scale
+  const contentRef = useRef<HTMLDivElement>(null);
 
+  // We'll store the transform scale in React state:
+  const [scale, setScale] = useState({ x: 1, y: 1 });
+
+  // Once content is actually rendered, measure then apply scale:
   useLayoutEffect(() => {
-    if (!wrapperRef.current) return;
+    if (!wrapperRef.current || !contentRef.current) return;
 
-    const { offsetWidth, offsetHeight } = wrapperRef.current;
-    // Our chosen "design canvas" is 1200 x 800:
-    const designW = 1200;
-    const designH = 800;
+    // 1) Temporarily clear any transform to measure the "natural" size
+    contentRef.current.style.transform = 'none';
 
-    // Figure out how to fit that into our thumbnail:
-    const wScale = offsetWidth / designW;
-    const hScale = offsetHeight / designH;
-    const finalScale = Math.min(wScale, hScale);
+    // 2) Measure parent's (thumbnail's) size
+    const { offsetWidth: thumbW, offsetHeight: thumbH } = wrapperRef.current;
 
-    setScale(finalScale);
-  }, []);
+    // 3) Measure the *actual* rendered size of the content
+    const contentW = contentRef.current.scrollWidth;
+    const contentH = contentRef.current.scrollHeight;
+
+    if (contentW === 0 || contentH === 0) {
+      return; // avoid dividing by zero if something is not rendered
+    }
+
+    // 4) Compute scale for X and Y to fill the thumbnail completely
+    const scaleX = thumbW / contentW;
+    const scaleY = thumbH / contentH;
+
+    // Because you want it to fill no matter if it distorts, we set both:
+    setScale({ x: scaleX, y: scaleY });
+  }, [data]);
 
   return (
-    <>
-      {/* The area we measure to decide the scale */}
-      <div ref={wrapperRef} style={{ width: '100%', height: '100%' }} />
-
-      <ScaledEditorWrapper style={{ transform: `scale(${scale})` }}>
-        <DesignCanvas>
+    // This outer div ensures we get the correct 80px area
+    <div ref={wrapperRef} style={{ width: '100%', height: '100%' }}>
+      <ScaledContent
+        style={{
+          transform: `scale(${scale.x}, ${scale.y})`,
+        }}
+      >
+        <PageContent ref={contentRef}>
           <Editor resolver={currentResolver} enabled={false}>
             <Frame data={data} />
           </Editor>
-        </DesignCanvas>
-      </ScaledEditorWrapper>
-    </>
+        </PageContent>
+      </ScaledContent>
+    </div>
   );
 };
