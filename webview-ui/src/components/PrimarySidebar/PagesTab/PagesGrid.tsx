@@ -1,6 +1,6 @@
 // PagesGrid.tsx
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useLayoutEffect } from 'react';
 import styled from 'styled-components';
 import { Editor, Frame, Resolver } from '@craftjs/core';
 
@@ -18,7 +18,10 @@ import { Slider } from '../../UserComponents/Slider';
 import { Button } from '../../UserComponents/Button';
 import { Image } from '../../UserComponents/Image';
 
-// A helper function to combine your built-in components plus any dynamic ones.
+/* ------------------------------------------------------------------ */
+/* 1) Utility to build the CraftJS resolver: built-in + dynamic comps */
+/* ------------------------------------------------------------------ */
+
 function buildResolver(dynamicComponents: Record<string, React.FC>): Resolver {
   return {
     Container,
@@ -30,24 +33,23 @@ function buildResolver(dynamicComponents: Record<string, React.FC>): Resolver {
     Slider,
     Button,
     Image,
-    ...dynamicComponents, // merges in any additional custom components
+    ...dynamicComponents,
   };
 }
 
-/* ------------------ Styled Components ------------------ */
+/* --------------------------------------------------------------- */
+/* 2) Styled Components for the overall grid and the Page “cards.” */
+/* --------------------------------------------------------------- */
 
-/** The outer grid container. */
 const GridArea = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
   padding: 0;
-  width: 100%;
 `;
 
-/** Each page “card.” */
 const PageCard = styled.div<{ selected: boolean }>`
-  background-color: #ffffff;
+  background-color: rgb(227, 226, 226);
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   cursor: pointer;
@@ -67,7 +69,6 @@ const PageCard = styled.div<{ selected: boolean }>`
   }
 `;
 
-/** The thumbnail area that will hold our mini CraftJS preview. */
 const ThumbnailWrapper = styled.div`
   width: 100%;
   height: 80px;
@@ -76,16 +77,6 @@ const ThumbnailWrapper = styled.div`
   overflow: hidden;
 `;
 
-/** We'll transform the entire Frame to scale it down. */
-const ScaledEditorContainer = styled.div`
-  transform: scale(0.15); /* adjust to taste */
-  transform-origin: top left;
-  position: absolute;
-  top: 0;
-  left: 0;
-`;
-
-/** Page name label under the preview. */
 const PageName = styled.div`
   padding: 5px;
   font-size: 14px;
@@ -93,7 +84,9 @@ const PageName = styled.div`
   font-weight: 500;
 `;
 
-/* -------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* 3) The main PagesGrid component that loops through each Page card. */
+/* ------------------------------------------------------------------ */
 
 interface PagesGridProps {
   pages: Page[];
@@ -101,10 +94,6 @@ interface PagesGridProps {
   onSelectPage: (pageId: number) => void;
 }
 
-/**
- * Renders a grid of page cards, each showing a
- * mini CraftJS preview of that page's layout.
- */
 export const PagesGrid: React.FC<PagesGridProps> = ({
   pages,
   selectedPageId,
@@ -128,25 +117,40 @@ export const PagesGrid: React.FC<PagesGridProps> = ({
   );
 };
 
-/* -------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/* 4) A “mini” CraftJS preview that scales to fit inside 80px height. */
+/* ------------------------------------------------------------------ */
 
-/** A small, non-interactive CraftJS preview.
- *  Pass in the JSON string stored in `page.layout`.
- */
 interface MiniCraftPreviewProps {
   layoutJSON?: string;
 }
 
+const ScaledEditorWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  pointer-events: none;
+`;
+
+//
+//  The “design canvas” below is the fixed-size area
+//  we assume your pages are roughly designed for.
+//
+const DesignCanvas = styled.div`
+  width: 1000px; /* adjust if your typical page width is different */
+  height: 800px; /* adjust if your typical page height is different */
+  background: white; /* for visual reference during dev, optional */
+`;
+
 const MiniCraftPreview: React.FC<MiniCraftPreviewProps> = ({ layoutJSON }) => {
   const { customComponents } = useBlueprintContext();
-
-  // Build the combined resolver
   const currentResolver = useMemo(
     () => buildResolver(customComponents),
     [customComponents]
   );
 
-  // Safely parse the stored layout JSON
+  // Safely parse the stored layout JSON:
   const data = useMemo(() => {
     if (!layoutJSON) return {};
     try {
@@ -156,14 +160,38 @@ const MiniCraftPreview: React.FC<MiniCraftPreviewProps> = ({ layoutJSON }) => {
     }
   }, [layoutJSON]);
 
+  // We’ll measure the ThumbnailWrapper’s size, then scale accordingly.
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState<number>(0.1); // default scale
+
+  useLayoutEffect(() => {
+    if (!wrapperRef.current) return;
+
+    const { offsetWidth, offsetHeight } = wrapperRef.current;
+    // Our chosen "design canvas" is 1200 x 800:
+    const designW = 1200;
+    const designH = 800;
+
+    // Figure out how to fit that into our thumbnail:
+    const wScale = offsetWidth / designW;
+    const hScale = offsetHeight / designH;
+    const finalScale = Math.min(wScale, hScale);
+
+    setScale(finalScale);
+  }, []);
+
   return (
-    <ScaledEditorContainer>
-      <Editor
-        resolver={currentResolver}
-        enabled={false} // Disable user interaction for the preview
-      >
-        <Frame data={data} />
-      </Editor>
-    </ScaledEditorContainer>
+    <>
+      {/* The area we measure to decide the scale */}
+      <div ref={wrapperRef} style={{ width: '100%', height: '100%' }} />
+
+      <ScaledEditorWrapper style={{ transform: `scale(${scale})` }}>
+        <DesignCanvas>
+          <Editor resolver={currentResolver} enabled={false}>
+            <Frame data={data} />
+          </Editor>
+        </DesignCanvas>
+      </ScaledEditorWrapper>
+    </>
   );
 };
