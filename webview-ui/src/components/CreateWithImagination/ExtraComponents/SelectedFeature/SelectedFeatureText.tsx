@@ -23,7 +23,6 @@ import {
   getSelectedPageId,
   updatePage,
 } from '../../../../store/store';
-// import { getSelectedPage, updatePage } from '../../../../store/store';
 
 interface SelectedFeatureTextProps {
   openModal?: () => void;
@@ -41,6 +40,11 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   // Image file & local preview
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
+  // **NEW**: Store the raw ArrayBuffer for sending to extension
+  const [imageArrayBuffer, setImageArrayBuffer] = useState<ArrayBuffer | null>(
+    null
+  );
 
   // Loading indicator
   const [loading, setLoading] = useState<boolean>(false);
@@ -78,12 +82,21 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
       setUploadedImage(file);
 
-      // For preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviewUrl(reader.result as string);
+      // **First reader**: For preview
+      const previewReader = new FileReader();
+      previewReader.onloadend = () => {
+        setImagePreviewUrl(previewReader.result as string);
       };
-      reader.readAsDataURL(file);
+      previewReader.readAsDataURL(file);
+
+      // **Second reader**: For raw ArrayBuffer
+      const arrayBufferReader = new FileReader();
+      arrayBufferReader.onloadend = () => {
+        if (arrayBufferReader.result) {
+          setImageArrayBuffer(arrayBufferReader.result as ArrayBuffer);
+        }
+      };
+      arrayBufferReader.readAsArrayBuffer(file);
     }
   };
 
@@ -93,6 +106,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   const removeImage = () => {
     setUploadedImage(null);
     setImagePreviewUrl(null);
+    setImageArrayBuffer(null);
   };
 
   /**
@@ -123,14 +137,12 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
         return;
       }
 
-      // Post to extension with `command: 'blueprintAI.generateLayout'`
       vsCodeApi.postMessage({
         command: 'blueprintAI.generateLayout',
         payload: {
           userText: textValue,
-          // If `uploadedImage` is an array of bytes, pass it directly;
-          // otherwise, convert it to an array of bytes.
-          arrayBuffer: uploadedImage || [],
+          // Pass the actual ArrayBuffer (or an empty array if null)
+          arrayBuffer: imageArrayBuffer || [],
         },
       });
 
@@ -158,7 +170,6 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
       console.log('Received code snippet:', rawCodeSnippet);
 
       // 3) Clean up the snippet if necessary
-      // Example snippet-cleaning steps (optional, adapt as needed):
       let cleanedSnippet = rawCodeSnippet;
 
       // Remove everything before "const"
