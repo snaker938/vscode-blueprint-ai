@@ -12,10 +12,10 @@ import {
   Icon,
 } from '@fluentui/react';
 import { useNavigate } from 'react-router-dom';
+import { getVsCodeApi } from './utils/vscodeApi';
 
 import './SelectedFeatureText.css';
 
-import returnedComponentString from './CustomComponentString';
 import { createCustomComponent } from '../../../AiComponentGeneration/CreateCustomComponent';
 import { useBlueprintContext } from '../../../../store/useBlueprintContext';
 import {
@@ -112,45 +112,120 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
     }
 
     setLoading(true);
-    try {
-      // 1) Create & register the component
-      const generatedComponent = createCustomComponent(returnedComponentString);
-      const customName = 'MyGeneratedCmp';
-      registerCustomComponent(customName, generatedComponent);
 
-      // 2) Load the existing layout JSON
+    try {
+      // 1) Send the request to the VS Code extension
+      const vsCodeApi = getVsCodeApi();
+      if (!vsCodeApi) {
+        console.error(
+          'VS Code API not available. Are you running inside VS Code?'
+        );
+        return;
+      }
+
+      // Post to extension with `command: 'blueprintAI.generateLayout'`
+      vsCodeApi.postMessage({
+        command: 'blueprintAI.generateLayout',
+        payload: {
+          userText: textValue,
+          // If `uploadedImage` is an array of bytes, pass it directly;
+          // otherwise, convert it to an array of bytes.
+          arrayBuffer: uploadedImage || [],
+        },
+      });
+
+      // 2) Wait for the extension to send back `command: 'blueprintAI.result'`
+      const rawCodeSnippet = await new Promise<string>((resolve, reject) => {
+        function handleMessage(event: MessageEvent) {
+          const message = event.data;
+          // Make sure we only catch the correct response
+          if (message.command === 'blueprintAI.result') {
+            window.removeEventListener('message', handleMessage);
+
+            if (message.payload?.error) {
+              // If the extension sent an error
+              reject(new Error(message.payload.error));
+            } else {
+              // The extension is currently sending `layoutJson`;
+              // rename it or treat it as your "code snippet"
+              resolve(message.payload.layoutJson);
+            }
+          }
+        }
+        window.addEventListener('message', handleMessage);
+      });
+
+      console.log('Received code snippet:', rawCodeSnippet);
+
+      // 3) Clean up the snippet if necessary
+      // Example snippet-cleaning steps (optional, adapt as needed):
+      let cleanedSnippet = rawCodeSnippet;
+
+      // Remove everything before "const"
+      const constIndex = cleanedSnippet.indexOf('const');
+      if (constIndex !== -1) {
+        cleanedSnippet = cleanedSnippet.substring(constIndex);
+      }
+
+      const match = cleanedSnippet.match(/const\s+([A-Za-z0-9_]+)/);
+      let componentName = 'MyGeneratedComponent';
+      if (match && match[1]) {
+        componentName = match[1];
+      }
+
+      // Remove any colon if present (e.g. `const AmazonBlueprint:`)
+      cleanedSnippet = cleanedSnippet.replace(
+        new RegExp(`const\\s+${componentName}\\s*:`),
+        `const ${componentName} =`
+      );
+
+      // Remove everything after `export default Xyz;`
+      const defaultExportLine = `export default ${componentName};`;
+      const exportIndex = cleanedSnippet.indexOf(defaultExportLine);
+      if (exportIndex !== -1) {
+        cleanedSnippet = cleanedSnippet.substring(
+          0,
+          exportIndex + defaultExportLine.length
+        );
+      }
+
+      // 4) Store the final snippet
+      const returnedComponentString = cleanedSnippet;
+
+      // 5) Dynamically create & register the component
+      const generatedComponent = createCustomComponent(returnedComponentString);
+      registerCustomComponent(componentName, generatedComponent);
+
+      // 6) Load the existing layout JSON
       const pageId = getSelectedPageId();
       const page = getSelectedPage();
-      const layoutJson = page && page.layout ? JSON.parse(page.layout) : {};
+      const layoutJson = page?.layout ? JSON.parse(page.layout) : {};
 
-      // 3) Insert a new node under layoutJson.ROOT
+      // 7) Insert the new node in your layout
       if (layoutJson.ROOT) {
-        const newNodeId = 'MyGeneratedCmpNode_' + Date.now(); // unique ID
+        const newNodeId = `${componentName}_Node_${Date.now()}`;
 
-        // The new node is stored directly at layoutJson[newNodeId]
         layoutJson[newNodeId] = {
-          type: { resolvedName: customName },
+          type: { resolvedName: componentName },
           isCanvas: false,
           props: {},
-          displayName: customName,
+          displayName: componentName,
           hidden: false,
           parent: 'ROOT',
-          // Use "nodes" instead of "children" here
           nodes: [],
           linkedNodes: {},
         };
 
-        // Then reference it in ROOT.nodes (not ROOT.children)
         if (!layoutJson.ROOT.nodes) {
           layoutJson.ROOT.nodes = [];
         }
         layoutJson.ROOT.nodes.push(newNodeId);
       }
 
-      // 4) Save updated layout back to the store
+      // 8) Save updated layout back to the store
       updatePage(pageId, { layout: JSON.stringify(layoutJson) });
 
-      // 5) Navigate away after a short delay
+      // 9) Navigate away after a short delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       navigate('/editing');
     } catch (err) {
