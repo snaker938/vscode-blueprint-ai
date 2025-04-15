@@ -115,10 +115,10 @@ export const ElementsList: React.FC = () => {
     { key: 'button', icon: 'ButtonControl', name: 'Button' },
   ];
 
-  const mediaItems = [
-    { key: 'image', icon: 'FileImage', name: 'Image' },
-    { key: 'video', icon: 'Video', name: 'Video' },
-  ];
+  // const mediaItems = [
+  //   { key: 'image', icon: 'FileImage', name: 'Image' },
+  //   { key: 'video', icon: 'Video', name: 'Video' },
+  // ];
 
   const formItems = [
     { key: 'slider', icon: 'Slider', name: 'Slider' },
@@ -132,7 +132,7 @@ export const ElementsList: React.FC = () => {
 
   const filteredSmart = smartItems.filter(filterBySearch);
 
-  const filteredMedia = mediaItems.filter(filterBySearch);
+  // const filteredMedia = mediaItems.filter(filterBySearch);
   const filteredForm = formItems.filter(filterBySearch);
 
   return (
@@ -182,11 +182,11 @@ export const ElementsList: React.FC = () => {
         })}
       </GridArea>
 
-      <Separator
+      {/* <Separator
         styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}
-      />
+      /> */}
 
-      {/* ----- MEDIA ELEMENTS ----- */}
+      {/* ----- MEDIA ELEMENTS -----
       <FluentText
         variant="xLarge"
         styles={{ root: { fontWeight: 700, color: '#4b3f72' } }}
@@ -217,7 +217,7 @@ export const ElementsList: React.FC = () => {
             </ElementCard>
           );
         })}
-      </GridArea>
+      </GridArea> */}
 
       <Separator
         styles={{ root: { margin: '15px 0', borderTop: '2px solid #5c2d91' } }}

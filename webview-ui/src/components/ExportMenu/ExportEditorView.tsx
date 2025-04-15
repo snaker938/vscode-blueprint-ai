@@ -190,7 +190,7 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
       <Stack horizontal tokens={{ childrenGap: 16 }}>
         <DefaultButton
           iconProps={{ iconName: 'Back' }}
-          text="Back to Editor"
+          text="Back to Export Menu"
           onClick={onBack}
         />
         <PrimaryButton
@@ -203,6 +203,7 @@ const ExportEditorView: React.FC<ExportEditorViewProps> = ({
           defaultSelectedKey="htmlCss"
           options={exportOptions}
           styles={{ dropdown: { width: 180 } }}
+          disabled={true}
         />
       </Stack>
 

@@ -1,68 +1,57 @@
-import React, { useState } from 'react';
-import { Checkbox, PrimaryButton, IconButton } from '@fluentui/react';
-import { html as beautifyHtml } from 'js-beautify'; // For HTML formatting
+import React, { useEffect, useState } from 'react';
+import {
+  Stack,
+  Pivot,
+  PivotItem,
+  PrimaryButton,
+  Dropdown,
+  IDropdownOption,
+  IconButton,
+} from '@fluentui/react';
+import Editor from '@monaco-editor/react';
 
-import ExportEditorView from './ExportEditorView';
-import './ExportMenu.css'; // optional styling
+// For zipping:
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { css as beautifyCss, html as beautifyHtml } from 'js-beautify';
 
-interface Page {
-  id: number;
-  name: string;
-  thumbnail?: string;
-}
+// Pull the currently selected page from your store
+import { getSelectedPage } from '../../store/store';
 
 interface ExportMenuProps {
+  /** Handler to close/hide this export overlay. */
   onClose: () => void;
 }
 
-/**
- * In a real application, you might pull pages from Redux or your custom store.
- * Here, we define a single mock page.
- */
-const MOCK_PAGE: Page = {
-  id: 1,
-  name: 'MyPage',
-  thumbnail: '',
-};
+/** Helper to extract local images from /src/components/LocalPages/Page1/... */
+function extractLocalImageUrlsFromHtml(html: string): string[] {
+  const regex =
+    /\/src\/components\/LocalPages\/Page1\/[^\s"']+\.(?:png|jpe?g)(\?[^\s"']+)?/gi;
+  const matches = html.match(regex) || [];
+  return Array.from(new Set(matches));
+}
 
 const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
-  const [folderPath, setFolderPath] = useState('Choose folder');
-  const [selectAll, setSelectAll] = useState(true);
+  // The page from your store
+  const page = getSelectedPage();
+  const pageName = page ? page.name : 'UntitledPage';
+  const pageId = page ? String(page.id) : '0';
 
-  // Hard-coded stats
-  const totalSize = 22.1; // MB
-  const numberOfFiles = 16;
-  const linesOfCode = 102;
-
-  const onFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    // Not all browsers fully support directory picking.
-    setFolderPath(e.target.files[0].webkitRelativePath || 'Selected folder');
-  };
-
-  // Toggling "select all" for the single page
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-  };
-
-  // For toggling the Editor View
-  const [showEditorView, setShowEditorView] = useState(false);
-
-  // Data to pass into ExportEditorView
-  const [pageHtml, setPageHtml] = useState('');
-  const [pageCss, setPageCss] = useState('');
+  // Editor state
+  const [htmlCode, setHtmlCode] = useState('');
+  const [cssCode, setCssCode] = useState('');
 
   /**
-   * 1) Get the raw HTML from #droppable-canvas-border
-   * 2) Beautify the HTML
-   * 3) Provide some initial CSS
-   * 4) Switch to ExportEditorView
+   * On mount (and when the page/pageName changes), grab the HTML from
+   * #droppable-canvas-border, beautify it, then set a default CSS.
    */
-  const handleExport = () => {
-    const canvasEl = document.getElementById('droppable-canvas-border');
-    const rawHtml = canvasEl
-      ? canvasEl.outerHTML
-      : '<div>No content found</div>';
+  useEffect(() => {
+    if (!page) return;
+
+    const droppableEl = document.getElementById('droppable-canvas-border');
+    const rawHtml = droppableEl
+      ? droppableEl.outerHTML
+      : '<div>No content</div>';
 
     // Beautify the HTML
     const formattedHtml = beautifyHtml(rawHtml, {
@@ -70,120 +59,168 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onClose }) => {
       preserve_newlines: true,
     });
 
-    // Some default CSS (the computed CSS will be appended in ExportEditorView)
-    const defaultCss = `/* Example default CSS for your page. Adjust as needed. */
-body {
-  margin: 0;
-  padding: 0;
-}
-`;
+    setHtmlCode(formattedHtml);
+    setCssCode(
+      `/* Default CSS for ${pageName} */\nbody {\n  margin: 0;\n  padding: 0;\n}\n`
+    );
+  }, [page, pageName]);
 
-    setPageHtml(formattedHtml);
-    setPageCss(defaultCss);
-    setShowEditorView(true);
+  /**
+   * Whenever the HTML changes, gather computed CSS from the DOM
+   * and append it to the existing CSS.
+   */
+  useEffect(() => {
+    const container = document.getElementById('droppable-canvas-border');
+    if (!container) return;
+
+    // Tag each element
+    const allEls = [container, ...container.querySelectorAll('*')];
+    allEls.forEach((el, i) => el.setAttribute('data-export-index', String(i)));
+
+    let computedCss = '';
+    allEls.forEach((el, i) => {
+      const selector =
+        i === 0
+          ? '#droppable-canvas-border[data-export-index="0"]'
+          : `#droppable-canvas-border [data-export-index="${i}"]`;
+
+      const styleObj = window.getComputedStyle(el as HTMLElement);
+      const styleProps = Array.from(styleObj);
+
+      let rule = `${selector} {\n`;
+      styleProps.forEach((prop) => {
+        const val = styleObj.getPropertyValue(prop);
+        rule += `  ${prop}: ${val};\n`;
+      });
+      rule += '}\n\n';
+      computedCss += rule;
+    });
+
+    // Remove data-export attributes
+    allEls.forEach((el) => el.removeAttribute('data-export-index'));
+
+    // Beautify that CSS
+    const beautified = beautifyCss(computedCss, {
+      indent_size: 2,
+      preserve_newlines: true,
+    });
+
+    // Append to existing CSS
+    setCssCode(
+      (prev) => `${prev}\n\n/* --- Computed CSS Below --- */\n\n${beautified}`
+    );
+  }, [htmlCode]);
+
+  /** Downloads a zip containing: [pageName].html, [pageName].css, plus local images. */
+  const downloadPageFilesAsZip = async () => {
+    // Gather local images from the HTML
+    const imagesInHtml = extractLocalImageUrlsFromHtml(htmlCode);
+
+    // For the .html, remove the "/src/components/LocalPages/Page1/" prefix
+    const cleanedHtml = htmlCode.replace(
+      /\/src\/components\/LocalPages\/Page1\//g,
+      ''
+    );
+
+    // Build up the zip
+    const zip = new JSZip();
+    zip.file(`${pageName}.html`, cleanedHtml);
+    zip.file(`${pageName}.css`, cssCode);
+
+    // Fetch each image and add it
+    for (const url of imagesInHtml) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) continue;
+
+        const blob = await response.blob();
+        // Extract just the file name
+        const lastPart = url.split('/').pop() || 'image.png';
+        const [filename] = lastPart.split('?');
+        zip.file(filename, blob);
+      } catch {
+        // ignore fetch errors
+      }
+    }
+
+    // Trigger download
+    const content = await zip.generateAsync({ type: 'blob' });
+    saveAs(content, `${pageName}.zip`);
   };
 
-  // If user clicked "Export," we switch to the Editor screen
-  if (showEditorView) {
-    return (
-      <ExportEditorView
-        pageId={String(MOCK_PAGE.id)}
-        pageName={MOCK_PAGE.name}
-        initialHtml={pageHtml}
-        initialCss={pageCss}
-        onBack={() => setShowEditorView(false)}
-      />
-    );
-  }
+  // Simple options (disabled in the UI)
+  const exportOptions: IDropdownOption[] = [
+    { key: 'htmlCss', text: 'HTML & CSS' },
+    { key: 'winui', text: 'WinUI (N/A)' },
+    { key: 'dotnet', text: '.NET (N/A)' },
+  ];
 
-  // Otherwise, render the standard ExportMenu UI
   return (
-    <div className="export-menu-container">
-      <div className="export-menu-header">
-        <div className="export-destination">
-          <span>Export your website to:</span>
-          <label htmlFor="folderPicker" className="folder-label">
-            {folderPath}
-          </label>
-          <input
-            type="file"
-            id="folderPicker"
-            className="folder-input"
-            ref={(input) => {
-              if (input) {
-                input.setAttribute('webkitdirectory', 'true');
-                input.setAttribute('directory', 'true');
-              }
-            }}
-            onChange={onFolderChange}
-          />
-        </div>
+    <Stack
+      tokens={{ childrenGap: 10 }}
+      styles={{
+        root: {
+          padding: 16,
+          width: '90vw',
+          margin: '0 auto',
+          overflow: 'visible',
+        },
+      }}
+    >
+      <Stack horizontal tokens={{ childrenGap: 16 }}>
         <IconButton
           iconProps={{ iconName: 'Cancel' }}
           title="Close"
           ariaLabel="Close"
-          className="close-button"
           onClick={onClose}
+          styles={{ root: { marginTop: '4px' } }}
         />
-      </div>
+        <PrimaryButton
+          iconProps={{ iconName: 'Download' }}
+          text="Download as Zip"
+          onClick={downloadPageFilesAsZip}
+        />
+        <Dropdown
+          placeholder="Exporting to..."
+          defaultSelectedKey="htmlCss"
+          options={exportOptions}
+          styles={{ dropdown: { width: 180 } }}
+          disabled={true}
+        />
+      </Stack>
 
-      <div className="export-menu-body">
-        <div className="export-left-panel">
-          <h3>Select pages to export:</h3>
-          {/* Single page for the example */}
-          <div className="pages-list">
-            <div key={MOCK_PAGE.id} className="page-card">
-              <div className="page-thumbnail">
-                {MOCK_PAGE.thumbnail ? (
-                  <img src={MOCK_PAGE.thumbnail} alt={MOCK_PAGE.name} />
-                ) : null}
-              </div>
-              <div className="page-label">{MOCK_PAGE.name}</div>
-              <Checkbox
-                checked={selectAll}
-                onChange={(_, chk) => handleSelectAll(!!chk)}
+      <Pivot styles={{ root: { overflow: 'visible' } }}>
+        <PivotItem headerText={pageName} itemKey={pageId}>
+          <Pivot styles={{ root: { overflow: 'visible' } }}>
+            <PivotItem headerText="HTML" itemKey="html">
+              <Editor
+                width="100%"
+                height="70vh"
+                language="html"
+                value={htmlCode}
+                onChange={(val) => {
+                  if (val !== undefined) setHtmlCode(val);
+                }}
+                options={{ fixedOverflowWidgets: true }}
               />
-            </div>
-          </div>
-          <div className="pages-footer">
-            <Checkbox
-              label="Select All Pages:"
-              checked={selectAll}
-              onChange={(_, chk) => handleSelectAll(!!chk)}
-            />
-            <div className="pages-count">
-              Num Pages: {selectAll ? '1/1' : '0/1'}
-            </div>
-          </div>
-        </div>
+            </PivotItem>
 
-        <div className="export-divider" />
-
-        <div className="export-right-panel">
-          <div className="export-stats">
-            <div className="stat-line">
-              <span>Total Size:</span> <span>{totalSize} MB</span>
-            </div>
-            <div className="stat-line">
-              <span>Number of Files:</span> <span>{numberOfFiles}</span>
-            </div>
-            <div className="stat-line">
-              <span>Lines of Code:</span> <span>{linesOfCode}</span>
-            </div>
-          </div>
-
-          {/* Separator element */}
-          <hr className="export-separator" />
-
-          <PrimaryButton
-            className="export-button"
-            text="Export"
-            disabled={!selectAll}
-            onClick={handleExport}
-          />
-        </div>
-      </div>
-    </div>
+            <PivotItem headerText="CSS" itemKey="css">
+              <Editor
+                width="100%"
+                height="70vh"
+                language="css"
+                value={cssCode}
+                onChange={(val) => {
+                  if (val !== undefined) setCssCode(val);
+                }}
+                options={{ fixedOverflowWidgets: true }}
+              />
+            </PivotItem>
+          </Pivot>
+        </PivotItem>
+      </Pivot>
+    </Stack>
   );
 };
 
