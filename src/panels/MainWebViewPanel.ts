@@ -235,11 +235,37 @@ export class MainWebViewPanel {
         <meta http-equiv="Content-Security-Policy" content="
           default-src 'none';
           img-src ${webview.cspSource} vscode-webview: https: data:;
-          script-src 'nonce-${nonce}' ${webview.cspSource} 'unsafe-eval' https://www.youtube.com https://*.youtube.com https://www.youtube-nocookie.com;
-          style-src ${webview.cspSource} 'unsafe-inline';
-          font-src ${webview.cspSource} https: data:;
-          connect-src ${webview.cspSource} https: data: https://*.youtube.com https://*.googlevideo.com https://www.youtube-nocookie.com;
-          frame-src https://www.youtube.com https://*.youtube.com https://*.googlevideo.com https://www.youtube-nocookie.com;
+          script-src
+            'nonce-${nonce}'
+            ${webview.cspSource}
+            'unsafe-eval'
+            https://cdn.jsdelivr.net
+            https://www.youtube.com
+            https://*.youtube.com
+            https://www.youtube-nocookie.com;
+          style-src
+            'self'
+            'unsafe-inline'
+            ${webview.cspSource}
+            https://*.vscode-cdn.net
+            https://cdn.jsdelivr.net;
+          font-src
+            ${webview.cspSource}
+            https:
+            data:;
+          connect-src
+            ${webview.cspSource}
+            https:
+            data:
+            https://*.youtube.com
+            https://*.googlevideo.com
+            https://www.youtube-nocookie.com
+            https://cdn.jsdelivr.net;
+          frame-src
+            https://www.youtube.com
+            https://*.youtube.com
+            https://*.googlevideo.com
+            https://www.youtube-nocookie.com;
           worker-src 'self' blob:;
           media-src https://*.youtube.com https://*.googlevideo.com;
         ">
