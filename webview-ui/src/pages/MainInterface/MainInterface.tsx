@@ -33,7 +33,9 @@ import { CanvasBorderWrapper } from './Components/CanvasBorderWrapper';
 
 import './MainInterface.css';
 
-// A helper that returns the CraftJS resolver for "built-ins" plus dynamic
+/**
+ * A helper that returns the CraftJS resolver for "built-ins" plus dynamic
+ */
 function buildResolver(dynamicComponents: Record<string, React.FC>): Resolver {
   return {
     // built-ins
@@ -63,6 +65,9 @@ const MainInterface: React.FC = () => {
   const [showModal, setShowModal] = useState(true);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
+
+  // Hover state for AI icon
+  const [isHoveringAiIcon, setIsHoveringAiIcon] = useState(false);
 
   const selectedPage = getSelectedPage();
   // parse the page layout if it exists, or fallback to {}
@@ -97,6 +102,29 @@ const MainInterface: React.FC = () => {
   };
 
   const currentResolver = buildResolver(customComponents);
+
+  // Inline style for the floating AI button, including hover/click animations
+  const aiIconStyle: React.CSSProperties = {
+    position: 'fixed',
+    bottom: '20px',
+    right: '20px',
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    // Change color to indicate open/close state
+    backgroundColor: isAiSidebarOpen ? '#8b0000' : '#0078d4',
+    transition: 'all 0.3s ease',
+    // Simple scale-up on hover
+    transform: isHoveringAiIcon ? 'scale(1.1)' : 'scale(1.0)',
+    boxShadow: isHoveringAiIcon
+      ? '0 4px 8px rgba(0, 0, 0, 0.3)'
+      : '0 2px 4px rgba(0, 0, 0, 0.2)',
+    zIndex: 9999,
+  };
 
   return (
     <Editor
@@ -174,13 +202,16 @@ const MainInterface: React.FC = () => {
         </div>
       )}
 
-      {/* Floating AI Button classname: ai-sidebar-icon*/}
+      {/* Floating AI Button */}
       <div
-        className="ai-sidebar-icon"
+        style={aiIconStyle}
         onClick={() => setIsAiSidebarOpen(!isAiSidebarOpen)}
+        onMouseEnter={() => setIsHoveringAiIcon(true)}
+        onMouseLeave={() => setIsHoveringAiIcon(false)}
       >
         <Icon
-          iconName="Robot"
+          // Change the icon if the sidebar is open or closed
+          iconName={isAiSidebarOpen ? 'ChromeClose' : 'Robot'}
           styles={{ root: { fontSize: 24, color: '#fff' } }}
         />
       </div>

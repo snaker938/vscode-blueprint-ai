@@ -51,8 +51,6 @@ body {
 
 /* 
   Wrapper for the AI Sidebar.
-  We fix its width so it doesn't appear "floating" 
-  or misaligned.
 */
 .ai-sidebar-wrapper {
   width: 300px;
@@ -60,6 +58,7 @@ body {
   border-right: 1px solid #ddd;
   overflow-y: auto;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .right-sidebar {
