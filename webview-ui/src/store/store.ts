@@ -49,13 +49,14 @@ export interface Page {
 
 /**
  * Define the shape of our entire store: all Pages, the selectedPageId,
- * the suggested pages array, and now the user's prompt.
+ * the suggested pages array, the user's prompt, and now the selected node ID.
  */
 interface StoreState {
   pages: Page[];
   selectedPageId: number;
   suggestedPages: string[];
   userPrompt: string;
+  selectedNodeId: string | null; // <-- NEW
 }
 
 /**
@@ -65,7 +66,8 @@ let storeState: StoreState = {
   pages: [{ id: 1, name: 'Page 1', layout: DEFAULT_LAYOUT_JSON }],
   selectedPageId: 1,
   suggestedPages: ['Account', 'Buy Again', 'Best Sellers', 'Returns & Orders'],
-  userPrompt: '', // Newly added
+  userPrompt: '',
+  selectedNodeId: null, // <-- NEW
 };
 
 /**
@@ -105,6 +107,11 @@ export function getSuggestedPages(): string[] {
 // NEW: Getter for the user's prompt
 export function getUserPrompt(): string {
   return storeState.userPrompt;
+}
+
+// NEW: Getter for the selected node ID
+export function getSelectedNodeId(): string | null {
+  return storeState.selectedNodeId;
 }
 
 /* ------------------------------------------------------------------
@@ -208,6 +215,14 @@ export function setUserPrompt(newPrompt: string) {
   notifyPromptListeners();
 }
 
+/** NEW: Setter for the selected node ID. */
+export function setSelectedNodeId(nodeId: string | null) {
+  storeState.selectedNodeId = nodeId;
+  // If you want, you can notify listeners about node ID changes
+  // For instance, you could notify "pageListeners" or a new "nodeListeners"
+  // if needed. For now, we won't.
+}
+
 /* ------------------------------------------------------------------
    PERSISTENCE
    ------------------------------------------------------------------ */
@@ -235,7 +250,8 @@ export function clearStoreFromLocalStorage() {
       'Best Sellers',
       'Returns & Orders',
     ],
-    userPrompt: '', // Reset to empty
+    userPrompt: '',
+    selectedNodeId: null, // Reset to null
   };
   // Notify all relevant listeners
   notifyPageListeners();

@@ -128,6 +128,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ render }) => {
       onMouseOver={handleWrapperMouseOver}
       onMouseOut={handleWrapperMouseOut}
       onClick={handleNodeClick}
+      id="indicator-div-wrapper"
     >
       {(isSelected || manualHovered) && (
         <div

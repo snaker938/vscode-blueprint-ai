@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import './SelectedFeatureText.css';
 
 import returnedComponentString from './CustomComponentString';
-import { createCustomComponent } from './utils/CreateCustomComponent';
+import { createCustomComponent } from '../../../AiComponentGeneration/CreateCustomComponent';
 import { useBlueprintContext } from '../../../../store/useBlueprintContext';
 import {
   getSelectedPage,

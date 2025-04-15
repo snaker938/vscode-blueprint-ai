@@ -1,11 +1,15 @@
+// AiSidebar.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { useEditor } from '@craftjs/core';
 import {
   getUserPrompt,
   setUserPrompt,
   subscribePromptChange,
+  setSelectedNodeId,
+  getSelectedNodeId,
 } from '../../store/store';
 
+// Overlay, sections, etc.
 import { LoadingOverlay } from './Components/LoadingOverlay';
 import { HeaderSection } from './Components/HeaderSection';
 import { SelectedElementInfo } from './Components/SelectedElementInfo';
@@ -14,6 +18,12 @@ import { AiPromptSection } from './Components/AiPromptSection';
 import { GenerateButtons } from './Components/GenerateButtons';
 import { GeneratedPreviewSection } from './Components/GeneratedPreviewSection';
 import { AcceptRejectSection } from './Components/AcceptRejectSection';
+
+// The helper function that logs the snippet:
+import { handleGenerateOutput } from './HandleChanges';
+
+// For beautifying HTML:
+import { html as beautifyHtml } from 'js-beautify';
 
 export interface AiSidebarProps {
   isOpen: boolean;
@@ -32,25 +42,38 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
   onAcceptChanges,
   onRejectChanges,
 }) => {
-  const { selectedElementName, isSelected } = useEditor((state, query) => {
-    let elementName: string | undefined;
-    let selected = false;
-    if (state.events.selected && state.events.selected.size === 1) {
-      selected = true;
-      const nodeId = Array.from(state.events.selected)[0];
-      if (nodeId) {
-        const node = query.node(nodeId).get();
-        if (node?.data?.displayName) {
-          elementName = node.data.displayName;
-        }
-      }
-    }
-    return {
-      selectedElementName: elementName,
-      isSelected: selected,
-    };
-  });
+  // Pull in Craft.js state + actions
+  const { actions, selectedElementName, isSelected } = useEditor(
+    (state, query) => {
+      let elementName: string | undefined;
+      let selected = false;
 
+      if (state.events.selected && state.events.selected.size === 1) {
+        selected = true;
+        const nodeId = Array.from(state.events.selected)[0];
+
+        if (nodeId) {
+          setSelectedNodeId(nodeId);
+
+          const node = query.node(nodeId).get();
+          if (node?.data?.displayName) {
+            elementName = node.data.displayName;
+          }
+        }
+      } else {
+        // If multiple or none selected, clear out the store
+        setSelectedNodeId(null);
+      }
+
+      return {
+        selectedElementName: elementName,
+        isSelected: selected,
+        query,
+      };
+    }
+  );
+
+  // Local component state
   const [userInput, setUserInputState] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -118,10 +141,50 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
       alert('Please enter text or upload an image first.');
       return;
     }
+
+    // 1) Store the node ID so we can still find it after deselecting
+    const nodeId = getSelectedNodeId();
+    if (!nodeId) {
+      alert('No node is selected.');
+      return;
+    }
+
+    // 2) Deselect the node so there's no "selected" overlay in the DOM
+    //    or any special "indicator-div-wrapper" elements.
+    actions.clearEvents(); // Or: actions.selectNode(null)
+
+    // 3) Wait a tick for the DOM to update
+    setTimeout(() => {
+      // Now that it's deselected, query the DOM
+      const domElement = document.querySelector(`[data-node-id="${nodeId}"]`);
+      if (domElement) {
+        // Clone so we can optionally remove any leftover indicators if they exist
+        const cloned = domElement.cloneNode(true) as HTMLElement;
+
+        // (Optionally, remove #indicator-div-wrapper if it remains in the DOM)
+        const indicatorEls = cloned.querySelectorAll('#indicator-div-wrapper');
+        indicatorEls.forEach((el) => el.remove());
+
+        // Beautify HTML
+        const rawHTML = cloned.outerHTML;
+        const beautifiedHTML = beautifyHtml(rawHTML, {
+          indent_size: 2,
+          preserve_newlines: true,
+        });
+
+        const componentName = selectedElementName || 'MyComponent';
+        handleGenerateOutput(componentName, beautifiedHTML);
+      } else {
+        console.warn(`No DOM element found for data-node-id="${nodeId}"`);
+      }
+    }, 0);
+
+    // 4) Continue with any "generation" logic (API calls, etc.)
     const localUserInput = userInput;
     setIsLoading(true);
     setShowGenerated(false);
     setPreviewClosed(false);
+
     setTimeout(() => {
       setIsLoading(false);
       setUserPrompt(localUserInput);
@@ -147,7 +210,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
     onRejectChanges?.();
   };
 
-  // Determines whether the preview should be displayed
+  // Controls whether the preview is displayed
   const isPreviewVisible =
     !previewClosed && (showGenerated || showAcceptChanges);
 
@@ -162,7 +225,6 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
           width: '300px',
           border: '1px solid #ddd',
           background: '#fff',
-          // Removed height: '100%' and overflowY: 'auto' to eliminate scrolling
           overflow: 'hidden',
         }}
       >
