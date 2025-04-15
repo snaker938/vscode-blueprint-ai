@@ -92,8 +92,7 @@ export const AiSidebar: React.FC<AiSidebarProps> = ({
     };
   }, []);
 
-  const POST_GENERATE_MESSAGE =
-    'I have removed the Books category and replaced it with a Trending categories image with a call to action button as requested.';
+  const POST_GENERATE_MESSAGE = 'TESTING';
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
