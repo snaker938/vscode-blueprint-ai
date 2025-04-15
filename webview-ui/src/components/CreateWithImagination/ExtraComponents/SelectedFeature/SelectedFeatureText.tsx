@@ -22,6 +22,7 @@ import {
   getSelectedPage,
   getSelectedPageId,
   updatePage,
+  setSuggestedPages, // <--- Import this
 } from '../../../../store/store';
 
 interface SelectedFeatureTextProps {
@@ -41,7 +42,7 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
-  // **NEW**: Store the raw ArrayBuffer for sending to extension
+  // Raw ArrayBuffer for sending to the extension
   const [imageArrayBuffer, setImageArrayBuffer] = useState<ArrayBuffer | null>(
     null
   );
@@ -82,14 +83,14 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
 
       setUploadedImage(file);
 
-      // **First reader**: For preview
+      // For preview
       const previewReader = new FileReader();
       previewReader.onloadend = () => {
         setImagePreviewUrl(previewReader.result as string);
       };
       previewReader.readAsDataURL(file);
 
-      // **Second reader**: For raw ArrayBuffer
+      // For raw ArrayBuffer
       const arrayBufferReader = new FileReader();
       arrayBufferReader.onloadend = () => {
         if (arrayBufferReader.result) {
@@ -193,17 +194,61 @@ const SelectedFeatureText: React.FC<SelectedFeatureTextProps> = ({
       // Remove everything after `export default Xyz;`
       const defaultExportLine = `export default ${componentName};`;
       const exportIndex = cleanedSnippet.indexOf(defaultExportLine);
+
+      // We'll capture what's after the export line (for parsing suggested pages),
+      // then remove it from `cleanedSnippet`.
+      let snippetAfterExport = '';
       if (exportIndex !== -1) {
+        snippetAfterExport = cleanedSnippet.substring(
+          exportIndex + defaultExportLine.length
+        );
         cleanedSnippet = cleanedSnippet.substring(
           0,
           exportIndex + defaultExportLine.length
         );
       }
 
-      // 4) Store the final snippet
-      const returnedComponentString = cleanedSnippet;
+      // 4) Parse out any suggestedPageNames from snippetAfterExport
+      //    For example:  suggestedPageNames: ["Home","Products", ...]
+      //    or (non-JSON style) suggestedPageNames: {"Home","Products",...}
+      if (snippetAfterExport.includes('suggestedPageNames')) {
+        // Attempt to find the substring after `suggestedPageNames:`
+        const splittedByKey = snippetAfterExport.split('suggestedPageNames:');
+        if (splittedByKey[1]) {
+          let suggestionBlock = splittedByKey[1].trim();
+
+          // If the extension returns JSON arrays like ["Home","Products"], parse them:
+          const arrayMatch = suggestionBlock.match(/\[[^\]]*\]/);
+          if (arrayMatch && arrayMatch[0]) {
+            // It's probably standard JSON array
+            try {
+              const pages = JSON.parse(arrayMatch[0]);
+              if (Array.isArray(pages)) {
+                setSuggestedPages(pages);
+              }
+            } catch (err) {
+              console.error('Could not parse suggestedPageNames as JSON', err);
+            }
+          } else {
+            // Otherwise, try to parse it as { "Home", "Products", ... }
+            // We'll do a naive parse: strip braces, split by commas, strip quotes.
+            suggestionBlock = suggestionBlock
+              .replace(/^\{/, '')
+              .replace(/\}$/, '');
+            const splittedPages = suggestionBlock
+              .split(',')
+              .map((s) => s.trim().replace(/^"|"$/g, ''))
+              .filter((s) => !!s);
+
+            if (splittedPages.length > 0) {
+              setSuggestedPages(splittedPages);
+            }
+          }
+        }
+      }
 
       // 5) Dynamically create & register the component
+      const returnedComponentString = cleanedSnippet;
       const generatedComponent = createCustomComponent(returnedComponentString);
       registerCustomComponent(componentName, generatedComponent);
 
